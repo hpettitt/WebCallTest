@@ -2,20 +2,48 @@
 <html>
 <head>
   <title>Vapi Test</title>
+  <meta charset="utf-8">
 </head>
 <body>
-  <h1>Testing Vapi SDK...</h1>
-  <div id="status">Loading SDK...</div>
+  <h2 id="status">Loading Vapi SDK...</h2>
 
-  <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web-call-sdk@1.0.5/dist/vapi-web-call-sdk.min.js"></script>
+  <!-- Load Vapi SDK with error handling -->
   <script>
-    const status = document.getElementById("status");
-    if (window.Vapi) {
-      status.textContent = "✅ SDK loaded!";
-    } else {
-      status.textContent = "❌ SDK failed to load";
-      console.error("Vapi not found");
-    }
+    // Detect if script fails to load
+    window.vapiLoadError = false;
+    window.addEventListener('error', (e) => {
+      if (e.target?.src?.includes('vapi')) {
+        window.vapiLoadError = true;
+        document.getElementById('status').textContent = '❌ SDK failed to load (network error)';
+        console.error('Vapi SDK load failed:', e.target.src);
+      }
+    });
+  </script>
+
+  <!-- Use a known-good version -->
+  <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web-call-sdk@1.0.3/dist/vapi-web-call-sdk.min.js"></script>
+
+  <script>
+    const status = document.getElementById('status');
+    
+    // Wait a moment for script to initialize
+    setTimeout(() => {
+      if (window.vapiLoadError) return;
+      
+      if (typeof window.Vapi !== 'undefined') {
+        status.textContent = '✅ Vapi SDK loaded successfully!';
+        status.style.color = 'green';
+        
+        // Optional: auto-start call (add your keys below)
+        // const vapi = new window.Vapi("pk_...");
+        // vapi.start({ assistantId: "..." });
+        
+      } else {
+        status.textContent = '❌ window.Vapi is undefined';
+        status.style.color = 'red';
+        console.error('Vapi not found. Check Network tab for failed script.');
+      }
+    }, 500);
   </script>
 </body>
 </html>
