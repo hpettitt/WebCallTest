@@ -1,92 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Connecting to Agent...</title>
+  <title>Vapi Voice Agent</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: system-ui, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: #f9fafb;
-      color: #1f2937;
-      text-align: center;
+      background: #f8fafc;
     }
     .container {
-      max-width: 500px;
+      text-align: center;
       padding: 20px;
     }
-    h1 {
-      font-size: 24px;
-      margin-bottom: 16px;
-    }
     #status {
-      font-size: 16px;
-      color: #4b5563;
-      margin-top: 12px;
-    }
-    .mic-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-      color: #3b82f6;
+      margin-top: 16px;
+      color: #475569;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="mic-icon">🎤</div>
-    <h1>Connecting to your assistant...</h1>
-    <div id="status">Please allow microphone access to start the call.</div>
+    <h1>🎙️ Voice Assistant</h1>
+    <div id="status">Connecting...</div>
   </div>
 
-  <!-- Load Vapi Web SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web-call-sdk@latest/dist/vapi-web-call-sdk.min.js"></script>
+  <!-- Vapi Web SDK (from official quickstart) -->
+  <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web-call-sdk@1.0.5/dist/vapi-web-call-sdk.min.js"></script>
 
   <script>
-    // 🔑 REPLACE THESE WITH YOUR ACTUAL VALUES
+    // 🔑 REPLACE WITH YOUR VALUES
     const PUBLIC_API_KEY = "pk_f3a732ca-378e-40ca-88e2-7a39d326a8e0";
     const ASSISTANT_ID = "778ec8a9-8f3e-4a38-9606-46752d4f830b";
 
     const statusEl = document.getElementById("status");
-    const vapi = new window.Vapi(PUBLIC_API_KEY);
 
-    // Attempt to start call automatically on page load
+    // Wait for page load
     window.addEventListener("load", () => {
-      // Modern browsers require user interaction for mic access,
-      // but we can try to start immediately if already allowed,
-      // or show a fallback instruction.
-      
-      // Show a gentle prompt if needed
-      statusEl.textContent = "Starting call... Please allow microphone access if prompted.";
+      if (typeof window.Vapi === "undefined") {
+        statusEl.textContent = "❌ SDK failed to load";
+        return;
+      }
+
+      const vapi = new window.Vapi(PUBLIC_API_KEY);
+
+      statusEl.textContent = "Requesting microphone access...";
 
       vapi.start({ assistantId: ASSISTANT_ID })
         .then(() => {
-          statusEl.textContent = "✅ Connected! Speak anytime.";
+          statusEl.textContent = "✅ Connected! Speak now.";
         })
-        .catch((error) => {
-          console.error("Auto-start failed:", error);
-          statusEl.innerHTML = `
-            ❌ Microphone access required.<br>
-            Please reload this page and allow mic permission.<br>
-            <button onclick="location.reload()" style="margin-top:12px;padding:8px 16px;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;">
-              Retry
-            </button>
-          `;
+        .catch((err) => {
+          console.error("Call failed:", err);
+          statusEl.innerHTML = "⚠️ " + (err.message || "Permission denied or network error");
         });
-    });
 
-    vapi.on("call-end", () => {
-      statusEl.textContent = "📞 Call ended. Thank you!";
-    });
-
-    vapi.on("error", (err) => {
-      console.error("Vapi error:", err);
-      if (!statusEl.textContent.includes("❌")) {
-        statusEl.textContent = "⚠️ Connection issue. Please reload.";
-      }
+      vapi.on("call-end", () => {
+        statusEl.textContent = "📞 Call ended";
+      });
     });
   </script>
 </body>
