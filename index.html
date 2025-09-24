@@ -1,24 +1,50 @@
-<script>
-  var vapiInstance = null;
-  const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b"; // Substitute with your assistant ID
-  const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0"; // Substitute with your Public key from Vapi Dashboard.
-  const buttonConfig = {}; // Modify this as required
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vapi Voice Agent</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <h2 id="status">Connecting to voice agent...</h2>
 
-  (function (d, t) {
-    var g = document.createElement(t),
-      s = d.getElementsByTagName(t)[0];
-    g.src =
-      "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
-    g.defer = true;
-    g.async = true;
-    s.parentNode.insertBefore(g, s);
+  <!-- Official SDK from Vapi Quickstart -->
+  <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi-web.min.js"></script>
 
-    g.onload = function () {
-      vapiInstance = window.vapiSDK.run({
-        apiKey: apiKey, // mandatory
-        assistant: assistant, // mandatory
-        config: buttonConfig, // optional
+  <script>
+    const status = document.getElementById('status');
+
+    // Wait a moment for SDK to initialize
+    setTimeout(() => {
+      // ✅ Use window.vapi (lowercase), NOT window.Vapi
+      if (typeof window.vapi === 'undefined') {
+        status.textContent = '❌ Vapi SDK failed to load';
+        console.error('window.vapi is undefined. Check Network tab.');
+        return;
+      }
+
+      status.textContent = '✅ SDK loaded! Starting call...';
+
+      // 🔑 REPLACE THESE WITH YOUR ACTUAL VALUES
+      const PUBLIC_API_KEY = "pk_f3a732ca-378e-40ca-88e2-7a39d326a8e0";
+      const ASSISTANT_ID = "778ec8a9-8f3e-4a38-9606-46752d4f830b";
+
+      // ✅ Initialize with lowercase 'vapi'
+      const vapiClient = window.vapi(PUBLIC_API_KEY);
+
+      vapiClient.start({ assistantId: ASSISTANT_ID })
+        .then(() => {
+          status.textContent = '📞 Call active! Speak now.';
+        })
+        .catch((err) => {
+          console.error('Call failed:', err);
+          status.textContent = '⚠️ ' + (err.message || 'Call failed');
+        });
+
+      vapiClient.on('call-end', () => {
+        status.textContent = '📞 Call ended.';
       });
-    };
-  })(document, "script");
-</script>
+    }, 500);
+  </script>
+</body>
+</html>
