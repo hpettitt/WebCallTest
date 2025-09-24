@@ -1,68 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Vapi Voice Agent</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #f8fafc;
-    }
-    .container {
-      text-align: center;
-      padding: 20px;
-    }
-    #status {
-      margin-top: 16px;
-      color: #475569;
-    }
-  </style>
+  <title>Vapi Test</title>
 </head>
 <body>
-  <div class="container">
-    <h1>🎙️ Voice Assistant</h1>
-    <div id="status">Connecting...</div>
-  </div>
+  <h1>Testing Vapi SDK...</h1>
+  <div id="status">Loading SDK...</div>
 
-  <!-- Vapi Web SDK (from official quickstart) -->
   <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web-call-sdk@1.0.5/dist/vapi-web-call-sdk.min.js"></script>
-
   <script>
-    // 🔑 REPLACE WITH YOUR VALUES
-    const PUBLIC_API_KEY = "pk_f3a732ca-378e-40ca-88e2-7a39d326a8e0";
-    const ASSISTANT_ID = "778ec8a9-8f3e-4a38-9606-46752d4f830b";
-
-    const statusEl = document.getElementById("status");
-
-    // Wait for page load
-    window.addEventListener("load", () => {
-      if (typeof window.Vapi === "undefined") {
-        statusEl.textContent = "❌ SDK failed to load";
-        return;
-      }
-
-      const vapi = new window.Vapi(PUBLIC_API_KEY);
-
-      statusEl.textContent = "Requesting microphone access...";
-
-      vapi.start({ assistantId: ASSISTANT_ID })
-        .then(() => {
-          statusEl.textContent = "✅ Connected! Speak now.";
-        })
-        .catch((err) => {
-          console.error("Call failed:", err);
-          statusEl.innerHTML = "⚠️ " + (err.message || "Permission denied or network error");
-        });
-
-      vapi.on("call-end", () => {
-        statusEl.textContent = "📞 Call ended";
-      });
-    });
+    const status = document.getElementById("status");
+    if (window.Vapi) {
+      status.textContent = "✅ SDK loaded!";
+    } else {
+      status.textContent = "❌ SDK failed to load";
+      console.error("Vapi not found");
+    }
   </script>
 </body>
 </html>
