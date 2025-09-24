@@ -1,47 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Vapi Test</title>
+  <title>Vapi Voice Agent</title>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-  <h2 id="status">Loading Vapi SDK...</h2>
+  <h2 id="status">Connecting to voice agent...</h2>
 
-  <!-- Load Vapi SDK with error handling -->
-  <script>
-    // Detect if script fails to load
-    window.vapiLoadError = false;
-    window.addEventListener('error', (e) => {
-      if (e.target?.src?.includes('vapi')) {
-        window.vapiLoadError = true;
-        document.getElementById('status').textContent = '❌ SDK failed to load (network error)';
-        console.error('Vapi SDK load failed:', e.target.src);
-      }
-    });
-  </script>
-
-  <!-- Use a known-good version -->
-<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@1.1.0/dist/vapi-web.min.js"></script>
+  <!-- ✅ Official SDK from Vapi Quickstart -->
+  <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@1.1.0/dist/vapi-web.min.js"></script>
 
   <script>
     const status = document.getElementById('status');
-    
-    // Wait a moment for script to initialize
+
+    // Wait for SDK to initialize
     setTimeout(() => {
-      if (window.vapiLoadError) return;
-      
-      if (typeof window.Vapi !== 'undefined') {
-        status.textContent = '✅ Vapi SDK loaded successfully!';
-        status.style.color = 'green';
-        
-        // Optional: auto-start call (add your keys below)
-        // const vapi = new window.Vapi("pk_...");
-        // vapi.start({ assistantId: "..." });
-        
+      if (typeof window.Vapi === 'undefined') {
+        status.textContent = '❌ Vapi SDK failed to load';
+        console.error('window.Vapi is undefined. Check network tab.');
       } else {
-        status.textContent = '❌ window.Vapi is undefined';
-        status.style.color = 'red';
-        console.error('Vapi not found. Check Network tab for failed script.');
+        status.textContent = '✅ Connected! Starting call...';
+
+        // 🔑 REPLACE WITH YOUR KEYS
+        const PUBLIC_API_KEY = "pk_your_public_key_here";
+        const ASSISTANT_ID = "your_assistant_id_here";
+
+        const vapi = new window.Vapi(PUBLIC_API_KEY);
+        vapi.start({ assistantId: ASSISTANT_ID }).catch(err => {
+          console.error("Call failed:", err);
+          status.textContent = "⚠️ " + err.message;
+        });
       }
     }, 500);
   </script>
