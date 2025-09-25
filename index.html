@@ -17,7 +17,7 @@
       throw new Error("No token");
     }
   // ✅ Validate token via n8n BEFORE starting call
-    fetch(`https://hpettitt.app.n8n.cloud/webhook-test/2a82d555-61c2-4755-82c2-ecca3b62f35b?token=${encodeURIComponent(token)}`)
+    fetch(`https://hpettitt.app.n8n.cloud/webhook-test/validate-token?token=${encodeURIComponent(token)}`)
       .then(res => res.json())
       .then(data => {
         if (!data.valid) {
