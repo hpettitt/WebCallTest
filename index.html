@@ -1,24 +1,39 @@
+<div id="vapi-status">Loading voice agent...</div>
+
 <script>
   var vapiInstance = null;
-  const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b"; // Substitute with your assistant ID
-  const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0"; // Substitute with your Public key from Vapi Dashboard.
-  const buttonConfig = {}; // Modify this as required
+  const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b";
+  const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0";
+  const buttonConfig = {
+    // Optional: hide default button if you want full auto-start
+    disableDefaultButton: true,
+  };
 
   (function (d, t) {
+    const status = document.getElementById("vapi-status");
+    status.textContent = "Initializing...";
+
     var g = document.createElement(t),
-      s = d.getElementsByTagName(t)[0];
-    g.src =
-      "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+        s = d.getElementsByTagName(t)[0];
+    g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
     g.defer = true;
     g.async = true;
     s.parentNode.insertBefore(g, s);
 
     g.onload = function () {
+      status.textContent = "Starting call...";
       vapiInstance = window.vapiSDK.run({
-        apiKey: apiKey, // mandatory
-        assistant: assistant, // mandatory
-        config: buttonConfig, // optional
+        apiKey: apiKey,
+        assistant: assistant,
+        config: buttonConfig,
       });
+
+      // Optional: listen for events (if supported)
+      // Note: event handling may be limited in this widget
+    };
+
+    g.onerror = function () {
+      status.textContent = "❌ Failed to load voice agent";
     };
   })(document, "script");
 </script>
