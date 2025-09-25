@@ -1,39 +1,49 @@
-<div id="vapi-status">Loading voice agent...</div>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Interview Call</title>
+  <meta charset="utf-8">
+</head>
+<body>
+  <div id="status">Verifying your interview link...</div>
 
 <script>
-  var vapiInstance = null;
-  const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b";
-  const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0";
-  const buttonConfig = {
-    // Optional: hide default button if you want full auto-start
-    disableDefaultButton: true,
-  };
+  const status = document.getElementById('status');
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
 
-  (function (d, t) {
-    const status = document.getElementById("vapi-status");
-    status.textContent = "Initializing...";
+    if (!token) {
+      status.textContent = "❌ Invalid link: missing token";
+      throw new Error("No token");
+    }
+  // ✅ Validate token via n8n BEFORE starting call
+    fetch(`https://hpettitt.app.n8n.cloud/webhook-test/2a82d555-61c2-4755-82c2-ecca3b62f35b?token=${encodeURIComponent(token)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.valid) {
+          status.textContent = "❌ " + (data.error || "Link expired or invalid");
+          return;
+        }
 
-    var g = document.createElement(t),
-        s = d.getElementsByTagName(t)[0];
-    g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
-    g.defer = true;
-    g.async = true;
-    s.parentNode.insertBefore(g, s);
-
-    g.onload = function () {
-      status.textContent = "Starting call...";
-      vapiInstance = window.vapiSDK.run({
-        apiKey: apiKey,
-        assistant: assistant,
-        config: buttonConfig,
+        status.textContent = `Hello ${data.candidateName}! Connecting to interviewer...`;
+       // ✅ Load Vapi SDK and start call
+   // ✅ Load Vapi SDK and start call
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+        script.onload = () => {
+          window.vapiSDK.run({
+            apiKey: "f3a732ca-378e-40ca-88e2-7a39d326a8e0", // UUID only (no pk_)
+            assistant: "778ec8a9-8f3e-4a38-9606-46752d4f830b",
+            config: { disableDefaultButton: true },
+            meta: { token } // ← critical for webhook
+          });
+        };
+        document.head.appendChild(script);
+      })
+      .catch(err => {
+        console.error("Validation failed:", err);
+        status.textContent = "⚠️ Connection error. Please try again later.";
       });
-
-      // Optional: listen for events (if supported)
-      // Note: event handling may be limited in this widget
-    };
-
-    g.onerror = function () {
-      status.textContent = "❌ Failed to load voice agent";
-    };
-  })(document, "script");
-</script>
+  </script>
+</body>
+</html>
