@@ -1,49 +1,111 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Interview Call</title>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <title>Bloom Buddies — Interview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #f8fafc;
+      color: #1f2937;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      max-width: 650px;
+      width: 100%;
+    }
+    h1 { margin-top: 0; color: #065f46; }
+    .lead { color: #374151; margin-bottom: 20px; }
+    .disclaimer {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #92400e;
+    }
+    button {
+      background: #10b981;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+    }
+    button:hover { background: #059669; }
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <div id="status">Verifying your interview link...</div>
+  <div class="card">
+    <h1>Welcome, Candidate Name</h1>
+    <p class="lead">This is your Bloom Buddies interview page. When you’re ready, click below to start.</p>
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> This interview will be recorded for quality and analytical purposes.<br>
+      Your call can be answered from <strong>5 minutes before</strong> until <strong>20 minutes after</strong> your scheduled appointment.
+    </div>
+    <button id="start">Start Interview</button>
+    <div id="status" style="margin-top:10px;font-size:14px;color:#065f46;"></div>
+    <div class="footer">© <span id="yr"></span> Bloom Buddies — <a href="https://www.bloom-buddies.fr/" target="_blank">bloom-buddies.fr</a></div>
+  </div>
 
-<script>
-  const status = document.getElementById('status');
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
+  <script>
+    document.getElementById("yr").textContent = new Date().getFullYear();
 
-    if (!token) {
-      status.textContent = "❌ Invalid link: missing token";
-      throw new Error("No token");
-    }
-  // ✅ Validate token via n8n BEFORE starting call
-    fetch(`https://hpettitt.app.n8n.cloud/webhook-test/validate-token?token=${encodeURIComponent(token)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (!data.valid) {
-          status.textContent = "❌ " + (data.error || "Link expired or invalid");
-          return;
-        }
+    const statusEl = document.getElementById("status");
+    const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b"; // your assistant ID
+    const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0";    // your public key
+    const buttonConfig = { disableDefaultButton: true };
+    let sdkLoaded = false;
 
-        status.textContent = `Hello ${data.candidateName}! Connecting to interviewer...`;
-       // ✅ Load Vapi SDK and start call
-   // ✅ Load Vapi SDK and start call
-        const script = document.createElement('script');
-        script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
-        script.onload = () => {
-          window.vapiSDK.run({
-            apiKey: "f3a732ca-378e-40ca-88e2-7a39d326a8e0", // UUID only (no pk_)
-            assistant: "778ec8a9-8f3e-4a38-9606-46752d4f830b",
-            config: { disableDefaultButton: true },
-            meta: { token } // ← critical for webhook
-          });
-        };
-        document.head.appendChild(script);
-      })
-      .catch(err => {
-        console.error("Validation failed:", err);
-        status.textContent = "⚠️ Connection error. Please try again later.";
+    function loadVapiSDK() {
+      return new Promise((resolve, reject) => {
+        if (sdkLoaded) return resolve();
+        const g = document.createElement("script");
+        g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+        g.defer = true; g.async = true;
+        g.onload = () => { sdkLoaded = true; resolve(); };
+        g.onerror = () => reject(new Error("Failed to load Vapi SDK"));
+        document.head.appendChild(g);
       });
+    }
+
+    async function startInterview() {
+      statusEl.textContent = "Loading interview...";
+      try {
+        await loadVapiSDK();
+        window.vapiSDK.run({
+          apiKey,
+          assistant,
+          config: buttonConfig,
+          meta: { candidate: "Candidate Name" } // placeholder
+        });
+        statusEl.textContent = "Interview started — allow microphone access to continue.";
+      } catch (e) {
+        statusEl.textContent = "Error starting interview. Please refresh.";
+      }
+    }
+
+    document.getElementById("start").addEventListener("click", startInterview);
   </script>
 </body>
 </html>
