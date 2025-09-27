@@ -46,4 +46,95 @@
       text-align: left;
     }
     .cta-text {
-      font-siz
+      font-size: 20px;
+      font-weight: bold;
+      color: #065f46;
+      margin: 20px 0;
+    }
+    button {
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      font-size: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 20px rgba(16,185,129,0.5);
+      transition: transform 0.1s ease, background 0.2s ease;
+      margin: 0 auto;
+    }
+    button:hover { background: #059669; transform: scale(1.05); }
+    .footer {
+      margin-top: 25px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div>
+      <h1>Welcome, Candidate Name</h1>
+      <p class="lead">This is your Bloom Buddies interview page.</p>
+
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> This interview will be recorded for quality and analytical purposes.<br>
+        Your call can be answered from <strong>5 minutes before</strong> until <strong>20 minutes after</strong> your scheduled appointment.
+      </div>
+
+      <div class="cta-text">
+        To connect to your interviewer, click the telephone icon below.
+      </div>
+    </div>
+
+    <div>
+      <button id="start" aria-label="Start Interview">📞</button>
+      <div id="status" style="margin-top:10px;font-size:14px;color:#065f46;"></div>
+      <div class="footer">© <span id="yr"></span> Bloom Buddies — <a href="https://www.bloom-buddies.fr/" target="_blank">bloom-buddies.fr</a></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("yr").textContent = new Date().getFullYear();
+    const statusEl = document.getElementById("status");
+    const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b";
+    const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0";
+    const buttonConfig = { disableDefaultButton: true };
+    let sdkLoaded = false;
+
+    function loadVapiSDK() {
+      return new Promise((resolve, reject) => {
+        if (sdkLoaded) return resolve();
+        const g = document.createElement("script");
+        g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+        g.defer = true; g.async = true;
+        g.onload = () => { sdkLoaded = true; resolve(); };
+        g.onerror = () => reject(new Error("Failed to load Vapi SDK"));
+        document.head.appendChild(g);
+      });
+    }
+
+    async function startInterview() {
+      statusEl.textContent = "Loading interview...";
+      try {
+        await loadVapiSDK();
+        window.vapiSDK.run({
+          apiKey,
+          assistant,
+          config: buttonConfig,
+          meta: { candidate: "Candidate Name" }
+        });
+        statusEl.textContent = "Interview started — allow microphone access to continue.";
+      } catch (e) {
+        statusEl.textContent = "Error starting interview. Please refresh.";
+      }
+    }
+
+    document.getElementById("start").addEventListener("click", startInterview);
+  </script>
+</body>
+</html>
