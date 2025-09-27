@@ -29,11 +29,7 @@
       justify-content: space-between;
       min-height: 500px;
     }
-    h1 {
-      margin-top: 0;
-      color: #065f46;
-      font-size: 28px;
-    }
+    h1 { margin-top: 0; color: #065f46; font-size: 28px; }
     .lead { color: #374151; margin-bottom: 25px; }
     .disclaimer {
       background: #fef3c7;
@@ -51,7 +47,7 @@
       color: #065f46;
       margin: 20px 0;
     }
-    button {
+    #start {
       background: #10b981;
       color: white;
       border: none;
@@ -67,12 +63,8 @@
       transition: transform 0.1s ease, background 0.2s ease;
       margin: 0 auto;
     }
-    button:hover { background: #059669; transform: scale(1.05); }
-    .footer {
-      margin-top: 25px;
-      font-size: 13px;
-      color: #6b7280;
-    }
+    #start:hover { background: #059669; transform: scale(1.05); }
+    .footer { margin-top: 25px; font-size: 13px; color: #6b7280; }
   </style>
 </head>
 <body>
@@ -83,28 +75,33 @@
 
       <div class="disclaimer">
         <strong>Disclaimer:</strong> This interview will be recorded for quality and analytical purposes.<br>
-        Your interviewer will be available to take your call <strong>5 minutes before</strong> and <strong>20 minutes after</strong> your scheduled appointment, [scheduled appointment].
+        Your interviewer will be available to take your call <strong>5 minutes before</strong> and <strong>20 minutes after</strong> your scheduled appointment.
       </div>
 
       <div class="cta-text">
-        To accept the above conditions and to start your call click on the phone icon that will appear below.
-           
+        To connect to your interviewer, click the telephone icon below.
       </div>
     </div>
 
     <div>
+      <!-- ✅ Button that triggers Vapi -->
+      <button id="start" aria-label="Start Interview">📞</button>
+
       <div id="status" style="margin-top:10px;font-size:14px;color:#065f46;"></div>
-      <div class="footer">© <span id="yr"></span> Bloom Buddies — <a href="https://www.bloom-buddies.fr/" target="_blank">bloom-buddies.fr</a></div>
+      <div class="footer">© <span id="yr"></span> Bloom Buddies — 
+        <a href="https://www.bloom-buddies.fr/" target="_blank">bloom-buddies.fr</a>
+      </div>
     </div>
   </div>
 
   <script>
     document.getElementById("yr").textContent = new Date().getFullYear();
     const statusEl = document.getElementById("status");
-    const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b";
-    const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0";
+
+    const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b"; // your assistant ID
+    const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0";    // your public key
     const buttonConfig = { disableDefaultButton: true };
-    let sdkLoaded = true;
+    let sdkLoaded = false;
 
     function loadVapiSDK() {
       return new Promise((resolve, reject) => {
@@ -130,10 +127,12 @@
         });
         statusEl.textContent = "Interview started — allow microphone access to continue.";
       } catch (e) {
+        console.error(e);
         statusEl.textContent = "Error starting interview. Please refresh.";
       }
     }
 
+    // ✅ Attach handler
     document.getElementById("start").addEventListener("click", startInterview);
   </script>
 </body>
