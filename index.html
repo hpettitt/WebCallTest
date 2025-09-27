@@ -8,7 +8,7 @@
     body {
       margin: 0;
       font-family: system-ui, sans-serif;
-      background: #f8fafc;
+      background: linear-gradient(135deg, #5dc399, #7be1b6);
       color: #1f2937;
       display: flex;
       justify-content: center;
@@ -18,62 +18,87 @@
     }
     .card {
       background: #fff;
-      padding: 30px;
-      border-radius: 14px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-      max-width: 650px;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      max-width: 700px;
       width: 100%;
+      text-align: center;
     }
-    h1 { margin-top: 0; color: #065f46; }
-    .lead { color: #374151; margin-bottom: 20px; }
+    h1 {
+      margin-top: 0;
+      color: #065f46;
+      font-size: 28px;
+    }
+    .lead { color: #374151; margin-bottom: 25px; }
     .disclaimer {
       background: #fef3c7;
       border: 1px solid #fcd34d;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 20px;
-      font-size: 14px;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 30px;
+      font-size: 15px;
       color: #92400e;
+      text-align: left;
+    }
+    .cta {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      margin: 20px 0;
+      font-size: 20px;
+      font-weight: bold;
+      color: #065f46;
     }
     button {
       background: #10b981;
       color: white;
-      font-weight: bold;
       border: none;
-      border-radius: 10px;
-      padding: 14px 20px;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 28px;
       cursor: pointer;
-      font-size: 16px;
-      box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 20px rgba(16,185,129,0.5);
+      transition: transform 0.1s ease, background 0.2s ease;
     }
-    button:hover { background: #059669; }
+    button:hover { background: #059669; transform: scale(1.05); }
     .footer {
-      margin-top: 20px;
-      font-size: 12px;
+      margin-top: 25px;
+      font-size: 13px;
       color: #6b7280;
-      text-align: center;
     }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Welcome, Candidate Name</h1>
-    <p class="lead">This is your Bloom Buddies interview page. When you’re ready, click below to start.</p>
+    <p class="lead">This is your Bloom Buddies interview page.</p>
+
     <div class="disclaimer">
       <strong>Disclaimer:</strong> This interview will be recorded for quality and analytical purposes.<br>
       Your call can be answered from <strong>5 minutes before</strong> until <strong>20 minutes after</strong> your scheduled appointment.
     </div>
-    <button id="start">Start Interview</button>
+
+    <div class="cta">
+      <span>To start interview, click the telephone icon</span>
+      <button id="start" aria-label="Start Interview">📞</button>
+    </div>
+
     <div id="status" style="margin-top:10px;font-size:14px;color:#065f46;"></div>
+
     <div class="footer">© <span id="yr"></span> Bloom Buddies — <a href="https://www.bloom-buddies.fr/" target="_blank">bloom-buddies.fr</a></div>
   </div>
 
   <script>
     document.getElementById("yr").textContent = new Date().getFullYear();
-
     const statusEl = document.getElementById("status");
-    const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b"; // your assistant ID
-    const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0";    // your public key
+    const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b";
+    const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0";
     const buttonConfig = { disableDefaultButton: true };
     let sdkLoaded = false;
 
@@ -97,7 +122,7 @@
           apiKey,
           assistant,
           config: buttonConfig,
-          meta: { candidate: "Candidate Name" } // placeholder
+          meta: { candidate: "Candidate Name" }
         });
         statusEl.textContent = "Interview started — allow microphone access to continue.";
       } catch (e) {
