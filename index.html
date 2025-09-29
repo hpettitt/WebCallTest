@@ -2,136 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Bloom Buddies — Interview</title>
+  <title>Interview Call</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: linear-gradient(135deg, #5dc399, #7be1b6);
-      color: #1f2937;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    .card {
-      background: #fff;
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-      max-width: 700px;
-      width: 100%;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 500px;
-    }
-    h1 { margin-top: 0; color: #065f46; font-size: 28px; }
-    .lead { color: #374151; margin-bottom: 25px; }
-    .disclaimer {
-      background: #fef3c7;
-      border: 1px solid #fcd34d;
-      border-radius: 14px;
-      padding: 18px;
-      margin-bottom: 30px;
-      font-size: 15px;
-      color: #92400e;
-      text-align: left;
-    }
-    .cta-text {
-      font-size: 20px;
-      font-weight: bold;
-      color: #065f46;
-      margin: 20px 0;
-    }
-    #readyBtn {
-      background: #10b981;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 16px 28px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 6px 20px rgba(16,185,129,0.5);
-      transition: transform 0.1s ease, background 0.2s ease;
-      margin: 0 auto;
-      display: inline-block;
-    }
-    #readyBtn:hover { background: #059669; transform: scale(1.03); }
-    .footer { margin-top: 25px; font-size: 13px; color: #6b7280; }
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { margin: 0; display: grid; place-items: center; min-height: 100vh; }
+    .card { padding: 24px 28px; border: 1px solid #e5e7eb; border-radius: 14px; max-width: 640px; width: 92%; }
+    .muted { color: #6b7280; font-size: 0.95rem; margin-top: 6px; }
+    .ok { color: #065f46; }
+    .err { color: #7f1d1d; }
+    .btn { margin-top: 14px; display: inline-block; padding: 10px 14px; border-radius: 10px; border: 1px solid #d1d5db; background: #f9fafb; cursor: default; }
   </style>
 </head>
 <body>
   <div class="card">
-    <div>
-      <h1>Welcome, Candidate Name</h1>
-      <p class="lead">This is your Bloom Buddies interview page.</p>
-
-      <div class="disclaimer">
-        <strong>Disclaimer:</strong> This interview will be recorded for quality and analytical purposes.<br>
-        Your interviewer will be available to take your call <strong>5 minutes before</strong> and <strong>20 minutes after</strong> your scheduled appointment.
-      </div>
-
-      <div class="cta-text">
-        Click on the button below and then the telephone button will appear for you to connect to your interviewer.
-      </div>
-    </div>
-
-    <div>
-      <!-- ✅ Rectangular trigger button -->
-      <button id="readyBtn" aria-label="Ready to connect">Ready to connect</button>
-
-      <div id="status" style="margin-top:10px;font-size:14px;color:#065f46;"></div>
-      <div class="footer">© <span id="yr"></span> Bloom Buddies — 
-        <a href="https://www.bloom-buddies.fr/" target="_blank">bloom-buddies.fr</a>
-      </div>
-    </div>
+    <div id="status">Verifying your interview link…</div>
+    <div id="details" class="muted"></div>
+    <div class="btn" id="readyButton" aria-disabled="true">Ready to connect</div>
   </div>
 
   <script>
-    document.getElementById("yr").textContent = new Date().getFullYear();
-    const statusEl = document.getElementById("status");
+    const statusEl = document.getElementById('status');
+    const detailsEl = document.getElementById('details');
+    const readyBtn  = document.getElementById('readyButton');
 
-    const assistant = "778ec8a9-8f3e-4a38-9606-46752d4f830b"; // your assistant ID
-    const apiKey = "f3a732ca-378e-40ca-88e2-7a39d326a8e0";    // your public key
+    // 1) Read token from URL ?token=...  (same approach as your prior snippet)
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
 
-    let sdkLoaded = false;
-
-    function loadVapiSDK() {
-      return new Promise((resolve, reject) => {
-        if (sdkLoaded) return resolve();
-        const g = document.createElement("script");
-        g.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
-        g.defer = true; g.async = true;
-        g.onload = () => { sdkLoaded = true; resolve(); };
-        g.onerror = () => reject(new Error("Failed to load Vapi SDK"));
-        document.head.appendChild(g);
-      });
+    if (!token) {
+      statusEl.className = 'err';
+      statusEl.textContent = '❌ Invalid link: missing token';
+      throw new Error('No token in URL');
     }
 
-    async function showPhoneButton() {
-      statusEl.textContent = "Loading telephone button...";
+    // 2) Validate the token with n8n BEFORE loading Vapi
+    //    You can switch this URL to your exact webhook path.
+    //    Example from your previous page is kept here:
+    //    https://hpettitt.app.n8n.cloud/webhook-test/2a82d555-61c2-4755-82c2-ecca3b62f35b?token=...
+    const N8N_VALIDATE_URL =
+      `https://hpettitt.app.n8n.cloud/webhook-test/2a82d555-61c2-4755-82c2-ecca3b62f35b?token=${encodeURIComponent(token)}`;
+
+    (async () => {
       try {
-        await loadVapiSDK();
-        // Let Vapi render its own phone button
-        window.vapiSDK.run({
-          apiKey,
-          assistant,
-          config: { disableDefaultButton: false },
-          meta: { candidate: "Candidate Name" }
-        });
-        statusEl.textContent = "Telephone button loaded — click it to connect.";
-      } catch (e) {
-        console.error(e);
-        statusEl.textContent = "Error starting interview. Please refresh.";
-      }
-    }
+        const res = await fetch(N8N_VALIDATE_URL, { method: 'GET' });
+        const data = await res.json();
 
-    document.getElementById("readyBtn").addEventListener("click", showPhoneButton);
+        if (!data || data.valid !== true) {
+          statusEl.className = 'err';
+          statusEl.textContent = '❌ ' + (data && data.error ? data.error : 'Link expired or invalid');
+          return;
+        }
+
+        // Expecting n8n to return candidate info (you can extend it to also include appointment time)
+        const name = data.candidateName || 'candidate';
+        const appt = data.appointmentTime; // optional — add in your n8n response when ready
+
+        statusEl.className = 'ok';
+        statusEl.textContent = `Hello ${name}! Connecting to your interviewer…`;
+        detailsEl.textContent = appt ? `Your appointment: ${appt}` : '';
+
+        // Make the CTA look “active” (we keep it non-clickable since Vapi auto-injects its own phone UI)
+        readyBtn.style.background = '#eef2ff';
+        readyBtn.style.borderColor = '#c7d2fe';
+        readyBtn.style.cursor = 'pointer';
+        readyBtn.setAttribute('aria-disabled', 'false');
+        readyBtn.title = 'Click to load the call widget. Then a phone button will appear to connect.';
+
+        // 3) Load the Vapi SDK and start the call, passing token in metadata
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js';
+        script.async = true;
+        script.onload = () => {
+          // Optional: gate the run behind a click so your instructions are clear
+          readyBtn.addEventListener('click', () => {
+            window.vapiSDK.run({
+              apiKey: 'f3a732ca-378e-40ca-88e2-7a39d326a8e0',   // UUID only (no pk_)
+              assistant: '778ec8a9-8f3e-4a38-9606-46752d4f830b',
+              config: { disableDefaultButton: false },          // show the telephone button after click
+              metadata: { token }                                // critical: n8n will use this to find the Airtable row
+            });
+            // Update helper text for UX
+            detailsEl.textContent =
+              'Click the phone button that just appeared to connect to your interviewer.';
+          }, { once: true });
+        };
+        document.head.appendChild(script);
+      } catch (err) {
+        console.error('Validation failed:', err);
+        statusEl.className = 'err';
+        statusEl.textContent = '⚠️ Connection error. Please try again later.';
+      }
+    })();
   </script>
 </body>
 </html>
