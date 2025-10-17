@@ -1,0 +1,64 @@
+{
+  "name": "Interview Verification",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "interview-verify",
+        "responseMode": "lastNode",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verify token against your database or service\nconst token = items[0].json.body.token;\n\n// Add your validation logic here\n// Example: Check against database, validate appointment time\nconst isValid = true; // Replace with actual validation\n\nif (isValid) {\n  // Generate session token\n  const sessionToken = Buffer.from(Date.now().toString()).toString('base64');\n  \n  return [\n    {\n      json: {\n        valid: true,\n        sessionToken: sessionToken\n      }\n    }\n  ];\n} else {\n  return [\n    {\n      json: {\n        valid: false\n      }\n    }\n  ];\n}"
+      },
+      "id": "function-1",
+      "name": "ValidateToken",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "ValidateToken",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "tags": [],
+  "trigger": {
+    "manual": false
+  },
+  "typeVersion": 1,
+  "id": "1"
+}
