@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Error - Bloom Buddies</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #5dc399, #7be1b6);
+      color: #1f2937;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 { 
+      margin-top: 0; 
+      color: #dc2626; 
+      font-size: 28px; 
+    }
+    .message { 
+      color: #374151; 
+      margin: 20px 0; 
+    }
+    .error-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    .support-info {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      border-radius: 14px;
+      padding: 18px;
+      margin: 30px 0;
+      font-size: 15px;
+      color: #991b1b;
+      text-align: left;
+    }
+    .back-btn {
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 16px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 20px;
+    }
+    .back-btn:hover { 
+      background: #059669; 
+    }
+    .footer { 
+      margin-top: 25px; 
+      font-size: 13px; 
+      color: #6b7280; 
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="error-icon">❌</div>
+    <h1>Access Error</h1>
+    <p class="message">We couldn't verify your interview session.</p>
+    
+    <div class="support-info">
+      <strong>Possible reasons:</strong>
+      <ul style="margin: 10px 0">
+        <li>Invalid or expired session token</li>
+        <li>Interview time has passed</li>
+        <li>Connection issues</li>
+      </ul>
+      Please check your interview invitation email and try again.
+    </div>
+
+    <a href="https://www.bloom-buddies.fr/contact" class="back-btn">Contact Support</a>
+
+    <div class="footer">
+      © <script>document.write(new Date().getFullYear())</script> Bloom Buddies — 
+      <a href="https://www.bloom-buddies.fr/" target="_blank">bloom-buddies.fr</a>
+    </div>
+  </div>
+</body>
+</html>
