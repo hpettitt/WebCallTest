@@ -66,6 +66,130 @@
   </style>
 </head>
 <body>
+  <script>
+    // Declare variables in wider scope
+    let sessionToken;
+    let candidateName;
+
+    // Add loadVapiSDK function
+    async function loadVapiSDK() {
+      return new Promise((resolve, reject) => {
+        if (window.vapiSDK) {
+          resolve();
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+
+        script.onload = () => {
+          if (window.vapiSDK) {
+            resolve();
+          } else {
+            reject(new Error('VAPI SDK object not found after script load'));
+          }
+        };
+
+        script.onerror = (event) => {
+          reject(new Error(`Failed to load VAPI SDK: ${event.type}`));
+        };
+
+        document.body.appendChild(script);
+      });
+    }
+
+    // Update DOMContentLoaded event handler
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        // Assign to outer scope variables
+        sessionToken = urlParams.get('session');
+        candidateName = urlParams.get('name');
+        
+        if (!sessionToken || !candidateName) {
+            window.location.href = 'error.html';
+        } else {
+            const nameSpan = document.getElementById('candidateNameSpan');
+            if (nameSpan) {
+                nameSpan.textContent = candidateName;
+            }
+        }
+    });
+
+    // Update VAPI SDK configuration
+    async function startInterview() {
+      const webhookUrl = 'https://nbhugh.app.n8n.cloud/webhook/get-vapi-credentials';
+      const button = document.getElementById('readyBtn');
+      
+      try {
+        button.disabled = true;
+        button.textContent = 'Connecting...';
+
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          mode: 'cors',
+          body: JSON.stringify({ 
+            sessionToken,
+            candidateName 
+          })
+        });
+
+        const data = await response.json();
+        const vapiKey = data.vapiKey || data.VapiKey;
+        const vapiAssistantId = data.vapiAssistantId || data.VapiAssistantId;
+
+        if (!vapiKey || !vapiAssistantId) {
+          throw new Error('Missing VAPI credentials');
+        }
+
+        await loadVapiSDK(); // Removed debugDiv parameter
+        
+        window.vapiSDK.run({
+          apiKey: vapiKey,
+          assistant: vapiAssistantId,
+          config: { 
+            disableDefaultButton: false,
+            autoStart: false,
+            audio: {
+              enumerateDevicesTimeout: 1000,
+              krisp: { enabled: false },
+              useBrowser: true,
+              useScreen: false,
+              startWithMicOn: true
+            }
+          },
+          meta: { 
+            candidate: candidateName,
+            sessionId: sessionToken
+          },
+          onError: (error) => {
+            button.textContent = 'Error - Try Again';
+            button.disabled = false;
+          },
+          onCallStart: () => {
+            button.style.display = 'none';
+          },
+          onCallEnd: () => {
+            window.location.href = 'thank-you.html';
+          }
+        });
+
+        button.textContent = 'Click on the telephone to connect!';
+        button.style.backgroundColor = '#059669';
+
+      } catch (error) {
+        console.error('Connection error:', error);
+        button.textContent = 'Error - Try Again';
+        button.disabled = false;
+      }
+    }
+  </script>
+
   <div class="card">
     <div>
       <h1>Welcome, <span id="candidateNameSpan">Candidate</span></h1>
@@ -85,142 +209,5 @@
       <button id="readyBtn" onclick="startInterview()">Start Phone Interview</button>
     </div>
   </div>
-
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionToken = urlParams.get('session');
-    const candidateName = urlParams.get('name');
-    
-    if (!sessionToken || !candidateName) {
-      window.location.href = 'error.html';
-    } else {
-      document.getElementById('candidateNameSpan').textContent = candidateName;
-    }
-
-    async function startInterview() {
-      const webhookUrl = 'https://nbhugh.app.n8n.cloud/webhook/get-vapi-credentials';
-      const button = document.getElementById('readyBtn');
-      
-      // Create or get debug panel
-      let debugDiv = document.getElementById('debugPanel');
-      if (!debugDiv) {
-        debugDiv = document.createElement('div');
-        debugDiv.id = 'debugPanel';
-        debugDiv.style.cssText = `
-          text-align: left;
-          background: #f3f4f6;
-          padding: 15px;
-          border-radius: 8px;
-          margin: 20px 0;
-          font-family: monospace;
-          white-space: pre-wrap;
-          overflow-x: auto;
-        `;
-        button.parentElement.appendChild(debugDiv);
-      }
-      
-      // Show initial request details
-      debugDiv.innerHTML = `
-DEBUG INFORMATION
-----------------
-Time: ${new Date().toISOString()}
-Webhook URL: ${webhookUrl}
-Session Token: ${sessionToken}
-Candidate Name: ${candidateName}
-
-REQUEST DETAILS
---------------
-Method: POST
-Headers: {
-  "Content-Type": "application/json",
-  "Accept": "application/json"
-}
-Body: ${JSON.stringify({sessionToken, candidateName}, null, 2)}
-`;
-
-      try {
-        button.disabled = true;
-        button.textContent = 'Connecting...';
-
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          mode: 'cors',
-          body: JSON.stringify({ 
-            sessionToken,
-            candidateName 
-          })
-        });
-
-        // Update debug with response status
-        debugDiv.innerHTML += `\nRESPONSE STATUS
----------------
-${response.status} ${response.statusText}
-
-RESPONSE HEADERS
----------------
-${JSON.stringify(Object.fromEntries([...response.headers]), null, 2)}
-`;
-
-        const data = await response.json();
-        
-        // Add response data to debug
-        debugDiv.innerHTML += `\nRESPONSE DATA
-------------
-${JSON.stringify(data, null, 2)}
-`;
-
-        // Check for credentials with either capitalization
-        const vapiKey = data.vapiKey || data.VapiKey;
-        const vapiAssistantId = data.vapiAssistantId || data.VapiAssistantId;
-
-        if (!vapiKey || !vapiAssistantId) {
-          throw new Error('Missing VAPI credentials in response');
-        }
-
-        debugDiv.innerHTML += '\nInitializing VAPI with credentials...';
-        
-        await loadVapiSDK(debugDiv);
-        
-        // Add configuration to handle device enumeration and Krisp
-        window.vapiSDK.run({
-          apiKey: vapiKey,
-          assistant: vapiAssistantId,
-          config: { 
-            disableDefaultButton: false,
-            audio: {
-              // Increase timeout for device enumeration
-              enumerateDevicesTimeout: 1000,
-              // Disable Krisp to avoid duplicate SDK issue
-              krisp: {
-                enabled: false
-              }
-            }
-          },
-          meta: { 
-            candidate: candidateName,
-            sessionId: sessionToken
-          },
-          onError: (error) => {
-            debugDiv.innerHTML += `\nVAPI Error: ${error.message}`;
-          },
-          onDevicesEnumerated: (devices) => {
-            debugDiv.innerHTML += `\nDevices enumerated: ${devices.length} found`;
-          }
-        });
-
-        debugDiv.innerHTML += '\nVAPI initialization completed';
-        button.textContent = 'Connected!';
-        button.style.backgroundColor = '#059669';
-
-      } catch (error) {
-        console.error('Connection error:', error);
-        button.textContent = 'Error - Try Again';
-        button.disabled = false;
-        
-        // Add error details to debug
-        debugDiv.innerHTML += `\nERROR DETAILS
--------------
+</body>
+</html>
