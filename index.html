@@ -82,33 +82,103 @@
     } else {
       // Show loading state
       document.getElementById('loadingCard').innerHTML = `
-        <h1>Verifying your appointment...</h1>
-        <p>Please wait while we validate your session.</p>
+        <h1>Verifying appointment...</h1>
+        <p>Connecting to verification service...</p>
         <p>Token: ${token}</p>
-        
       `;
 
-
-      // Redirect to n8n endpoint with token
+      // Test n8n endpoint with token
       fetch('https://nbhugh.app.n8n.cloud/webhook-test/interview-verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
+        mode: 'cors',
         body: JSON.stringify({ token })
       })
-      .then(response => response.json())
-      .then(data => {
-        if (data.valid) {
-          // Redirect to the verified interview page with the session token
-          window.location.href = `interview.html?session=${data.sessionToken}`;
-        } else {
-          window.location.href = 'error.html';
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        return response.json();
       })
-      .catch(() => {
-        window.location.href = 'error.html';
+      .then(data => {
+        // Debug: Display response and add continue button
+        document.getElementById('loadingCard').innerHTML = `
+          <h1>Verification Result</h1>
+          <div style="text-align: left; margin: 20px 0;">
+            <strong>Status:</strong> ${data.is_valid ? 'Valid' : 'Invalid'}<br>
+            <strong>Name:</strong> ${data.first_name}
+          </div>
+          <pre style="text-align: left; background: #f3f4f6; padding: 15px; border-radius: 8px; overflow: auto;">
+            ${JSON.stringify(data, null, 2)}
+          </pre>
+          ${data.is_valid ? `
+            <button onclick="proceedWithInterview('${data.first_name}')" 
+                    style="margin-top: 20px;" 
+                    id="readyBtn">
+              Start Interview
+            </button>
+          ` : `
+            <div class="support-info" style="background: #fee2e2; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              Sorry ${data.first_name}, we couldn't verify your appointment.
+            </div>
+            <button onclick="window.location.href='error.html'" 
+                    style="margin-top: 20px;" 
+                    id="readyBtn">
+              Contact Support
+            </button>
+          `}
+        `;
+      })
+      .catch((error) => {
+        console.error('Fetch Error:', error);
+        // Debug: Display detailed error information
+        document.getElementById('loadingCard').innerHTML = `
+          <h1>Connection Error</h1>
+          <div style="text-align: left; margin: 20px 0;">
+            <strong>Endpoint:</strong> https://nbhugh.app.n8n.cloud/webhook/interview-verify<br>
+            <strong>Error Type:</strong> ${error.name}<br>
+            <strong>Message:</strong> ${error.message}
+          </div>
+          <div class="support-info" style="background: #fee2e2; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <strong>Possible causes:</strong>
+            <ul>
+              <li>CORS policy restrictions</li>
+              <li>n8n server is not responding</li>
+              <li>Network connectivity issues</li>
+              <li>Invalid endpoint URL</li>
+            </ul>
+          </div>
+          <button onclick="location.reload()" 
+                  style="margin: 10px;" 
+                  id="readyBtn">
+            Try Again
+          </button>
+          <button onclick="window.location.href='error.html'" 
+                  style="margin: 10px;" 
+                  id="readyBtn">
+            Error Page
+          </button>
+        `;
       });
+    }
+
+    // Function to handle the continue button click
+    function proceedWithResponse(data) {
+      if (data.valid) {
+        window.location.href = `interview.html?session=${data.sessionToken}`;
+      } else {
+        window.location.href = 'error.html';
+      }
+    }
+
+    // New function to handle valid interviews
+    function proceedWithInterview(firstName) {
+      // Create a simple session token for demo purposes
+      const sessionToken = btoa(`${firstName}-${Date.now()}`);
+      window.location.href = `interview.html?session=${encodeURIComponent(sessionToken)}&name=${encodeURIComponent(firstName)}`;
     }
   </script>
 </body>

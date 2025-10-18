@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+   <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #5dc399, #7be1b6);
+      color: #1f2937;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 500px;
+    }
+    h1 { margin-top: 0; color: #065f46; font-size: 28px; }
+    .lead { color: #374151; margin-bottom: 25px; }
+    .disclaimer {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 30px;
+      font-size: 15px;
+      color: #92400e;
+      text-align: left;
+    }
+    .cta-text {
+      font-size: 20px;
+      font-weight: bold;
+      color: #065f46;
+      margin: 20px 0;
+    }
+    #readyBtn {
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 16px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(16,185,129,0.5);
+      transition: transform 0.1s ease, background 0.2s ease;
+      margin: 0 auto;
+      display: inline-block;
+    }
+    #readyBtn:hover { background: #059669; transform: scale(1.03); }
+    .footer { margin-top: 25px; font-size: 13px; color: #6b7280; }
+  </style>
+<head>
+  <meta charset="utf-8" />
+  <title>Bloom Buddies — Interview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+ 
+</head>
+<body>
+  <div class="card" id="loadingCard">
+    <h1>Verifying your appointment...</h1>
+    <p>Please wait while we validate your session.</p>
+  </div>
+
+  <script>
+    // Get token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (!token) {
+      window.location.href = 'error.html';
+    } else {
+      // Redirect to n8n endpoint with token
+      fetch('https://nbhugh.app.n8n.cloud/webhook-test/interview-verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.valid) {
+          // Redirect to the verified interview page with the session token
+          window.location.href = `interview.html?session=${data.sessionToken}`;
+        } else {
+          window.location.href = 'error.html';
+        }
+      })
+      .catch(() => {
+        window.location.href = 'error.html';
+      });
+    }
+  </script>
+</body>
+</html>
