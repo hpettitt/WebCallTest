@@ -126,6 +126,25 @@
         button.disabled = true;
         button.textContent = 'Connecting...';
 
+        // Debug: Log what we're sending
+        const requestPayload = { 
+          sessionToken,
+          candidateName,
+          // Add additional context for server-side processing
+          requestType: 'interview-start',
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          // Request that n8n configure the assistant with candidate context
+          configureAssistantWith: {
+            candidateName: candidateName,
+            sessionId: sessionToken,
+            interviewType: 'phone',
+            customInstructions: `Always address the candidate as ${candidateName} throughout the interview.`
+          }
+        };
+        console.log('🔍 Sending to webhook:', requestPayload);
+        console.log('🌐 Webhook URL:', webhookUrl);
+
         const response = await fetch(webhookUrl, {
           method: 'POST',
           headers: {
@@ -133,15 +152,18 @@
             'Accept': 'application/json'
           },
           mode: 'cors',
-          body: JSON.stringify({ 
-            sessionToken,
-            candidateName 
-          })
+          body: JSON.stringify(requestPayload)
         });
 
+        console.log('📡 Response status:', response.status);
         const data = await response.json();
+        console.log('📨 Response data:', data);
+        
         const vapiKey = data.vapiKey || data.VapiKey;
         const vapiAssistantId = data.vapiAssistantId || data.VapiAssistantId;
+        
+        console.log('🔑 VAPI Key found:', !!vapiKey);
+        console.log('🤖 Assistant ID found:', !!vapiAssistantId);
 
         if (!vapiKey || !vapiAssistantId) {
           throw new Error('Missing VAPI credentials');
@@ -149,7 +171,8 @@
 
         await loadVapiSDK(); // Removed debugDiv parameter
         
-        window.vapiSDK.run({
+        // Debug: Log VAPI configuration
+        const vapiConfig = {
           apiKey: vapiKey,
           assistant: vapiAssistantId,
           config: { 
@@ -162,20 +185,84 @@
               useScreen: false,
               startWithMicOn: true
             }
-          },
-          meta: { 
-            candidate: candidateName,
-            sessionId: sessionToken
+          }
+        };
+        
+        // VAPI variable values for dynamic content
+        const variableValues = {
+          name: candidateName,
+          candidateName: candidateName,
+          sessionId: sessionToken
+        };
+        
+        console.log('🚀 Starting VAPI with config:', vapiConfig);
+        console.log('👤 Candidate name being sent to VAPI:', candidateName);
+        console.log('🎫 Session ID being sent to VAPI:', sessionToken);
+        console.log('📊 Variable values for VAPI:', variableValues);
+
+        window.vapiSDK.run({
+          ...vapiConfig,
+          // Use VAPI's variableValues instead of metadata
+          assistantOverrides: {
+            variableValues: {
+              name: candidateName,
+              candidateName: candidateName,
+              sessionId: sessionToken
+            }
           },
           onError: (error) => {
+            console.error('❌ VAPI Error:', error);
             button.textContent = 'Error - Try Again';
             button.disabled = false;
           },
-          onCallStart: () => {
+          onCallStart: (data) => {
+            console.log('📞 Call started');
+            console.log('📊 Call start data:', data);
+            if (data && data.call) {
+              console.log('🔍 Call object:', data.call);
+              if (data.call.metadata || data.call.meta) {
+                console.log('✅ Meta data found in call start:', data.call.metadata || data.call.meta);
+              } else {
+                console.log('❌ No meta data found in call start - using fallback method');
+                // Fallback: send candidate context as system message
+                console.log('🔄 Sending candidate context via system message');
+                
+                // Send a system message with candidate info (if your VAPI setup supports it)
+                try {
+                  // This is a fallback - the proper fix is in the assistant system prompt
+                  console.log(`📤 Fallback: Candidate is ${candidateName}, Session: ${sessionToken}`);
+                } catch (fallbackError) {
+                  console.error('Fallback method failed:', fallbackError);
+                }
+              }
+            }
             button.style.display = 'none';
           },
           onCallEnd: () => {
+            console.log('📴 Call ended');
             window.location.href = 'thank-you.html';
+          },
+          onMessage: (message) => {
+            console.log('💬 VAPI Message:', message);
+            
+            // Check if message contains metadata
+            if (message && message.metadata) {
+              console.log('📊 Metadata in VAPI message:', message.metadata);
+              if (message.metadata.candidateName || message.metadata.candidate_name) {
+                console.log('✅ Candidate name confirmed in VAPI:', message.metadata.candidateName || message.metadata.candidate_name);
+              }
+            }
+            
+            // Check for call start message which should include meta
+            if (message && message.type === 'call-start') {
+              console.log('📞 Call start message:', message);
+            }
+          },
+          onSpeechStart: () => {
+            console.log('🗣️ Speech started');
+          },
+          onSpeechEnd: () => {
+            console.log('🤫 Speech ended');
           }
         });
 

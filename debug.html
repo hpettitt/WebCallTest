@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAPI Debug Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        .output { background: #f5f5f5; padding: 15px; border-radius: 4px; white-space: pre-wrap; }
+        button { padding: 10px 20px; margin: 5px; }
+        input[type="text"] { width: 300px; padding: 8px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>VAPI Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>Test n8n Webhook</h3>
+        <input type="text" id="testSession" placeholder="Session Token" value="test-session-123">
+        <input type="text" id="testName" placeholder="Candidate Name" value="John Doe">
+        <button onclick="testWebhook()">Test Webhook</button>
+        <div id="webhookOutput" class="output"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>Test VAPI Connection</h3>
+        <input type="text" id="testPublicKey" placeholder="VAPI Public Key (for calls)">
+        <input type="text" id="testPrivateKey" placeholder="VAPI Private Key (for config)">
+        <input type="text" id="testAssistantId" placeholder="Assistant ID">
+        <button onclick="testVapi()">1. Test VAPI Connection</button>
+        <button onclick="checkVapiAssistant()" id="assistantBtn" disabled>2. Check Assistant Config</button>
+        <button onclick="testMetadataFlow()" id="metadataBtn" disabled>3. Test Metadata Flow</button>
+        <div id="vapiOutput" class="output"></div>
+    </div>
+
+    <script>
+        async function testWebhook() {
+            const output = document.getElementById('webhookOutput');
+            const sessionToken = document.getElementById('testSession').value;
+            const candidateName = document.getElementById('testName').value;
+            
+            output.textContent = 'Testing webhook...\n';
+            
+            try {
+                const response = await fetch('https://nbhugh.app.n8n.cloud/webhook/get-vapi-credentials', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    body: JSON.stringify({ sessionToken, candidateName })
+                });
+                
+                output.textContent += `Status: ${response.status}\n`;
+                output.textContent += `Headers: ${JSON.stringify(Object.fromEntries(response.headers), null, 2)}\n`;
+                
+                const data = await response.json();
+                output.textContent += `Response: ${JSON.stringify(data, null, 2)}\n`;
+                
+            } catch (error) {
+                output.textContent += `Error: ${error.message}\n`;
+                output.textContent += `Stack: ${error.stack}\n`;
+            }
+        }
+
+        async function testVapi() {
+            const output = document.getElementById('vapiOutput');
+            const publicKey = document.getElementById('testPublicKey').value;
+            const privateKey = document.getElementById('testPrivateKey').value;
+            const assistantId = document.getElementById('testAssistantId').value;
+            
+            output.textContent = 'Testing VAPI connection...\n';
+            
+            if (!publicKey || !assistantId) {
+                output.textContent += 'Please provide Public Key and Assistant ID\n';
+                return;
+            }
+            
+            try {
+                // Load VAPI SDK
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+                script.async = true;
+                script.crossOrigin = 'anonymous';
+                
+                script.onload = () => {
+                    output.textContent += '✅ VAPI SDK loaded successfully\n';
+                    output.textContent += `window.vapiSDK exists: ${!!window.vapiSDK}\n`;
+                    
+                    // Check if VAPI SDK has methods we can use
+                    if (window.vapiSDK) {
+                        output.textContent += `Available methods: ${Object.keys(window.vapiSDK).join(', ')}\n`;
+                        
+                        // Store credentials for later use
+                        window.debugPublicKey = publicKey;
+                        window.debugPrivateKey = privateKey;
+                        window.debugAssistantId = assistantId;
+                        
+                        // Enable other buttons
+                        document.getElementById('assistantBtn').disabled = false;
+                        document.getElementById('metadataBtn').disabled = false;
+                        
+                        output.textContent += '🎉 VAPI SDK ready!\n';
+                        output.textContent += `📝 Using PUBLIC key for calls: ${publicKey.substring(0, 10)}...\n`;
+                        if (privateKey) {
+                            output.textContent += `🔐 Using PRIVATE key for config: ${privateKey.substring(0, 10)}...\n`;
+                        }
+                        output.textContent += '✅ You can now test assistant config and metadata.\n';
+                    }
+                };
+                
+                script.onerror = (error) => {
+                    output.textContent += `Script load error: ${error}\n`;
+                };
+                
+                document.body.appendChild(script);
+                
+            } catch (error) {
+                output.textContent += `Error: ${error.message}\n`;
+            }
+        }
+
+        async function checkVapiAssistant() {
+            const output = document.getElementById('vapiOutput');
+            
+            if (!window.vapiSDK) {
+                output.textContent += '❌ Please connect to VAPI first!\n';
+                return;
+            }
+
+            output.textContent += '\n🔍 Checking VAPI Assistant configuration...\n';
+            
+            // Check if we have a private key
+            if (window.debugPrivateKey) {
+                output.textContent += '🔐 Using private key to check assistant config...\n';
+                tryWithPrivateKey(window.debugPrivateKey);
+                return;
+            }
+            
+            output.textContent += '⚠️  No private key provided - manual check required.\n';
+            output.textContent += '\n📋 Manual Check Instructions:\n';
+            output.textContent += '1. Go to your VAPI Dashboard\n';
+            output.textContent += '2. Open your Assistant settings\n';
+            output.textContent += '3. Check the System Prompt/Message\n';
+            output.textContent += '4. Look for these metadata references:\n';
+            output.textContent += '   - {{metadata.candidateName}}\n';
+            output.textContent += '   - {{metadata.sessionId}}\n';
+            output.textContent += '   - {{metadata.candidate_name}}\n\n';
+            
+            output.textContent += '💡 Your System Prompt should include something like:\n';
+            output.textContent += '"You are interviewing {{metadata.candidateName}}. Always use their name."\n\n';
+            
+            output.textContent += '🔧 If metadata references are missing, add them to your system prompt.\n';
+            output.textContent += '✅ Then proceed to test metadata flow below!\n\n';
+            
+            // Add input for private key
+            const privateKeyInput = document.createElement('input');
+            privateKeyInput.type = 'text';
+            privateKeyInput.placeholder = 'Enter Private API Key';
+            privateKeyInput.style.width = '300px';
+            privateKeyInput.style.margin = '10px 0';
+            
+            const tryPrivateBtn = document.createElement('button');
+            tryPrivateBtn.textContent = 'Try with Private Key';
+            tryPrivateBtn.onclick = () => tryWithPrivateKey(privateKeyInput.value);
+            
+            const container = document.getElementById('vapiOutput');
+            container.appendChild(document.createElement('br'));
+            container.appendChild(privateKeyInput);
+            container.appendChild(tryPrivateBtn);
+        }
+
+        async function tryWithPrivateKey(privateKey) {
+            const output = document.getElementById('vapiOutput');
+            
+            // Use stored private key if available, otherwise use parameter
+            const keyToUse = privateKey || window.debugPrivateKey;
+            
+            if (!keyToUse) {
+                output.textContent += '❌ Please enter your private key\n';
+                return;
+            }
+
+            const assistantId = window.debugAssistantId || document.getElementById('testAssistantId').value;
+
+            try {
+                output.textContent += '\n🔐 Trying with Private Key...\n';
+
+                const response = await fetch(`https://api.vapi.ai/assistant/${assistantId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${keyToUse}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const assistant = await response.json();
+                    output.textContent += `✅ Assistant found: ${assistant.name || 'Unnamed'}\n`;
+                    
+                    const systemMessage = assistant.model?.messages?.[0]?.content || 
+                                        assistant.systemPrompt || 
+                                        assistant.prompt || 
+                                        'Not found';
+                    
+                    output.textContent += `📝 System Message:\n${systemMessage}\n\n`;
+                    
+                    const hasMetadata = systemMessage.includes('metadata') || 
+                                      systemMessage.includes('{{metadata') ||
+                                      systemMessage.includes('{metadata');
+                    
+                    output.textContent += `🎯 Metadata references: ${hasMetadata ? '✅ FOUND' : '❌ MISSING'}\n`;
+                    
+                    if (!hasMetadata) {
+                        output.textContent += '\n� ACTION NEEDED: Add metadata to your system prompt!\n';
+                        output.textContent += 'Example: "Hello {{metadata.candidateName}}, let\'s begin the interview."\n';
+                    }
+                } else {
+                    const errorText = await response.text();
+                    output.textContent += `❌ Still failed: ${errorText}\n`;
+                }
+
+            } catch (error) {
+                output.textContent += `❌ Error: ${error.message}\n`;
+            }
+        }
+
+        async function testMetadataFlow() {
+            const output = document.getElementById('vapiOutput');
+            
+            if (!window.vapiSDK || !window.debugPublicKey || !window.debugAssistantId) {
+                output.textContent += '❌ Please connect to VAPI first!\n';
+                return;
+            }
+
+            try {
+                output.textContent += '\n🧪 Testing complete metadata flow...\n';
+                
+                // Test metadata with various formats
+                const testMetadata = {
+                    candidateName: 'John TestCandidate',
+                    candidate_name: 'John TestCandidate',  
+                    name: 'John TestCandidate',
+                    firstName: 'John',
+                    lastName: 'TestCandidate',
+                    sessionId: 'debug-session-' + Date.now(),
+                    session_id: 'debug-session-' + Date.now(),
+                    interviewId: 'interview-' + Date.now(),
+                    testMode: true,
+                    timestamp: new Date().toISOString()
+                };
+                
+                output.textContent += `📊 Sending metadata:\n${JSON.stringify(testMetadata, null, 2)}\n\n`;
+                
+                let metadataReceived = false;
+                let callStarted = false;
+                
+                // Initialize VAPI with variable values (correct VAPI approach)
+                window.vapiSDK.run({
+                    apiKey: window.debugPublicKey,
+                    assistant: window.debugAssistantId,
+                    config: { 
+                        disableDefaultButton: false,
+                        autoStart: false
+                    },
+                    assistantOverrides: {
+                        variableValues: {
+                            name: 'John TestCandidate',
+                            candidateName: 'John TestCandidate',
+                            sessionId: testMetadata.sessionId
+                        }
+                    },
+                    onMessage: (message) => {
+                        output.textContent += `📨 Message Type: ${message.type || 'unknown'}\n`;
+                        
+                        if (message.metadata) {
+                            metadataReceived = true;
+                            output.textContent += `✅ METADATA CONFIRMED in message!\n`;
+                            output.textContent += `📊 Received: ${JSON.stringify(message.metadata)}\n`;
+                        }
+                        
+                        // Check if assistant mentions the candidate name
+                        if (message.transcript && message.transcript.includes('TestCandidate')) {
+                            output.textContent += `🎯 ASSISTANT USED CANDIDATE NAME: "${message.transcript}"\n`;
+                        }
+                        
+                        output.textContent += `Full message: ${JSON.stringify(message, null, 2)}\n\n`;
+                    },
+                    onCallStart: (data) => {
+                        callStarted = true;
+                        output.textContent += `📞 CALL STARTED!\n`;
+                        output.textContent += `📊 Start data: ${JSON.stringify(data, null, 2)}\n`;
+                        
+                        // Check if metadata is in call start data
+                        if (data && (data.metadata || data.meta)) {
+                            output.textContent += `✅ METADATA IN CALL START!\n`;
+                        }
+                    },
+                    onCallEnd: () => {
+                        output.textContent += `� Call ended.\n`;
+                        output.textContent += `📋 SUMMARY:\n`;
+                        output.textContent += `- Metadata received in messages: ${metadataReceived ? '✅ YES' : '❌ NO'}\n`;
+                        output.textContent += `- Call started successfully: ${callStarted ? '✅ YES' : '❌ NO'}\n`;
+                        
+                        if (!metadataReceived) {
+                            output.textContent += '\n🚨 METADATA NOT WORKING - Check your assistant system prompt!\n';
+                        }
+                    },
+                    onError: (error) => {
+                        output.textContent += `❌ VAPI Error: ${JSON.stringify(error)}\n`;
+                    },
+                    onSpeechStart: () => {
+                        output.textContent += `🗣️ Speech detected\n`;
+                    },
+                    onSpeechEnd: () => {
+                        output.textContent += `🤫 Speech ended\n`;
+                    }
+                });
+                
+                output.textContent += '✅ VAPI initialized with test metadata\n';
+                output.textContent += '🎯 Now start a call and listen for "John TestCandidate"\n';
+                output.textContent += '📞 If the assistant doesn\'t use the name, metadata isn\'t configured!\n\n';
+                
+            } catch (error) {
+                output.textContent += `❌ Metadata test error: ${error.message}\n`;
+            }
+        }
+    </script>
+</body>
+</html>
