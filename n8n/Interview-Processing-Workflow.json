@@ -1,0 +1,344 @@
+{
+  "name": "VAPI Interview Processing Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "vapi-call-completed",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f8b4c1a2-1234-5678-9abc-def012345678",
+      "name": "VAPI Call Completed Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "vapi-call-completed"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract and structure the incoming VAPI call data\nconst inputData = $input.all()[0].json;\n\n// Extract call information\nconst callData = {\n  callId: inputData.call?.id || inputData.id,\n  candidateName: inputData.call?.metadata?.candidateName || inputData.metadata?.candidateName || 'Unknown Candidate',\n  sessionId: inputData.call?.metadata?.sessionId || inputData.metadata?.sessionId,\n  duration: inputData.call?.endedAt && inputData.call?.startedAt ? \n    new Date(inputData.call.endedAt).getTime() - new Date(inputData.call.startedAt).getTime() : 0,\n  transcript: inputData.call?.transcript || inputData.transcript || '',\n  recordingUrl: inputData.call?.recordingUrl || inputData.recordingUrl,\n  startTime: inputData.call?.startedAt || inputData.startedAt,\n  endTime: inputData.call?.endedAt || inputData.endedAt,\n  callStatus: inputData.call?.status || inputData.status || 'unknown',\n  phoneNumber: inputData.call?.phoneNumber || inputData.phoneNumber,\n  cost: inputData.call?.cost || inputData.cost || 0,\n  summary: inputData.call?.summary || inputData.summary,\n  rawData: inputData\n};\n\n// Basic validation\nif (!callData.transcript) {\n  throw new Error('No transcript found in VAPI data');\n}\n\nif (!callData.candidateName || callData.candidateName === 'Unknown Candidate') {\n  console.warn('Candidate name not found in metadata');\n}\n\nreturn [{ json: { callData } }];"
+      },
+      "id": "a1b2c3d4-5678-9012-3456-789012345678",
+      "name": "Extract Call Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\n  \"role\": \"system\",\n  \"content\": \"You are an expert interview analyst for Bloom Buddies. Analyze phone interview transcripts and provide comprehensive evaluations. Return your response as valid JSON only, no additional text.\"\n}, {\n  \"role\": \"user\",\n  \"content\": \"Analyze this interview transcript for candidate: {{ $node['Extract Call Data'].json.callData.candidateName }}\\n\\nTranscript: {{ $node['Extract Call Data'].json.callData.transcript }}\\n\\nDuration: {{ Math.round($node['Extract Call Data'].json.callData.duration / 60000) }} minutes\\n\\nPlease analyze and return ONLY a JSON object with these exact fields:\\n{\\n  \\\"overallScore\\\": number (1-10),\\n  \\\"communicationSkillsScore\\\": number (1-10),\\n  \\\"enthusiasmScore\\\": number (1-10),\\n  \\\"professionalismScore\\\": number (1-10),\\n  \\\"keyStrengths\\\": [\\\"strength1\\\", \\\"strength2\\\"],\\n  \\\"areasForImprovement\\\": [\\\"area1\\\", \\\"area2\\\"],\\n  \\\"executiveSummary\\\": \\\"2-3 sentence summary\\\",\\n  \\\"recommendation\\\": \\\"Hire|Interview Further|Pass\\\",\\n  \\\"detailedFeedback\\\": \\\"detailed analysis\\\",\\n  \\\"redFlags\\\": [\\\"any concerning behaviors\\\"],\\n  \\\"standoutMoments\\\": [\\\"impressive responses or behaviors\\\"]\\n}\"\n}]"
+            },
+            {
+              "name": "temperature",
+              "value": 0.3
+            },
+            {
+              "name": "max_tokens",
+              "value": 1500
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-6789-0123-4567-890123456789",
+      "name": "AI Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Calculate comprehensive statistics and combine all data\nconst callData = $node['Extract Call Data'].json.callData;\nconst aiResponse = $node['AI Analysis'].json;\n\n// Parse AI analysis (handle potential JSON parsing issues)\nlet aiAnalysis;\ntry {\n  if (typeof aiResponse.choices[0].message.content === 'string') {\n    aiAnalysis = JSON.parse(aiResponse.choices[0].message.content);\n  } else {\n    aiAnalysis = aiResponse.choices[0].message.content;\n  }\n} catch (error) {\n  console.error('Error parsing AI response:', error);\n  // Fallback analysis\n  aiAnalysis = {\n    overallScore: 5,\n    communicationSkillsScore: 5,\n    enthusiasmScore: 5,\n    professionalismScore: 5,\n    keyStrengths: ['Participated in interview'],\n    areasForImprovement: ['Analysis could not be completed'],\n    executiveSummary: 'Interview completed but detailed analysis unavailable.',\n    recommendation: 'Interview Further',\n    detailedFeedback: 'AI analysis failed - manual review required.',\n    redFlags: [],\n    standoutMoments: []\n  };\n}\n\n// Calculate detailed statistics\nconst transcript = callData.transcript || '';\nconst words = transcript.split(/\\s+/).filter(word => word.length > 0);\nconst sentences = transcript.split(/[.!?]+/).filter(s => s.trim().length > 0);\nconst durationMinutes = callData.duration > 0 ? callData.duration / 60000 : 0;\n\nconst statistics = {\n  callDurationMinutes: Math.round(durationMinutes * 100) / 100,\n  callDurationSeconds: Math.round(callData.duration / 1000),\n  wordCount: words.length,\n  sentenceCount: sentences.length,\n  averageWordsPerMinute: durationMinutes > 0 ? Math.round((words.length / durationMinutes) * 100) / 100 : 0,\n  averageWordsPerSentence: sentences.length > 0 ? Math.round((words.length / sentences.length) * 100) / 100 : 0,\n  callCompletionRate: callData.callStatus === 'completed' ? 100 : 0,\n  hasRecording: !!callData.recordingUrl,\n  transcriptLength: transcript.length,\n  estimatedCost: callData.cost || 0\n};\n\n// Calculate composite scores\nconst compositeScores = {\n  averageScore: Math.round(((aiAnalysis.overallScore + aiAnalysis.communicationSkillsScore + aiAnalysis.enthusiasmScore + aiAnalysis.professionalismScore) / 4) * 100) / 100,\n  skillsScore: Math.round(((aiAnalysis.communicationSkillsScore + aiAnalysis.professionalismScore) / 2) * 100) / 100,\n  personalityScore: Math.round(((aiAnalysis.enthusiasmScore + aiAnalysis.overallScore) / 2) * 100) / 100\n};\n\n// Determine hire probability based on scores\nlet hireProbability = 0;\nif (aiAnalysis.recommendation === 'Hire') hireProbability = 85;\nelse if (aiAnalysis.recommendation === 'Interview Further') hireProbability = 60;\nelse hireProbability = 25;\n\n// Add score-based adjustments\nif (compositeScores.averageScore >= 8) hireProbability += 10;\nelse if (compositeScores.averageScore <= 4) hireProbability -= 15;\n\nhireProbability = Math.max(0, Math.min(100, hireProbability));\n\n// Create comprehensive report data\nconst reportData = {\n  // Candidate Info\n  candidateName: callData.candidateName,\n  sessionId: callData.sessionId,\n  callId: callData.callId,\n  \n  // Call Details\n  startTime: callData.startTime,\n  endTime: callData.endTime,\n  callStatus: callData.callStatus,\n  phoneNumber: callData.phoneNumber,\n  \n  // AI Analysis Scores\n  overallScore: aiAnalysis.overallScore,\n  communicationScore: aiAnalysis.communicationSkillsScore,\n  enthusiasmScore: aiAnalysis.enthusiasmScore,\n  professionalismScore: aiAnalysis.professionalismScore,\n  \n  // Composite Scores\n  averageScore: compositeScores.averageScore,\n  skillsScore: compositeScores.skillsScore,\n  personalityScore: compositeScores.personalityScore,\n  hireProbability: hireProbability,\n  \n  // Qualitative Analysis\n  keyStrengths: aiAnalysis.keyStrengths || [],\n  areasForImprovement: aiAnalysis.areasForImprovement || [],\n  executiveSummary: aiAnalysis.executiveSummary || '',\n  recommendation: aiAnalysis.recommendation || 'Review Required',\n  detailedFeedback: aiAnalysis.detailedFeedback || '',\n  redFlags: aiAnalysis.redFlags || [],\n  standoutMoments: aiAnalysis.standoutMoments || [],\n  \n  // Statistics\n  ...statistics,\n  \n  // Technical Data\n  transcript: callData.transcript,\n  recordingUrl: callData.recordingUrl,\n  \n  // Metadata\n  generatedAt: new Date().toISOString(),\n  processedBy: 'n8n-workflow',\n  workflowVersion: '1.0'\n};\n\nreturn [{\n  json: {\n    reportData,\n    callData,\n    aiAnalysis,\n    statistics,\n    compositeScores\n  }\n}];"
+      },
+      "id": "c3d4e5f6-7890-1234-5678-901234567890",
+      "name": "Calculate Statistics & Compile Report",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Interviews",
+          "mode": "list"
+        },
+        "id": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionId }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Interview_Status",
+              "fieldValue": "Completed"
+            },
+            {
+              "fieldId": "Call_Duration_Minutes",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.callDurationMinutes }}"
+            },
+            {
+              "fieldId": "Overall_Score",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.overallScore }}"
+            },
+            {
+              "fieldId": "Communication_Score",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.communicationScore }}"
+            },
+            {
+              "fieldId": "Enthusiasm_Score",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.enthusiasmScore }}"
+            },
+            {
+              "fieldId": "Professionalism_Score",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.professionalismScore }}"
+            },
+            {
+              "fieldId": "Average_Score",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.averageScore }}"
+            },
+            {
+              "fieldId": "Hire_Probability",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.hireProbability }}"
+            },
+            {
+              "fieldId": "AI_Summary",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.executiveSummary }}"
+            },
+            {
+              "fieldId": "Recommendation",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.recommendation }}"
+            },
+            {
+              "fieldId": "Key_Strengths",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.keyStrengths.join('\\n• ') }}"
+            },
+            {
+              "fieldId": "Areas_for_Improvement",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.areasForImprovement.join('\\n• ') }}"
+            },
+            {
+              "fieldId": "Red_Flags",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.redFlags.join('\\n• ') }}"
+            },
+            {
+              "fieldId": "Standout_Moments",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.standoutMoments.join('\\n• ') }}"
+            },
+            {
+              "fieldId": "Transcript",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.transcript }}"
+            },
+            {
+              "fieldId": "Recording_URL",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.recordingUrl }}"
+            },
+            {
+              "fieldId": "Word_Count",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.wordCount }}"
+            },
+            {
+              "fieldId": "Words_Per_Minute",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.averageWordsPerMinute }}"
+            },
+            {
+              "fieldId": "Call_Status",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.callStatus }}"
+            },
+            {
+              "fieldId": "Processed_At",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.generatedAt }}"
+            }
+          ]
+        }
+      },
+      "id": "d4e5f6g7-8901-2345-6789-012345678901",
+      "name": "Update Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate comprehensive HTML report\nconst reportData = $node['Calculate Statistics & Compile Report'].json.reportData;\n\n// Helper function to get score color\nfunction getScoreColor(score) {\n  if (score >= 8) return '#10b981'; // Green\n  if (score >= 6) return '#f59e0b'; // Yellow\n  return '#ef4444'; // Red\n}\n\n// Helper function to get recommendation color\nfunction getRecommendationColor(recommendation) {\n  if (recommendation === 'Hire') return '#10b981';\n  if (recommendation === 'Interview Further') return '#f59e0b';\n  return '#ef4444';\n}\n\nconst htmlReport = `\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Interview Report - ${reportData.candidateName}</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { \n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; \n            line-height: 1.6; \n            color: #333; \n            background-color: #f8fafc;\n        }\n        .container { max-width: 900px; margin: 0 auto; padding: 20px; }\n        .header { \n            background: linear-gradient(135deg, #5dc399, #7be1b6); \n            color: white; \n            padding: 30px; \n            border-radius: 12px; \n            margin-bottom: 30px;\n            box-shadow: 0 4px 6px rgba(0,0,0,0.1);\n        }\n        .header h1 { font-size: 2.5em; margin-bottom: 10px; }\n        .header-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }\n        .header-item { background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; }\n        .score-section { \n            background: white; \n            padding: 30px; \n            border-radius: 12px; \n            margin-bottom: 30px;\n            box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        }\n        .score-grid { \n            display: grid; \n            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); \n            gap: 20px; \n            margin: 20px 0; \n        }\n        .score-card { \n            background: #f8fafc; \n            padding: 20px; \n            border-radius: 12px; \n            text-align: center;\n            border: 2px solid #e2e8f0;\n            transition: transform 0.2s;\n        }\n        .score-card:hover { transform: translateY(-2px); }\n        .score { \n            font-size: 3em; \n            font-weight: bold; \n            margin-bottom: 5px;\n        }\n        .score-label { font-size: 0.9em; color: #64748b; font-weight: 500; }\n        .recommendation { \n            padding: 25px; \n            border-radius: 12px; \n            margin: 20px 0;\n            border-left: 6px solid;\n        }\n        .section { \n            background: white; \n            padding: 25px; \n            border-radius: 12px; \n            margin-bottom: 20px;\n            box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        }\n        .section h3 { \n            color: #065f46; \n            margin-bottom: 15px; \n            font-size: 1.3em;\n            border-bottom: 2px solid #e2e8f0;\n            padding-bottom: 10px;\n        }\n        .two-column { \n            display: grid; \n            grid-template-columns: 1fr 1fr; \n            gap: 30px; \n        }\n        .stat-item { \n            display: flex; \n            justify-content: space-between; \n            padding: 8px 0; \n            border-bottom: 1px solid #f1f5f9;\n        }\n        .stat-label { font-weight: 500; color: #64748b; }\n        .stat-value { font-weight: bold; color: #1e293b; }\n        ul { list-style: none; }\n        li { \n            padding: 8px 0; \n            padding-left: 20px;\n            position: relative;\n        }\n        li:before { \n            content: '•'; \n            color: #5dc399; \n            font-weight: bold; \n            position: absolute; \n            left: 0;\n            font-size: 1.2em;\n        }\n        .highlight { background: #fef3c7; padding: 15px; border-radius: 8px; margin: 10px 0; }\n        .footer { \n            text-align: center; \n            color: #64748b; \n            margin-top: 30px; \n            padding: 20px;\n            border-top: 2px solid #e2e8f0;\n        }\n        @media (max-width: 768px) {\n            .two-column { grid-template-columns: 1fr; }\n            .score-grid { grid-template-columns: repeat(2, 1fr); }\n            .header h1 { font-size: 2em; }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <!-- Header -->\n        <div class=\"header\">\n            <h1>🌸 Bloom Buddies Interview Report</h1>\n            <div class=\"header-info\">\n                <div class=\"header-item\">\n                    <strong>Candidate:</strong><br>${reportData.candidateName}\n                </div>\n                <div class=\"header-item\">\n                    <strong>Date:</strong><br>${new Date(reportData.startTime).toLocaleDateString('en-US', { \n                        year: 'numeric', month: 'long', day: 'numeric' \n                    })}\n                </div>\n                <div class=\"header-item\">\n                    <strong>Duration:</strong><br>${reportData.callDurationMinutes} minutes\n                </div>\n                <div class=\"header-item\">\n                    <strong>Session ID:</strong><br>${reportData.sessionId || 'N/A'}\n                </div>\n            </div>\n        </div>\n\n        <!-- Scores Section -->\n        <div class=\"score-section\">\n            <h2>📊 Interview Scores</h2>\n            <div class=\"score-grid\">\n                <div class=\"score-card\">\n                    <div class=\"score\" style=\"color: ${getScoreColor(reportData.overallScore)}\">${reportData.overallScore}/10</div>\n                    <div class=\"score-label\">Overall Score</div>\n                </div>\n                <div class=\"score-card\">\n                    <div class=\"score\" style=\"color: ${getScoreColor(reportData.communicationScore)}\">${reportData.communicationScore}/10</div>\n                    <div class=\"score-label\">Communication</div>\n                </div>\n                <div class=\"score-card\">\n                    <div class=\"score\" style=\"color: ${getScoreColor(reportData.enthusiasmScore)}\">${reportData.enthusiasmScore}/10</div>\n                    <div class=\"score-label\">Enthusiasm</div>\n                </div>\n                <div class=\"score-card\">\n                    <div class=\"score\" style=\"color: ${getScoreColor(reportData.professionalismScore)}\">${reportData.professionalismScore}/10</div>\n                    <div class=\"score-label\">Professionalism</div>\n                </div>\n                <div class=\"score-card\">\n                    <div class=\"score\" style=\"color: ${getScoreColor(reportData.averageScore)}\">${reportData.averageScore}/10</div>\n                    <div class=\"score-label\">Average Score</div>\n                </div>\n                <div class=\"score-card\">\n                    <div class=\"score\" style=\"color: ${getScoreColor(reportData.hireProbability/10)}\">${reportData.hireProbability}%</div>\n                    <div class=\"score-label\">Hire Probability</div>\n                </div>\n            </div>\n        </div>\n\n        <!-- Recommendation -->\n        <div class=\"recommendation\" style=\"\n            background-color: ${getRecommendationColor(reportData.recommendation)}15;\n            border-left-color: ${getRecommendationColor(reportData.recommendation)};\n        \">\n            <h3 style=\"color: ${getRecommendationColor(reportData.recommendation)}; margin-bottom: 10px;\">\n                🎯 Recommendation: ${reportData.recommendation}\n            </h3>\n            <p style=\"font-size: 1.1em; margin-bottom: 15px;\">${reportData.executiveSummary}</p>\n            ${reportData.detailedFeedback ? `<div class=\"highlight\"><strong>Detailed Feedback:</strong> ${reportData.detailedFeedback}</div>` : ''}\n        </div>\n\n        <!-- Two Column Layout -->\n        <div class=\"two-column\">\n            <!-- Strengths -->\n            <div class=\"section\">\n                <h3>💪 Key Strengths</h3>\n                <ul>\n                    ${reportData.keyStrengths.map(strength => `<li>${strength}</li>`).join('')}\n                </ul>\n                ${reportData.standoutMoments && reportData.standoutMoments.length > 0 ? `\n                    <h4 style=\"margin-top: 20px; color: #065f46;\">⭐ Standout Moments</h4>\n                    <ul>\n                        ${reportData.standoutMoments.map(moment => `<li>${moment}</li>`).join('')}\n                    </ul>\n                ` : ''}\n            </div>\n\n            <!-- Areas for Improvement -->\n            <div class=\"section\">\n                <h3>📈 Areas for Improvement</h3>\n                <ul>\n                    ${reportData.areasForImprovement.map(area => `<li>${area}</li>`).join('')}\n                </ul>\n                ${reportData.redFlags && reportData.redFlags.length > 0 ? `\n                    <h4 style=\"margin-top: 20px; color: #dc2626;\">🚩 Areas of Concern</h4>\n                    <ul>\n                        ${reportData.redFlags.map(flag => `<li style=\"color: #dc2626;\">${flag}</li>`).join('')}\n                    </ul>\n                ` : ''}\n            </div>\n        </div>\n\n        <!-- Call Statistics -->\n        <div class=\"section\">\n            <h3>📞 Call Statistics</h3>\n            <div class=\"two-column\">\n                <div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Call Duration:</span>\n                        <span class=\"stat-value\">${reportData.callDurationMinutes} minutes</span>\n                    </div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Word Count:</span>\n                        <span class=\"stat-value\">${reportData.wordCount.toLocaleString()} words</span>\n                    </div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Speaking Rate:</span>\n                        <span class=\"stat-value\">${reportData.averageWordsPerMinute} WPM</span>\n                    </div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Sentence Count:</span>\n                        <span class=\"stat-value\">${reportData.sentenceCount}</span>\n                    </div>\n                </div>\n                <div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Call Status:</span>\n                        <span class=\"stat-value\">${reportData.callStatus}</span>\n                    </div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Recording Available:</span>\n                        <span class=\"stat-value\">${reportData.hasRecording ? 'Yes' : 'No'}</span>\n                    </div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Avg Words/Sentence:</span>\n                        <span class=\"stat-value\">${reportData.averageWordsPerSentence}</span>\n                    </div>\n                    <div class=\"stat-item\">\n                        <span class=\"stat-label\">Estimated Cost:</span>\n                        <span class=\"stat-value\">$${reportData.estimatedCost.toFixed(2)}</span>\n                    </div>\n                </div>\n            </div>\n        </div>\n\n        <!-- Technical Details -->\n        <div class=\"section\">\n            <h3>🔧 Technical Details</h3>\n            <div class=\"stat-item\">\n                <span class=\"stat-label\">Call ID:</span>\n                <span class=\"stat-value\">${reportData.callId || 'N/A'}</span>\n            </div>\n            <div class=\"stat-item\">\n                <span class=\"stat-label\">Phone Number:</span>\n                <span class=\"stat-value\">${reportData.phoneNumber || 'N/A'}</span>\n            </div>\n            <div class=\"stat-item\">\n                <span class=\"stat-label\">Processed At:</span>\n                <span class=\"stat-value\">${new Date(reportData.generatedAt).toLocaleString()}</span>\n            </div>\n            ${reportData.recordingUrl ? `\n                <div class=\"stat-item\">\n                    <span class=\"stat-label\">Recording:</span>\n                    <span class=\"stat-value\"><a href=\"${reportData.recordingUrl}\" target=\"_blank\">Listen to Recording</a></span>\n                </div>\n            ` : ''}\n        </div>\n\n        <!-- Footer -->\n        <div class=\"footer\">\n            <p>Report generated by Bloom Buddies AI Interview System</p>\n            <p>Workflow Version: ${reportData.workflowVersion} | Generated: ${new Date(reportData.generatedAt).toLocaleString()}</p>\n        </div>\n    </div>\n</body>\n</html>\n`;\n\nreturn [{ json: { htmlReport } }];"
+      },
+      "id": "e5f6g7h8-9012-3456-7890-123456789012",
+      "name": "Generate HTML Report",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "interviews@bloombuddies.com",
+        "toEmail": "hr@bloombuddies.com, hiring@bloombuddies.com",
+        "subject": "=🌸 Interview Report: {{ $node['Calculate Statistics & Compile Report'].json.reportData.candidateName }} - {{ $node['Calculate Statistics & Compile Report'].json.reportData.recommendation }} ({{ $node['Calculate Statistics & Compile Report'].json.reportData.averageScore }}/10)",
+        "message": "=Interview completed for {{ $node['Calculate Statistics & Compile Report'].json.reportData.candidateName }}\\n\\n📊 SUMMARY:\\n• Overall Score: {{ $node['Calculate Statistics & Compile Report'].json.reportData.overallScore }}/10\\n• Average Score: {{ $node['Calculate Statistics & Compile Report'].json.reportData.averageScore }}/10\\n• Recommendation: {{ $node['Calculate Statistics & Compile Report'].json.reportData.recommendation }}\\n• Hire Probability: {{ $node['Calculate Statistics & Compile Report'].json.reportData.hireProbability }}%\\n• Call Duration: {{ $node['Calculate Statistics & Compile Report'].json.reportData.callDurationMinutes }} minutes\\n\\n🎯 AI SUMMARY:\\n{{ $node['Calculate Statistics & Compile Report'].json.reportData.executiveSummary }}\\n\\n💪 KEY STRENGTHS:\\n{{ $node['Calculate Statistics & Compile Report'].json.reportData.keyStrengths.map(s => '• ' + s).join('\\n') }}\\n\\n📈 AREAS FOR IMPROVEMENT:\\n{{ $node['Calculate Statistics & Compile Report'].json.reportData.areasForImprovement.map(s => '• ' + s).join('\\n') }}\\n\\n{{ $node['Calculate Statistics & Compile Report'].json.reportData.redFlags && $node['Calculate Statistics & Compile Report'].json.reportData.redFlags.length > 0 ? '🚩 RED FLAGS:\\n' + $node['Calculate Statistics & Compile Report'].json.reportData.redFlags.map(s => '• ' + s).join('\\n') + '\\n\\n' : '' }}📞 CALL DETAILS:\\n• Session ID: {{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionId }}\\n• Word Count: {{ $node['Calculate Statistics & Compile Report'].json.reportData.wordCount }}\\n• Speaking Rate: {{ $node['Calculate Statistics & Compile Report'].json.reportData.averageWordsPerMinute }} WPM\\n• Call Status: {{ $node['Calculate Statistics & Compile Report'].json.reportData.callStatus }}\\n\\n{{ $node['Calculate Statistics & Compile Report'].json.reportData.recordingUrl ? '🎧 Recording: ' + $node['Calculate Statistics & Compile Report'].json.reportData.recordingUrl + '\\n\\n' : '' }}Please review the attached detailed HTML report for complete analysis.\\n\\n---\\nBloom Buddies Interview System\\nGenerated: {{ $node['Calculate Statistics & Compile Report'].json.reportData.generatedAt }}",
+        "html": "={{ $node['Generate HTML Report'].json.htmlReport }}",
+        "attachments": "=[{\\n  \\\"name\\\": \\\"Interview-Report-{{ $node['Calculate Statistics & Compile Report'].json.reportData.candidateName.replace(/\\\\s+/g, '-') }}-{{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionId }}.html\\\",\\n  \\\"content\\\": \\\"{{ $node['Generate HTML Report'].json.htmlReport }}\\\",\\n  \\\"type\\\": \\\"text/html\\\"\\n}]",
+        "options": {}
+      },
+      "id": "f6g7h8i9-0123-4567-8901-234567890123",
+      "name": "Send Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\\n  \\\"status\\\": \\\"success\\\",\\n  \\\"message\\\": \\\"Interview processed successfully\\\",\\n  \\\"candidateName\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.candidateName }}\\\",\\n  \\\"overallScore\\\": {{ $node['Calculate Statistics & Compile Report'].json.reportData.overallScore }},\\n  \\\"recommendation\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.recommendation }}\\\",\\n  \\\"sessionId\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionId }}\\\",\\n  \\\"processedAt\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.generatedAt }}\\\"\\n}",
+        "options": {}
+      },
+      "id": "g7h8i9j0-1234-5678-9012-345678901234",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1780,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "VAPI Call Completed Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Call Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Call Data": {
+      "main": [
+        [
+          {
+            "node": "AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analysis": {
+      "main": [
+        [
+          {
+            "node": "Calculate Statistics & Compile Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Statistics & Compile Report": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Airtable": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML Report": {
+      "main": [
+        [
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Report": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "00000000-0000-0000-0000-000000000000",
+  "id": "00000000-0000-0000-0000-000000000000",
+  "meta": {
+    "instanceId": "00000000-0000-0000-0000-000000000000"
+  },
+  "tags": []
+}
