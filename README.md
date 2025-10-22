@@ -46,7 +46,9 @@ Field mappings: Match your Airtable field names
 In your VAPI dashboard, set the webhook URL to:
 
 
-https://your-n8n-instance.com/webhook/vapi-call-completed
+```
+https://kraig-unjustified-collinearly.ngrok-free.dev/webhook/vapi-call-completed
+```
 5. Test the Workflow
 Activate the workflow in n8n
 Conduct a test interview

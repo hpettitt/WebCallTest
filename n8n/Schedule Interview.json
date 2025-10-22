@@ -1,0 +1,323 @@
+{
+  "name": "Schedule Interview",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "events": [
+          "invitee.created"
+        ]
+      },
+      "type": "n8n-nodes-base.calendlyTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1d49c54c-6f7e-47de-b073-4a8ca3a87799",
+      "name": "Calendly Trigger",
+      "webhookId": "d71c23d3-f044-4504-82a5-d20fb0405fd6",
+      "credentials": {
+        "calendlyOAuth2Api": {
+          "id": "4yuKy4LZJSJ4RQyf",
+          "name": "Calendly account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appni7Lgyrk5sjLXY",
+          "mode": "list",
+          "cachedResultName": "Candidate Tracker",
+          "cachedResultUrl": "https://airtable.com/appni7Lgyrk5sjLXY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZbvFHR0vV2pPCd",
+          "mode": "list",
+          "cachedResultName": "Candidates",
+          "cachedResultUrl": "https://airtable.com/appni7Lgyrk5sjLXY/tblZbvFHR0vV2pPCd"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Candidate Name": "={{ $json.payload.name }}",
+            "Email": "={{ $json.payload.email }}",
+            "Interview Time": "={{ $json.payload.scheduled_event.start_time }}",
+            "token": "={{ $json.token }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Photo",
+              "displayName": "Photo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Interview Time",
+              "displayName": "Interview Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Interview Content",
+              "displayName": "Interview Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Interview Analysis",
+              "displayName": "Interview Analysis",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Days Until Interview",
+              "displayName": "Days Until Interview",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Interview Weekday",
+              "displayName": "Interview Weekday",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Interview Content Summary",
+              "displayName": "Interview Content Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Action Recommendation",
+              "displayName": "Next Action Recommendation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "token",
+              "displayName": "token",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "f009f11c-7d46-414f-86a1-93df79cb7ddf",
+      "name": "Create a record",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "m3mu45U9vA2UAO33",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "action": "generate",
+        "dataPropertyName": "token",
+        "encodingType": "hex",
+        "stringLength": 16
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "baf33bc4-291f-439f-aa11-0938d1e1dc20",
+      "name": "Crypto"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Calendly Trigger').item.json.payload.email }}",
+        "subject": "Your Interview link",
+        "message": "=Hello {{ $('Calendly Trigger').item.json.payload.name .split(' ')[0]}}! \n\nYour interview has been scheduled for:\n📅 {{ DateTime.fromISO($('Calendly Trigger').item.json.payload.scheduled_event.start_time).toFormat(\"cccc, LLLL d, yyyy 'at' h:mm a\") }}\n🎤 Join your voice interview here:\nhttps://hpettitt.github.io/WebCallTest/index.html?token={{ $('Create a record').item.json.fields.token }}\n\nThis link is unique to you and will only work at your scheduled time.\n\nSee you soon!\n\n\nRegards,\n\nVanessa\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "a84af13d-b7f0-4882-bbd3-528c16c0108f",
+      "name": "Send a message",
+      "webhookId": "c9566ada-b93d-410c-ae33-2e4f7c72ead7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "n41dhFfXLmdPZBkT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "formatDate",
+        "date": "={{ $json.fields[\"Interview Time\"] }}",
+        "format": "=HH:mm dd MMMM,yyyy",
+        "outputFieldName": "AppointmentDate",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "92db8ce4-6f3e-4e3c-831a-db66e743cc63",
+      "name": "Date & Time"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Calendly Trigger": {
+      "main": [
+        [
+          {
+            "node": "Crypto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crypto": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "71a25190-c5f7-4e57-b55d-08554003e9b1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f0340714a889de34029a918512ab69ac03a5f9c338fbfae0e656eee3e31467d1"
+  },
+  "id": "Yl8bKS1Q3uoY14k8",
+  "tags": []
+}

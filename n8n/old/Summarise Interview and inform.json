@@ -1,0 +1,223 @@
+{
+  "name": "Summarise Interview and inform",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "652a2ec0-2a41-47cb-a95c-94adaade194f",
+      "name": "Webhook",
+      "webhookId": "7f4093f8-c5d3-4738-9a2d-606e9633d2e7"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get VAPI message payload\nconst msg = $input.first().json.body?.message || {};\n\n// Determine event type\nconst isCallEnd = msg.type === 'call-end';\nconst isConversationUpdate = msg.type === 'conversation-update';\n\n// Extract conversation/messages based on event type\nlet conversation = [];\nlet callData = {};\n\nif (isCallEnd) {\n  // In 'call-end', full transcript is in msg.call.messages\n  callData = msg.call || {};\n  conversation = callData.messages || [];\n} else if (isConversationUpdate) {\n  // In 'conversation-update', it's in msg.conversation\n  conversation = msg.conversation || [];\n  // For duration, we'll use a placeholder (since accurate time isn't available)\n  callData = {\n    duration: null,\n    startedAt: null,\n    endedAt: null\n  };\n} else {\n  // Unknown event type — skip\n  console.log('Unhandled VAPI event type:', msg.type);\n  return [];\n}\n\n// Compute duration & timestamps\nlet durationFormatted, startedAt, endedAt;\n\nif (isCallEnd && callData.duration !== undefined) {\n  // Real duration from VAPI (in milliseconds)\n  const totalSeconds = Math.floor(callData.duration / 1000);\n  const minutes = Math.floor(totalSeconds / 60);\n  const seconds = totalSeconds % 60;\n  durationFormatted = `${minutes}m ${seconds}s`;\n  startedAt = callData.startedAt || \"Unknown\";\n  endedAt = callData.endedAt || \"Unknown\";\n} else {\n  // Fallback for conversation-update (or missing data)\n  durationFormatted = \"Unknown\";\n  startedAt = \"Unknown\";\n  endedAt = \"Unknown\";\n}\n\n// Extract caller name\nlet caller = \"Vanessa from Bloom Buddies\";\nif (conversation[0]?.role === 'assistant') {\n  const intro = conversation[0].content;\n  const match = intro.match(/This is ([^.]+)/);\n  if (match) caller = match[1].trim();\n}\n\n// Build transcript\nconst transcript = conversation\n  .filter(m => m.role === 'user' || m.role === 'assistant')\n  .map(m => `${m.role === 'user' ? 'Candidate' : 'Interviewer'}: ${m.content}`)\n  .join('\\n');\n\n// Safety: if no transcript, skip\nif (!transcript.trim()) {\n  console.log('No transcript found in VAPI payload');\n  return [];\n}\n\n// Build prompt\nconst prompt = `Write a job interview summary with these sections:\n- FACTS: bullet list of ONLY stated facts (quote numbers)\n- SUMMARY: short neutral recap\n- Action Items: if any (specify owner)\n- Risks/Concerns: if any\n\nDO NOT include Call Stats, duration, timestamps, or caller info — those will be added separately.\n\nTranscript:\n---\n${transcript}\n---`;\n\nreturn [{\n  json: {\n    openai_prompt: prompt,\n    call_stats: {\n      duration: durationFormatted,\n      started_at: startedAt,\n      ended_at: endedAt,\n      caller: caller\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "3cf630b5-d371-48b4-8ee2-e38078cec63f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=[\n  { \"role\": \"user\", \"content\": \"={{ $('Code in JavaScript').item.json.openai_prompt }}\" }\n]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        672,
+        0
+      ],
+      "id": "7f1bf76d-7e09-4242-b4a2-507527a0fb1e",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "QtnX7K7CcLdLwtxh",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "<h2>Interview Summary — Demo</h2>\n<p><strong>Caller:</strong> 'Candidate Name'</p>\n<p><strong>Time:</strong> {{ $('Webhook').item.json.body.message.timestamp }}{{ $('Webhook').item.json.body.message.artifact.messages[2].metadata.wordLevelConfidence[0].start }} → {{ $('Webhook').item.json.body.message.artifact.messages[2].metadata.wordLevelConfidence[0].end }} ({{ $('Webhook').item.json.body.message.artifact.messages[2].duration }}s)</p>\n<hr/>\n<pre style=\"white-space: pre-wrap; font-family: system-ui;\">{{ $json.final_interview_summary }}</pre>\n\n"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "1cd738d7-4372-4fca-90c5-8e323fcf7727",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "sendTo": "hugh@xenergies.com",
+        "subject": "Interview Summary",
+        "message": "={{ $json.html }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1472,
+        0
+      ],
+      "id": "8ac38c4c-aaa8-443e-bc28-6973703a6687",
+      "name": "Send a message1",
+      "webhookId": "f4f5b288-d0a1-4fd8-8403-3983c7e9a405",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "n41dhFfXLmdPZBkT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiSummary = $input.first().json.message?.content || \"No summary.\";\nconst { duration, started_at, ended_at, caller } = $('Edit Fields').first().json.saved_call_stats;\n\nconst finalReport = `${aiSummary.trim()}\n\n### CALL STATS:\n- **Duration**: ${duration}\n- **Started At**: ${started_at}\n- **Ended At**: ${ended_at}\n- **Interviewer**: ${caller}\n`;\n\nreturn [{ json: { final_interview_summary: finalReport } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "a858bcc5-cf89-489a-b893-14b2aaea80f8",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9ed1c70b-8498-4192-a3b9-e323b3c717e9",
+              "name": "saved_call_stats",
+              "value": "={{ $json.call_stats }}",
+              "type": "object"
+            },
+            {
+              "id": "125027de-038c-498e-9fd6-ca158ee76ebd",
+              "name": "call_stats",
+              "value": "={{ $json.call_stats }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        0
+      ],
+      "id": "8106ede7-1d58-411e-9d73-1724c0de3554",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "06d841b1-053e-4f0f-97e8-445c9476abc2",
+  "meta": {
+    "instanceId": "f0340714a889de34029a918512ab69ac03a5f9c338fbfae0e656eee3e31467d1"
+  },
+  "id": "K7zTwuXhangIGo0Q",
+  "tags": []
+}
