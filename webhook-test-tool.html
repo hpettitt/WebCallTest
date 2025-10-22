@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n8n Webhook POST Test Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 200px;
+            font-family: monospace;
+        }
+        button {
+            background-color: #007cba;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #005a87;
+        }
+        .secondary {
+            background-color: #6c757d;
+        }
+        .secondary:hover {
+            background-color: #545b62;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            display: none;
+        }
+        .response.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .response.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d7ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 n8n Webhook POST Test Tool</h1>
+        
+        <div class="info">
+            <strong>Purpose:</strong> Test your n8n webhook to ensure it can receive POST requests from VAPI.<br>
+            <strong>Instructions:</strong> Enter your n8n webhook URL and test with sample VAPI payload.
+        </div>
+
+        <form id="webhookTestForm">
+            <div class="form-group">
+                <label for="webhookUrl">n8n Webhook URL:</label>
+                <input type="text" id="webhookUrl" placeholder="https://nbhugh.app.n8n.cloud/webhook-test/vapi-call-completed" value="https://nbhugh.app.n8n.cloud/webhook-test/vapi-call-completed">
+            </div>
+
+            <div class="form-group">
+                <label for="testPayload">Test Payload (JSON):</label>
+                <textarea id="testPayload" placeholder="Enter JSON payload here...">{
+  "type": "transcript",
+  "message": {
+    "type": "transcript",
+    "transcript": "Hello, is this John Smith? Yes, this is John speaking. Great! I'm calling regarding your application for the Customer Service position at Bloom Buddies.",
+    "call": {
+      "id": "test_call_12345",
+      "status": "in-progress",
+      "startedAt": "2025-10-22T10:30:00Z",
+      "phoneNumber": "+1234567890",
+      "metadata": {
+        "candidateName": "John Smith",
+        "sessionId": "test_session_789"
+      }
+    }
+  }
+}</textarea>
+            </div>
+
+            <button type="button" onclick="testWebhook()">🚀 Test POST Request</button>
+            <button type="button" class="secondary" onclick="loadCallEndedPayload()">📞 Load Call-Ended Sample</button>
+            <button type="button" class="secondary" onclick="loadTranscriptPayload()">📝 Load Transcript Sample</button>
+        </form>
+
+        <div id="response" class="response"></div>
+    </div>
+
+    <script>
+        function loadTranscriptPayload() {
+            const transcriptPayload = {
+                "type": "transcript",
+                "message": {
+                    "type": "transcript",
+                    "transcript": "Hi John Smith, thanks for taking the time to interview at Bloom Buddies. How are you today?",
+                    "call": {
+                        "id": "778ec8a9-8f3e-4a38-9606-46752d4f830b_live_456",
+                        "status": "in-progress",
+                        "startedAt": "2025-10-22T10:30:00Z",
+                        "phoneNumber": "+1234567890",
+                        "metadata": {
+                            "candidateName": "John Smith",
+                            "sessionId": "test_session_789"
+                        }
+                    }
+                }
+            };
+            document.getElementById('testPayload').value = JSON.stringify(transcriptPayload, null, 2);
+        }
+
+        function loadCallEndedPayload() {
+            const callEndedPayload = {
+                "type": "call-ended",
+                "message": {
+                    "type": "call-ended",
+                    "call": {
+                        "id": "778ec8a9-8f3e-4a38-9606-46752d4f830b_test_123",
+                        "status": "ended",
+                        "startedAt": "2025-10-22T10:30:00Z",
+                        "endedAt": "2025-10-22T10:45:00Z",
+                        "phoneNumber": "+1234567890",
+                        "duration": 900,
+                        "cost": 0.25,
+                        "recordingUrl": "https://example.com/recording.mp3",
+                        "transcript": "Hi John Smith, thanks for taking the time to interview at Bloom Buddies. How are you today? I'm doing well, thank you. What's your availability over the next 2 weeks? I'm available weekday mornings and some afternoons. Have you worked with children under 3 before? Yes, I have 2 years of experience as a babysitter.",
+                        "summary": "Candidate John Smith interviewed for babysitting position. Has 2 years experience with children under 3. Available weekday mornings and afternoons. Professional and engaged throughout the call.",
+                        "analysis": {
+                            "successEvaluation": "The call was successful with good candidate engagement",
+                            "callDuration": 900
+                        },
+                        "metadata": {
+                            "candidateName": "John Smith",
+                            "sessionId": "test_session_789"
+                        }
+                    }
+                }
+            };
+            document.getElementById('testPayload').value = JSON.stringify(callEndedPayload, null, 2);
+        }
+
+        async function testWebhook() {
+            const webhookUrl = document.getElementById('webhookUrl').value.trim();
+            const payload = document.getElementById('testPayload').value.trim();
+            const responseDiv = document.getElementById('response');
+
+            if (!webhookUrl) {
+                showResponse('❌ ERROR: Please enter a webhook URL', 'error');
+                return;
+            }
+
+            if (!payload) {
+                showResponse('❌ ERROR: Please enter a test payload', 'error');
+                return;
+            }
+
+            let jsonPayload;
+            try {
+                jsonPayload = JSON.parse(payload);
+            } catch (e) {
+                showResponse(`❌ ERROR: Invalid JSON payload\n${e.message}`, 'error');
+                return;
+            }
+
+            showResponse('🔄 Sending POST request to webhook...', 'success');
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jsonPayload)
+                });
+
+                const responseText = await response.text();
+                let responseData;
+                
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    responseData = responseText;
+                }
+
+                if (response.ok) {
+                    showResponse(`✅ SUCCESS! (Status: ${response.status})
+                    
+Response:
+${typeof responseData === 'object' ? JSON.stringify(responseData, null, 2) : responseData}
+
+Headers:
+${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`, 'success');
+                } else {
+                    showResponse(`❌ HTTP ERROR (Status: ${response.status})
+                    
+Response:
+${typeof responseData === 'object' ? JSON.stringify(responseData, null, 2) : responseData}
+
+Headers:
+${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResponse(`❌ NETWORK ERROR:
+${error.message}
+
+This could mean:
+1. The webhook URL is incorrect
+2. n8n is not running or accessible
+3. CORS issues (if testing from browser)
+4. Network connectivity problems`, 'error');
+            }
+        }
+
+        function showResponse(message, type) {
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = message;
+            responseDiv.className = `response ${type}`;
+            responseDiv.style.display = 'block';
+        }
+
+        // Load default transcript payload on page load
+        window.onload = function() {
+            loadTranscriptPayload();
+        };
+    </script>
+</body>
+</html>

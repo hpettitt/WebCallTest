@@ -1,11 +1,15 @@
 {
-  "name": "VAPI Interview Processing Workflow",
+  "name": "VAPI Interview Processing Workflow-v2",
   "nodes": [
     {
       "parameters": {
         "path": "vapi-call-completed",
+        "httpMethod": "POST",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "rawBody": false,
+          "allowedOrigins": "*"
+        }
       },
       "id": "f8b4c1a2-1234-5678-9abc-def012345678",
       "name": "VAPI Call Completed Webhook",
@@ -19,14 +23,27 @@
     },
     {
       "parameters": {
-        "functionCode": "// Extract and structure the incoming VAPI call data\nconst inputData = $input.all()[0].json;\n\n// Extract call information\nconst callData = {\n  callId: inputData.call?.id || inputData.id,\n  candidateName: inputData.call?.metadata?.candidateName || inputData.metadata?.candidateName || 'Unknown Candidate',\n  sessionId: inputData.call?.metadata?.sessionId || inputData.metadata?.sessionId,\n  duration: inputData.call?.endedAt && inputData.call?.startedAt ? \n    new Date(inputData.call.endedAt).getTime() - new Date(inputData.call.startedAt).getTime() : 0,\n  transcript: inputData.call?.transcript || inputData.transcript || '',\n  recordingUrl: inputData.call?.recordingUrl || inputData.recordingUrl,\n  startTime: inputData.call?.startedAt || inputData.startedAt,\n  endTime: inputData.call?.endedAt || inputData.endedAt,\n  callStatus: inputData.call?.status || inputData.status || 'unknown',\n  phoneNumber: inputData.call?.phoneNumber || inputData.phoneNumber,\n  cost: inputData.call?.cost || inputData.cost || 0,\n  summary: inputData.call?.summary || inputData.summary,\n  rawData: inputData\n};\n\n// Basic validation\nif (!callData.transcript) {\n  throw new Error('No transcript found in VAPI data');\n}\n\nif (!callData.candidateName || callData.candidateName === 'Unknown Candidate') {\n  console.warn('Candidate name not found in metadata');\n}\n\nreturn [{ json: { callData } }];"
+        "functionCode": "// Enhanced Debug: Log everything VAPI sends us\nconst inputData = $input.all()[0].json;\n\nconsole.log('=== VAPI WEBHOOK DATA RECEIVED ===');\nconsole.log('Full payload:', JSON.stringify(inputData, null, 2));\nconsole.log('Event type:', inputData.type);\nconsole.log('Message type:', inputData.message?.type);\nconsole.log('Call ID:', inputData.call?.id || inputData.message?.call?.id);\n\n// Check all possible transcript locations\nconsole.log('Direct transcript:', inputData.transcript);\nconsole.log('Message transcript:', inputData.message?.transcript);\nconsole.log('Call transcript:', inputData.call?.transcript);\nconsole.log('Message call transcript:', inputData.message?.call?.transcript);\n\n// Check for conversation messages\nif (inputData.messages) {\n  console.log('Conversation messages found:', inputData.messages.length);\n  console.log('Messages:', JSON.stringify(inputData.messages, null, 2));\n}\nif (inputData.call?.messages) {\n  console.log('Call messages found:', inputData.call.messages.length);\n  console.log('Call messages:', JSON.stringify(inputData.call.messages, null, 2));\n}\nif (inputData.message?.call?.messages) {\n  console.log('Message call messages found:', inputData.message.call.messages.length);\n  console.log('Message call messages:', JSON.stringify(inputData.message.call.messages, null, 2));\n}\n\n// Check for analysis/summary\nif (inputData.analysis || inputData.call?.analysis || inputData.message?.call?.analysis) {\n  console.log('Analysis found:', inputData.analysis || inputData.call?.analysis || inputData.message?.call?.analysis);\n}\n\nconsole.log('Metadata:', inputData.metadata || inputData.call?.metadata || inputData.message?.call?.metadata);\nconsole.log('=====================================');\n\n// Pass through unchanged\nreturn [{ json: inputData }];"
+      },
+      "id": "debug-vapi-webhook",
+      "name": "Debug VAPI Webhook Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Enhanced VAPI Data Extraction for Interview Processing\nconst inputData = $input.all()[0].json;\n\nconsole.log('=== PROCESSING VAPI END-OF-CALL-REPORT ===');\nconsole.log('Message type:', inputData.message?.type);\nconsole.log('Call ID:', inputData.message?.call?.id);\n\n// Extract the main message data\nconst message = inputData.message;\nconst call = message?.call;\nconst analysis = message?.analysis;\nconst artifact = message?.artifact;\n\n// Extract transcript from multiple possible locations\nlet transcript = '';\nif (message?.transcript) {\n  transcript = message.transcript;\n  console.log('📝 Found transcript in message.transcript');\n} else if (artifact?.transcript) {\n  transcript = artifact.transcript;\n  console.log('📝 Found transcript in artifact.transcript');\n} else if (call?.transcript) {\n  transcript = call.transcript;\n  console.log('📝 Found transcript in call.transcript');\n} else {\n  // Build transcript from messages if no direct transcript\n  const messages = artifact?.messages || message?.messages || [];\n  if (messages.length > 0) {\n    transcript = messages\n      .filter(msg => msg.role === 'bot' || msg.role === 'user' || msg.role === 'assistant')\n      .map(msg => {\n        const role = msg.role === 'bot' ? 'AI' : (msg.role === 'assistant' ? 'AI' : 'User');\n        return `${role}: ${msg.message}`;\n      })\n      .join('\\n');\n    console.log('📝 Built transcript from messages array');\n  }\n}\n\n// Extract summary\nconst summary = analysis?.summary || message?.summary || call?.summary || 'No summary available';\n\n// Extract call statistics\nconst callStats = {\n  callId: call?.id || message?.call?.id || 'unknown',\n  duration: {\n    milliseconds: message?.durationMs || 0,\n    seconds: message?.durationSeconds || 0,\n    minutes: message?.durationMinutes || 0\n  },\n  startedAt: message?.startedAt || call?.startedAt,\n  endedAt: message?.endedAt || call?.endedAt,\n  endedReason: message?.endedReason || 'unknown',\n  totalCost: message?.cost || 0,\n  costBreakdown: message?.costBreakdown || {},\n  recordingUrl: message?.recordingUrl || artifact?.recordingUrl,\n  stereoRecordingUrl: message?.stereoRecordingUrl || artifact?.stereoRecordingUrl\n};\n\n// Extract candidate information\nconst candidateName = \n  call?.metadata?.candidateName || \n  message?.assistant?.variableValues?.candidateName ||\n  message?.assistant?.variableValues?.name ||\n  'Unknown Candidate';\n\nconst sessionId = \n  call?.metadata?.sessionId || \n  message?.assistant?.variableValues?.sessionId ||\n  'unknown';\n\n// Extract session token for Airtable lookup\nconst sessionToken = \n  call?.metadata?.sessionToken || \n  message?.assistant?.variableValues?.sessionToken ||\n  message?.assistant?.metadata?.sessionToken ||\n  call?.metadata?.sessionId || // fallback to sessionId\n  message?.assistant?.variableValues?.sessionId ||\n  null;\n\nconsole.log('🔖 Session Token extracted:', sessionToken);\nconsole.log('👤 Candidate Name extracted:', candidateName);\n\n// Structure all extracted data\nconst extractedData = {\n  eventType: message?.type || 'unknown',\n  timestamp: message?.timestamp || Date.now(),\n  \n  candidate: {\n    name: candidateName,\n    sessionId: sessionId,\n    sessionToken: sessionToken  // Add for Airtable lookup\n  },\n  \n  transcript: {\n    full: transcript,\n    length: transcript.length,\n    hasContent: transcript.length > 0\n  },\n  \n  analysis: {\n    summary: summary,\n    successEvaluation: analysis?.successEvaluation || 'unknown'\n  },\n  \n  callStats: callStats,\n  \n  conversation: {\n    messages: artifact?.messages || [],\n    totalMessages: (artifact?.messages || []).length\n  },\n  \n  processing: {\n    extractedAt: new Date().toISOString(),\n    hasTranscript: transcript.length > 0,\n    hasSummary: summary !== 'No summary available'\n  }\n};\n\nconsole.log('📊 EXTRACTION SUMMARY:');\nconsole.log(`- Candidate: ${extractedData.candidate.name}`);\nconsole.log(`- Transcript length: ${extractedData.transcript.length} characters`);\nconsole.log(`- Call duration: ${extractedData.callStats.duration.minutes} minutes`);\nconsole.log(`- Total cost: $${extractedData.callStats.totalCost}`);\nconsole.log(`- Success evaluation: ${extractedData.analysis.successEvaluation}`);\nconsole.log('=== EXTRACTION COMPLETE ===');\n\nreturn [{ json: { extractedData } }];"
       },
       "id": "a1b2c3d4-5678-9012-3456-789012345678",
       "name": "Extract Call Data",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        460,
+        570,
         300
       ]
     },
@@ -92,7 +109,7 @@
     },
     {
       "parameters": {
-        "operation": "update",
+        "operation": "list",
         "base": {
           "__rl": true,
           "value": "YOUR_AIRTABLE_BASE_ID",
@@ -100,91 +117,101 @@
         },
         "table": {
           "__rl": true,
-          "value": "Interviews",
+          "value": "Candidates",
           "mode": "list"
         },
-        "id": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionId }}",
+        "options": {
+          "filterByFormula": "={{IF($node['Calculate Statistics & Compile Report'].json.reportData.sessionToken, 'token=\"' + $node['Calculate Statistics & Compile Report'].json.reportData.sessionToken + '\"', 'FALSE()')}}"
+        }
+      },
+      "id": "c1d2e3f4-5678-9012-3456-789012345678",
+      "name": "Lookup Candidate by Token",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "={{$node['Lookup Candidate by Token'].json.records && $node['Lookup Candidate by Token'].json.records.length > 0 ? 'update' : 'create'}}",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Candidates",
+          "mode": "list"
+        },
+        "id": "={{$node['Lookup Candidate by Token'].json.records && $node['Lookup Candidate by Token'].json.records.length > 0 ? $node['Lookup Candidate by Token'].json.records[0].id : undefined}}",
         "fieldsUi": {
           "fieldValues": [
             {
-              "fieldId": "Interview_Status",
-              "fieldValue": "Completed"
+              "fieldId": "Candidate Name",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.candidateName }}"
             },
             {
-              "fieldId": "Call_Duration_Minutes",
+              "fieldId": "Interview Time",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.startTime }}"
+            },
+            {
+              "fieldId": "Interview Length",
               "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.callDurationMinutes }}"
             },
             {
-              "fieldId": "Overall_Score",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.overallScore }}"
-            },
-            {
-              "fieldId": "Communication_Score",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.communicationScore }}"
-            },
-            {
-              "fieldId": "Enthusiasm_Score",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.enthusiasmScore }}"
-            },
-            {
-              "fieldId": "Professionalism_Score",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.professionalismScore }}"
-            },
-            {
-              "fieldId": "Average_Score",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.averageScore }}"
-            },
-            {
-              "fieldId": "Hire_Probability",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.hireProbability }}"
-            },
-            {
-              "fieldId": "AI_Summary",
+              "fieldId": "Interview Summary",
               "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.executiveSummary }}"
             },
             {
-              "fieldId": "Recommendation",
+              "fieldId": "Interview Analysis",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.detailedFeedback || $node['Calculate Statistics & Compile Report'].json.reportData.executiveSummary }}"
+            },
+            {
+              "fieldId": "Recommandation",
               "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.recommendation }}"
             },
             {
-              "fieldId": "Key_Strengths",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.keyStrengths.join('\\n• ') }}"
-            },
-            {
-              "fieldId": "Areas_for_Improvement",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.areasForImprovement.join('\\n• ') }}"
-            },
-            {
-              "fieldId": "Red_Flags",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.redFlags.join('\\n• ') }}"
-            },
-            {
-              "fieldId": "Standout_Moments",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.standoutMoments.join('\\n• ') }}"
-            },
-            {
-              "fieldId": "Transcript",
+              "fieldId": "Interview Transcript",
               "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.transcript }}"
             },
             {
-              "fieldId": "Recording_URL",
+              "fieldId": "Next Action Recommendation",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.nextActions || $node['Calculate Statistics & Compile Report'].json.reportData.recommendation }}"
+            },
+            {
+              "fieldId": "token",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionToken }}"
+            },
+            {
+              "fieldId": "Sessions ID",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionId }}"
+            },
+            {
+              "fieldId": "recording",
               "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.recordingUrl }}"
             },
             {
-              "fieldId": "Word_Count",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.wordCount }}"
+              "fieldId": "status",
+              "fieldValue": "interviewed"
             },
             {
-              "fieldId": "Words_Per_Minute",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.averageWordsPerMinute }}"
+              "fieldId": "score",
+              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.overallScore }}"
             },
             {
-              "fieldId": "Call_Status",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.callStatus }}"
+              "fieldId": "Communication",
+              "fieldValue": "={{ Math.round($node['Calculate Statistics & Compile Report'].json.reportData.communicationScore / 2) }}"
             },
             {
-              "fieldId": "Processed_At",
-              "fieldValue": "={{ $node['Calculate Statistics & Compile Report'].json.reportData.generatedAt }}"
+              "fieldId": "enthusiasm",
+              "fieldValue": "={{ Math.round($node['Calculate Statistics & Compile Report'].json.reportData.enthusiasmScore / 2) }}"
+            },
+            {
+              "fieldId": "professionalism",
+              "fieldValue": "={{ Math.round($node['Calculate Statistics & Compile Report'].json.reportData.professionalismScore / 2) }}"
             }
           ]
         }
@@ -194,7 +221,7 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 1,
       "position": [
-        1120,
+        1220,
         300
       ]
     },
@@ -208,7 +235,7 @@
       "typeVersion": 1,
       "position": [
         1340,
-        300
+        200
       ]
     },
     {
@@ -226,14 +253,14 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        1560,
-        300
+        1460,
+        200
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\\n  \\\"status\\\": \\\"success\\\",\\n  \\\"message\\\": \\\"Interview processed successfully\\\",\\n  \\\"candidateName\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.candidateName }}\\\",\\n  \\\"overallScore\\\": {{ $node['Calculate Statistics & Compile Report'].json.reportData.overallScore }},\\n  \\\"recommendation\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.recommendation }}\\\",\\n  \\\"sessionId\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionId }}\\\",\\n  \\\"processedAt\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.generatedAt }}\\\"\\n}",
+        "responseBody": "={\\n  \\\"status\\\": \\\"success\\\",\\n  \\\"message\\\": \\\"Interview processed and candidate record updated\\\",\\n  \\\"candidateName\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.candidateName }}\\\",\\n  \\\"overallScore\\\": {{ $node['Calculate Statistics & Compile Report'].json.reportData.overallScore }},\\n  \\\"recommendation\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.recommendation }}\\\",\\n  \\\"sessionId\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionId }}\\\",\\n  \\\"sessionToken\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.sessionToken }}\\\",\\n  \\\"existingCandidate\\\": {{$node['Lookup Candidate by Token'].json.records && $node['Lookup Candidate by Token'].json.records.length > 0 ? true : false}},\\n  \\\"recordOperation\\\": \\\"{{$node['Lookup Candidate by Token'].json.records && $node['Lookup Candidate by Token'].json.records.length > 0 ? 'updated' : 'created'}}\\\",\\n  \\\"processedAt\\\": \\\"{{ $node['Calculate Statistics & Compile Report'].json.reportData.generatedAt }}\\\"\\n}",
         "options": {}
       },
       "id": "g7h8i9j0-1234-5678-9012-345678901234",
@@ -241,7 +268,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1780,
+        1480,
         300
       ]
     }
@@ -249,6 +276,17 @@
   "pinData": {},
   "connections": {
     "VAPI Call Completed Webhook": {
+      "main": [
+        [
+          {
+            "node": "Debug VAPI Webhook Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug VAPI Webhook Data": {
       "main": [
         [
           {
@@ -285,12 +323,23 @@
       "main": [
         [
           {
-            "node": "Update Airtable",
+            "node": "Lookup Candidate by Token",
             "type": "main",
             "index": 0
           },
           {
             "node": "Generate HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Candidate by Token": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable",
             "type": "main",
             "index": 0
           }

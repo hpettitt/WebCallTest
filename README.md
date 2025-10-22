@@ -60,3 +60,37 @@ Check that VAPI sends completion data to your webhook
 ✅ Scalable System: Handles multiple interviews automatically
 
 The workflow is production-ready and includes error handling, comprehensive logging, and professional reporting. Just import it and configure your credentials to get started!
+
+POSSIBLE FIELDS TO IMPLEMENT
+Essential Fields:
+- Name (candidate name)
+- SessionToken (for correlation)
+- Session_ID (VAPI session identifier)
+- Interview_Status (Completed/Pending/etc.)
+- Interview_Date (when interview occurred)
+- Last_Interview_Date (tracks most recent interview)
+
+Interview Scores:
+- Overall_Score
+- Communication_Score
+- Enthusiasm_Score  
+- Professionalism_Score
+- Average_Score
+- Hire_Probability
+
+AI Analysis:
+- AI_Summary (executive summary)
+- Recommendation (Hire/Interview Further/Pass)
+- Key_Strengths (bullet list)
+- Areas_for_Improvement (bullet list)
+- Red_Flags (areas of concern)
+- Standout_Moments (memorable highlights)
+
+Technical Data:
+- Call_Duration_Minutes
+- Word_Count
+- Words_Per_Minute
+- Call_Status
+- Transcript (full conversation)
+- Recording_URL (if available)
+- Processed_At (when AI analysis completed)

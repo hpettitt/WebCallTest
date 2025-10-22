@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Test Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #065f46; margin-bottom: 30px; }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+        .test-section h3 {
+            color: #374151;
+            margin-top: 0;
+        }
+        button {
+            background: #5dc399;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #4ade80;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+        .success { background: #d1fae5; border: 1px solid #10b981; }
+        .error { background: #fecaca; border: 1px solid #ef4444; }
+        .info { background: #dbeafe; border: 1px solid #3b82f6; }
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin: 5px 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Bloom Buddies Workflow Test Tool</h1>
+
+        <!-- Test 1: n8n Webhook Connectivity -->
+        <div class="test-section">
+            <h3>1. Test n8n Webhook Connectivity</h3>
+            <div class="form-group">
+                <label for="webhookUrl">n8n Webhook URL:</label>
+                <input type="text" id="webhookUrl" placeholder="https://your-n8n-instance.com/webhook/your-webhook-id" />
+            </div>
+            <button onclick="testWebhookConnectivity()">Test Webhook Connection</button>
+            <div id="webhookResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 2: VAPI Data Simulation -->
+        <div class="test-section">
+            <h3>2. Test VAPI Data Processing</h3>
+            <div class="form-group">
+                <label for="candidateName">Test Candidate Name:</label>
+                <input type="text" id="candidateName" value="John Test Candidate" />
+            </div>
+            <div class="form-group">
+                <label for="sessionToken">Test Session Token:</label>
+                <input type="text" id="sessionToken" value="test-token-12345" />
+            </div>
+            <div class="form-group">
+                <label for="sessionId">Test Session ID:</label>
+                <input type="text" id="sessionId" value="test-session-67890" />
+            </div>
+            <button onclick="testVAPIData()">Send Test VAPI Data</button>
+            <div id="vapiResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 3: Session Token Lookup -->
+        <div class="test-section">
+            <h3>3. Test Session Token Lookup</h3>
+            <div class="form-group">
+                <label for="airtableBase">Airtable Base ID:</label>
+                <input type="text" id="airtableBase" placeholder="appXXXXXXXXXXXXXX" />
+            </div>
+            <div class="form-group">
+                <label for="airtableToken">Airtable Personal Access Token:</label>
+                <input type="password" id="airtableToken" placeholder="patXXXXXXXXXXXXXX" />
+            </div>
+            <button onclick="testTokenLookup()">Test Token Lookup</button>
+            <div id="tokenResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 4: Complete Workflow -->
+        <div class="test-section">
+            <h3>4. Complete End-to-End Test</h3>
+            <p>This will simulate a complete interview workflow from VAPI webhook to Airtable update.</p>
+            <button onclick="testCompleteWorkflow()">Run Complete Test</button>
+            <div id="completeResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Test 1: Webhook Connectivity
+        async function testWebhookConnectivity() {
+            const webhookUrl = document.getElementById('webhookUrl').value;
+            const resultDiv = document.getElementById('webhookResult');
+            
+            if (!webhookUrl) {
+                showResult(resultDiv, 'Please enter a webhook URL', 'error');
+                return;
+            }
+
+            try {
+                showResult(resultDiv, 'Testing webhook connectivity...', 'info');
+                
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        test: true,
+                        message: 'Connectivity test from test tool'
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.text();
+                    showResult(resultDiv, `✅ Webhook connectivity successful!\nResponse: ${result}`, 'success');
+                } else {
+                    showResult(resultDiv, `❌ Webhook returned status: ${response.status}\n${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 2: VAPI Data Simulation
+        async function testVAPIData() {
+            const webhookUrl = document.getElementById('webhookUrl').value;
+            const candidateName = document.getElementById('candidateName').value;
+            const sessionToken = document.getElementById('sessionToken').value;
+            const sessionId = document.getElementById('sessionId').value;
+            const resultDiv = document.getElementById('vapiResult');
+
+            if (!webhookUrl) {
+                showResult(resultDiv, 'Please enter a webhook URL first', 'error');
+                return;
+            }
+
+            // Simulate realistic VAPI end-of-call-report data
+            const testVAPIData = {
+                type: 'end-of-call-report',
+                call: {
+                    id: sessionId,
+                    status: 'completed',
+                    startedAt: new Date().toISOString(),
+                    endedAt: new Date(Date.now() + 5 * 60000).toISOString(), // 5 minutes later
+                    phoneNumber: '+1234567890'
+                },
+                transcript: {
+                    messages: [
+                        {
+                            role: 'assistant',
+                            message: 'Hello! Thank you for your interest in Bloom Buddies. I\'m here to conduct your interview today.',
+                            timestamp: new Date().toISOString()
+                        },
+                        {
+                            role: 'user',
+                            message: `Hi! I'm ${candidateName}. I'm excited to learn more about the opportunities at Bloom Buddies.`,
+                            timestamp: new Date(Date.now() + 3000).toISOString()
+                        },
+                        {
+                            role: 'assistant',
+                            message: 'Great! Can you tell me about your experience with customer service?',
+                            timestamp: new Date(Date.now() + 5000).toISOString()
+                        },
+                        {
+                            role: 'user',
+                            message: 'I have 3 years of experience in retail customer service. I love helping people and solving problems.',
+                            timestamp: new Date(Date.now() + 10000).toISOString()
+                        }
+                    ]
+                },
+                recording: {
+                    url: 'https://example.com/recording.mp3'
+                },
+                summary: `Interview with ${candidateName} went very well. Candidate showed enthusiasm and good communication skills.`,
+                metadata: {
+                    candidateName: candidateName,
+                    sessionToken: sessionToken,
+                    sessionId: sessionId
+                },
+                variableValues: {
+                    candidateName: candidateName,
+                    sessionToken: sessionToken,
+                    sessionId: sessionId
+                }
+            };
+
+            try {
+                showResult(resultDiv, 'Sending test VAPI data...', 'info');
+                
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testVAPIData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult(resultDiv, `✅ VAPI data processed successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult(resultDiv, `❌ Processing failed: ${response.status}\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ Failed to send VAPI data: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 3: Session Token Lookup
+        async function testTokenLookup() {
+            const baseId = document.getElementById('airtableBase').value;
+            const token = document.getElementById('airtableToken').value;
+            const sessionToken = document.getElementById('sessionToken').value;
+            const resultDiv = document.getElementById('tokenResult');
+
+            if (!baseId || !token) {
+                showResult(resultDiv, 'Please enter Airtable Base ID and Token', 'error');
+                return;
+            }
+
+            try {
+                showResult(resultDiv, 'Looking up session token in Airtable...', 'info');
+                
+                const response = await fetch(`https://api.airtable.com/v0/${baseId}/Candidates?filterByFormula=token="${sessionToken}"`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.records.length > 0) {
+                        showResult(resultDiv, `✅ Found existing candidate!\n${JSON.stringify(result.records[0], null, 2)}`, 'success');
+                    } else {
+                        showResult(resultDiv, `ℹ️ No existing candidate found with token: ${sessionToken}\nNew record will be created.`, 'info');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult(resultDiv, `❌ Airtable lookup failed: ${response.status}\n${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ Token lookup failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 4: Complete Workflow
+        async function testCompleteWorkflow() {
+            const resultDiv = document.getElementById('completeResult');
+            showResult(resultDiv, 'Running complete end-to-end test...', 'info');
+
+            // Run all tests in sequence
+            await testWebhookConnectivity();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testVAPIData();
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            await testTokenLookup();
+            
+            showResult(resultDiv, '✅ Complete workflow test finished! Check individual test results above.', 'success');
+        }
+
+        // Helper function to show results
+        function showResult(element, message, type) {
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+
+        // Auto-save form values
+        document.addEventListener('input', function(e) {
+            if (e.target.type === 'text' || e.target.type === 'password') {
+                localStorage.setItem(e.target.id, e.target.value);
+            }
+        });
+
+        // Load saved form values
+        window.addEventListener('load', function() {
+            document.querySelectorAll('input[type="text"], input[type="password"]').forEach(input => {
+                const savedValue = localStorage.getItem(input.id);
+                if (savedValue) {
+                    input.value = savedValue;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

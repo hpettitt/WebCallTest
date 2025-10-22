@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAPI Data Inspector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #555;
+            border-bottom: 2px solid #007cba;
+            padding-bottom: 10px;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .found {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .missing {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .success {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #007cba;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #005a87;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 VAPI Data Inspector</h1>
+        
+        <div class="warning">
+            <strong>Purpose:</strong> This tool helps you analyze the exact data structure VAPI sends to your webhook.<br>
+            <strong>Instructions:</strong> 
+            <ol>
+                <li>Paste the JSON payload VAPI sent to your n8n webhook below</li>
+                <li>Click "Analyze VAPI Data" to see all transcript locations</li>
+                <li>Use this info to fix your n8n workflow extraction</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h3>📥 VAPI Payload Input</h3>
+            <textarea id="vapiPayload" placeholder="Paste your VAPI JSON payload here..." style="width: 100%; height: 200px; font-family: monospace; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">{
+  "paste": "your actual VAPI payload here"
+}</textarea>
+            <br><br>
+            <button onclick="analyzeVapiData()">🔍 Analyze VAPI Data</button>
+            <button onclick="loadSampleData()">📄 Load Sample Data</button>
+            <button onclick="clearAll()">🗑️ Clear All</button>
+        </div>
+
+        <div id="analysisResults" style="display: none;">
+            <div class="section">
+                <h3>📊 Analysis Results</h3>
+                <div id="summaryInfo"></div>
+            </div>
+
+            <div class="section">
+                <h3>📝 Transcript Locations</h3>
+                <div id="transcriptAnalysis"></div>
+            </div>
+
+            <div class="section">
+                <h3>👤 Metadata Analysis</h3>
+                <div id="metadataAnalysis"></div>
+            </div>
+
+            <div class="section">
+                <h3>💬 Messages Analysis</h3>
+                <div id="messagesAnalysis"></div>
+            </div>
+
+            <div class="section">
+                <h3>🛠️ Recommended n8n Extraction Code</h3>
+                <div id="extractionCode"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadSampleData() {
+            const sampleData = {
+                "type": "call-ended",
+                "message": {
+                    "type": "call-ended",
+                    "call": {
+                        "id": "778ec8a9-8f3e-4a38-9606-46752d4f830b_12345",
+                        "status": "ended",
+                        "startedAt": "2025-10-22T10:30:00Z",
+                        "endedAt": "2025-10-22T10:35:00Z",
+                        "phoneNumber": "+1234567890",
+                        "duration": 300,
+                        "cost": 0.15,
+                        "messages": [
+                            {
+                                "role": "assistant",
+                                "content": "Hi John Smith, thanks for taking the time to interview at Bloom Buddies. How are you today?"
+                            },
+                            {
+                                "role": "user", 
+                                "content": "I'm doing well, thank you for calling."
+                            },
+                            {
+                                "role": "assistant",
+                                "content": "What's your availability over the next 2 weeks?"
+                            },
+                            {
+                                "role": "user",
+                                "content": "I'm available weekday mornings and some afternoons."
+                            }
+                        ],
+                        "summary": "Candidate John Smith interviewed for babysitting position. Professional and engaged.",
+                        "metadata": {
+                            "candidateName": "John Smith",
+                            "sessionId": "session_789"
+                        }
+                    }
+                }
+            };
+            document.getElementById('vapiPayload').value = JSON.stringify(sampleData, null, 2);
+        }
+
+        function clearAll() {
+            document.getElementById('vapiPayload').value = '';
+            document.getElementById('analysisResults').style.display = 'none';
+        }
+
+        function analyzeVapiData() {
+            const payloadText = document.getElementById('vapiPayload').value.trim();
+            
+            if (!payloadText) {
+                alert('Please paste a VAPI payload first');
+                return;
+            }
+
+            let data;
+            try {
+                data = JSON.parse(payloadText);
+            } catch (e) {
+                alert('Invalid JSON: ' + e.message);
+                return;
+            }
+
+            // Show results
+            document.getElementById('analysisResults').style.display = 'block';
+            
+            // Analyze the data
+            analyzeSummary(data);
+            analyzeTranscriptLocations(data);
+            analyzeMetadata(data);
+            analyzeMessages(data);
+            generateExtractionCode(data);
+        }
+
+        function analyzeSummary(data) {
+            const summary = {
+                eventType: data.type || 'unknown',
+                messageType: data.message?.type || 'none',
+                hasCall: !!data.call || !!data.message?.call,
+                callId: data.call?.id || data.message?.call?.id || 'not found',
+                callStatus: data.call?.status || data.message?.call?.status || 'unknown'
+            };
+
+            document.getElementById('summaryInfo').innerHTML = `
+                <div class="code-block">
+Event Type: ${summary.eventType}
+Message Type: ${summary.messageType}
+Has Call Object: ${summary.hasCall}
+Call ID: ${summary.callId}
+Call Status: ${summary.callStatus}
+                </div>
+            `;
+        }
+
+        function analyzeTranscriptLocations(data) {
+            const locations = [
+                { path: 'data.transcript', value: data.transcript },
+                { path: 'data.message.transcript', value: data.message?.transcript },
+                { path: 'data.call.transcript', value: data.call?.transcript },
+                { path: 'data.message.call.transcript', value: data.message?.call?.transcript },
+                { path: 'data.call.summary', value: data.call?.summary },
+                { path: 'data.message.call.summary', value: data.message?.call?.summary }
+            ];
+
+            let html = '';
+            let foundTranscript = false;
+
+            locations.forEach(location => {
+                if (location.value) {
+                    foundTranscript = true;
+                    html += `<div class="code-block found">
+✅ FOUND: ${location.path}
+Value: ${JSON.stringify(location.value, null, 2)}
+Length: ${location.value.length} characters
+                    </div>`;
+                } else {
+                    html += `<div class="code-block missing">
+❌ MISSING: ${location.path}
+                    </div>`;
+                }
+            });
+
+            if (!foundTranscript) {
+                html += `<div class="code-block warning">
+⚠️ NO DIRECT TRANSCRIPT FOUND - Check messages array for conversation
+                </div>`;
+            }
+
+            document.getElementById('transcriptAnalysis').innerHTML = html;
+        }
+
+        function analyzeMetadata(data) {
+            const metadata = data.metadata || data.call?.metadata || data.message?.call?.metadata;
+            
+            let html = '';
+            if (metadata) {
+                html = `<div class="code-block found">
+✅ METADATA FOUND:
+${JSON.stringify(metadata, null, 2)}
+
+Candidate Name: ${metadata.candidateName || 'NOT FOUND'}
+Session ID: ${metadata.sessionId || 'NOT FOUND'}
+                </div>`;
+            } else {
+                html = `<div class="code-block missing">
+❌ NO METADATA FOUND in any expected location
+                </div>`;
+            }
+
+            document.getElementById('metadataAnalysis').innerHTML = html;
+        }
+
+        function analyzeMessages(data) {
+            const messages = data.messages || data.call?.messages || data.message?.call?.messages;
+            
+            let html = '';
+            if (messages && Array.isArray(messages) && messages.length > 0) {
+                const transcript = messages.map(msg => `${msg.role}: ${msg.content}`).join('\\n');
+                
+                html = `<div class="code-block found">
+✅ MESSAGES FOUND: ${messages.length} messages
+Can build transcript from messages:
+
+${JSON.stringify(messages.slice(0, 3), null, 2)}
+${messages.length > 3 ? '... and ' + (messages.length - 3) + ' more messages' : ''}
+
+Built Transcript Preview:
+${transcript.substring(0, 300)}${transcript.length > 300 ? '...' : ''}
+                </div>`;
+            } else {
+                html = `<div class="code-block missing">
+❌ NO MESSAGES ARRAY FOUND
+                </div>`;
+            }
+
+            document.getElementById('messagesAnalysis').innerHTML = html;
+        }
+
+        function generateExtractionCode(data) {
+            const hasDirectTranscript = !!(data.transcript || data.message?.transcript || data.call?.transcript || data.message?.call?.transcript);
+            const hasMessages = !!(data.messages || data.call?.messages || data.message?.call?.messages);
+            const hasMetadata = !!(data.metadata || data.call?.metadata || data.message?.call?.metadata);
+
+            let code = `// Recommended extraction for your VAPI data structure:
+const inputData = $input.all()[0].json;
+
+`;
+
+            if (hasDirectTranscript) {
+                code += `// Direct transcript found - use this method:
+let transcript = inputData.transcript || 
+                 inputData.message?.transcript || 
+                 inputData.call?.transcript || 
+                 inputData.message?.call?.transcript || '';
+`;
+            } else if (hasMessages) {
+                code += `// No direct transcript - build from messages:
+const messages = inputData.messages || 
+                 inputData.call?.messages || 
+                 inputData.message?.call?.messages || [];
+
+let transcript = messages.map(msg => 
+  \`\${msg.role}: \${msg.content}\`
+).join('\\n');
+`;
+            } else {
+                code += `// No transcript or messages - use summary:
+let transcript = inputData.call?.summary || 
+                 inputData.message?.call?.summary || 
+                 '[No transcript available]';
+`;
+            }
+
+            if (hasMetadata) {
+                code += `
+// Metadata extraction:
+const candidateName = inputData.metadata?.candidateName || 
+                      inputData.call?.metadata?.candidateName || 
+                      inputData.message?.call?.metadata?.candidateName || 
+                      'Unknown Candidate';
+
+const sessionId = inputData.metadata?.sessionId || 
+                  inputData.call?.metadata?.sessionId || 
+                  inputData.message?.call?.metadata?.sessionId;
+`;
+            } else {
+                code += `
+// No metadata found - candidate name extraction may fail
+const candidateName = 'Unknown Candidate';
+const sessionId = null;
+`;
+            }
+
+            code += `
+// Call details:
+const callData = {
+  callId: inputData.call?.id || inputData.message?.call?.id,
+  transcript: transcript,
+  candidateName: candidateName,
+  sessionId: sessionId,
+  duration: inputData.call?.duration || inputData.message?.call?.duration || 0,
+  summary: inputData.call?.summary || inputData.message?.call?.summary
+};
+
+return [{ json: { callData } }];`;
+
+            document.getElementById('extractionCode').innerHTML = `<div class="code-block">${code}</div>`;
+        }
+    </script>
+</body>
+</html>

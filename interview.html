@@ -175,6 +175,8 @@
         const vapiConfig = {
           apiKey: vapiKey,
           assistant: vapiAssistantId,
+          // ADD WEBHOOK URL FOR TRANSCRIPT/CALL EVENTS
+          serverUrl: "https://nbhugh.app.n8n.cloud/webhook-test/vapi-call-completed",
           config: { 
             disableDefaultButton: false,
             autoStart: false,
@@ -192,13 +194,17 @@
         const variableValues = {
           name: candidateName,
           candidateName: candidateName,
-          sessionId: sessionToken
+          sessionId: sessionToken,
+          sessionToken: sessionToken  // Add token for n8n processing
         };
         
         console.log('🚀 Starting VAPI with config:', vapiConfig);
         console.log('👤 Candidate name being sent to VAPI:', candidateName);
         console.log('🎫 Session ID being sent to VAPI:', sessionToken);
+        console.log('🔖 Session Token for Airtable lookup:', sessionToken);
         console.log('📊 Variable values for VAPI:', variableValues);
+        console.log('🔗 Webhook URL configured:', vapiConfig.serverUrl);
+        console.log('🎯 VAPI will send transcript + token to n8n webhook');
 
         window.vapiSDK.run({
           ...vapiConfig,
@@ -207,7 +213,16 @@
             variableValues: {
               name: candidateName,
               candidateName: candidateName,
-              sessionId: sessionToken
+              sessionId: sessionToken,
+              sessionToken: sessionToken  // Add session token for n8n lookup
+            },
+            // Also add to metadata for webhook processing
+            metadata: {
+              candidateName: candidateName,
+              sessionId: sessionToken,
+              sessionToken: sessionToken,  // Critical for Airtable lookup
+              interviewType: 'phone',
+              source: 'bloom-buddies-interview'
             }
           },
           onError: (error) => {
