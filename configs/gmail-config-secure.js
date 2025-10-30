@@ -1,9 +1,44 @@
+/**
+ * Environment-Safe Configuration for Interview Reports
+ * Uses environment variables for sensitive data
+ */
+
+// Load environment variables (in a real Node.js environment)
+// For n8n, you'll set these in the n8n environment or use n8n's credential system
+
+// Environment variables to set in your deployment:
+const config = {
+    // Gmail settings (use n8n Gmail credentials instead of hardcoding)
+    gmail: {
+        user: process.env.GMAIL_USER || '{{ $node["Gmail Credentials"].parameter.user }}',
+        // Don't hardcode passwords - use n8n's credential system
+    },
+    
+    // Airtable settings
+    airtable: {
+        baseId: process.env.AIRTABLE_BASE_ID || 'your_base_id',
+        tableName: process.env.AIRTABLE_TABLE_NAME || 'Interview Records',
+        // API key should be in n8n credentials, not here
+    },
+    
+    // VAPI settings
+    vapi: {
+        assistantId: process.env.VAPI_ASSISTANT_ID || 'your_assistant_id',
+        // API key should be in n8n credentials
+    }
+};
+
+// Subject Line Configuration - No secrets here, safe to commit
+const subjectLine = `🌸 Interview Report: {{ $node["Update record"].json.fields["Candidate Name"] }} - {{ $node["Update record"].json.fields.Recommandation }} ({{ $node["Update record"].json.fields.score }}/10)`;
+
+// HTML Email Body Configuration - No secrets here, safe to commit
+const htmlEmailBody = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interview Report - Wednesday (Preview)</title>
+    <title>Interview Report - {{ $node["Update record"].json.fields["Candidate Name"] }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -190,25 +225,9 @@
             .main-score { font-size: 3em; }
             body { padding: 10px; }
         }
-        
-        /* Preview notice */
-        .preview-notice {
-            background: #fef3c7;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #f59e0b;
-            text-align: center;
-            font-weight: bold;
-            color: #92400e;
-        }
     </style>
 </head>
 <body>
-    <div class="preview-notice">
-        📧 EMAIL TEMPLATE PREVIEW - This shows how the email will look with sample data
-    </div>
-    
     <div class="container">
         <!-- Header -->
         <div class="header">
@@ -219,23 +238,25 @@
                 <tr>
                     <td style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
                         <strong>Candidate</strong><br>
-                        Wednesday
+                        {{ $node["Update record"].json.fields["Candidate Name"] }}
                     </td>
                     <td style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
                         <strong>Interview Date</strong><br>
-                        October 29, 2025
+                        {{ new Date($node["Update record"].json.fields["Interview Time"]).toLocaleDateString('en-US', { 
+                            year: 'numeric', month: 'long', day: 'numeric' 
+                        }) }}
                     </td>
                     <td style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
                         <strong>Duration</strong><br>
-                        1.97 minutes
+                        {{ $node["Update record"].json.fields["Interview Length"] }} minutes
                     </td>
                     <td style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
                         <strong>Email</strong><br>
-                        hugh@xenergies.com
+                        {{ $node["Update record"].json.fields.Email }}
                     </td>
                     <td style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
                         <strong>Status</strong><br>
-                        interviewed
+                        {{ $node["Update record"].json.fields.status }}
                     </td>
                 </tr>
             </table>
@@ -245,19 +266,19 @@
                 <tr>
                     <td style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
                         <strong>Communication</strong><br>
-                        <span style="font-size: 1.5em; font-weight: bold; color: #ff8c00;">5/10</span>
+                        <span style="font-size: 1.5em; font-weight: bold; color: {{ $node["Update record"].json.fields.Communication >= 7 ? '#007bff' : ($node["Update record"].json.fields.Communication >= 5 ? '#ff8c00' : '#dc3545') }};">{{ $node["Update record"].json.fields.Communication }}/10</span>
                     </td>
                     <td style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
                         <strong>Enthusiasm</strong><br>
-                        <span style="font-size: 1.5em; font-weight: bold; color: #ff8c00;">5/10</span>
+                        <span style="font-size: 1.5em; font-weight: bold; color: {{ $node["Update record"].json.fields.enthusiasm >= 7 ? '#007bff' : ($node["Update record"].json.fields.enthusiasm >= 5 ? '#ff8c00' : '#dc3545') }};">{{ $node["Update record"].json.fields.enthusiasm }}/10</span>
                     </td>
                     <td style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
                         <strong>Professionalism</strong><br>
-                        <span style="font-size: 1.5em; font-weight: bold; color: #ff8c00;">6/10</span>
+                        <span style="font-size: 1.5em; font-weight: bold; color: {{ $node["Update record"].json.fields.professionalism >= 7 ? '#007bff' : ($node["Update record"].json.fields.professionalism >= 5 ? '#ff8c00' : '#dc3545') }};">{{ $node["Update record"].json.fields.professionalism }}/10</span>
                     </td>
                     <td style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
                         <strong>Overall Score</strong><br>
-                        <span style="font-size: 1.8em; font-weight: bold; color: #ff8c00;">6/10</span>
+                        <span style="font-size: 1.8em; font-weight: bold; color: {{ $node["Update record"].json.fields.score >= 7 ? '#007bff' : ($node["Update record"].json.fields.score >= 5 ? '#ff8c00' : '#dc3545') }};">{{ $node["Update record"].json.fields.score }}/10</span>
                     </td>
                 </tr>
             </table>
@@ -268,22 +289,22 @@
             <div class="section">
                 <h3>📅 Candidate Availability</h3>
                 <div class="availability-text">
-                    Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.
+                    {{ $node["Update record"].json.fields.availability }}
                 </div>
             </div>
 
             <!-- Recommendation -->
-            <div class="recommendation interviewfurther">
+            <div class="recommendation {{ $node['Update record'].json.fields.Recommandation.toLowerCase().replace(' ', '') }}">
                 <h3 style="margin-bottom: 15px; font-size: 1.5em;">
-                    🎯 Recommendation: Interview Further
+                    🎯 Recommendation: {{ $node["Update record"].json.fields.Recommandation }}
                 </h3>
                 <div style="font-size: 1.1em; margin-bottom: 15px;">
                     <strong>Executive Summary:</strong><br>
-                    Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.
+                    {{ $node["Update record"].json.fields["Interview Summary"] }}
                 </div>
                 <div style="background: rgba(255,255,255,0.7); padding: 15px; border-radius: 8px;">
                     <strong>Detailed Analysis:</strong><br>
-                    Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.
+                    {{ $node["Update record"].json.fields["Interview Analysis"] }}
                 </div>
             </div>
 
@@ -291,45 +312,31 @@
             <div class="section">
                 <h3>🎯 Next Action</h3>
                 <p style="background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #3b82f6;">
-                    Arrange follow-up interview focusing on communication skills and availability details
+                    {{ $node["Update record"].json.fields["Next Action Recommendation"] }}
                 </p>
             </div>
 
             <!-- Interview Transcript -->
             <div class="section">
                 <h3>📞 Interview Transcript</h3>
-                <div class="transcript-box">AI: Hi. Is this Jane? Hi, Jane. This is Vanessa from Bloom Buddies. Thanks for taking the time to interview with us.
-User: You're welcome.
-AI: Jane, if you are ready, let's begin the interview. I'll ask a few quick questions to help our team understand if this could be a great fit for both of you. Are you ready to get started?
-User: Yes.
-AI: Great. First, I'd like to know more about your availability. What's your availability over the next 2 weeks? Are you available for weekday mornings, afternoons, or evenings?
-User: Written warnings except Friday.
-AI: Thank you for sharing that, Jane. Just to clarify, are you completely unavailable on Fridays? Do you have some availability on that day?
-User: I'm completely unavailable.
-AI: Got it. So you're available for weekday mornings, afternoons, and evenings, but completely unavailable on Fridays. Thank you for clarifying that. Now could you
-User: No. No. No. Listen. I'm unavailable. I'm available only on week day mornings.
-AI: Thank you for your patience, Jane. So just to confirm, you are available only on weekday mornings and completely unavailable at all other times including Fridays. Is that correct?
-User: Correct.
-AI: Thank you for the clarification, Jane. Next, could you share your background in babysitting and your experience with children? How long have you been babysitting?
-User: For 3 years for a daycare center in Paris, for children under 3.
-AI: That sounds like valuable experience, Jane. Working in a day care center for 3 years, particularly with children under 3, certainly gives you a solid background in childcare. Now could you tell me about your approach to safety when caring for children? What practices do you have in place to ensure their safety?
-User: I always carry, uh, phone with me, and I make sure the premises are secure.
-AI: That's excellent, Jane. Keeping a phone for communication and ensuring the premises are secure are both vital safety practices. Thank you for sharing your experience and safety practices with me. Before we wrap up, do you have any questions about Bloom Buddies or the application process?
-User: Hello?
-AI: I'm here, Jane. Do you have any questions about Bloom Buddies or the application process?
-User: No.
-AI: Alright. Thank you, Jane. Our team will review your responses and reach out within 48 hours if there's a potential match. Have a wonderful day.
-User: Thank you.
-AI: You're welcome, Jane. Take care, and I'll be in touch soon. Goodbye.</div>
+                <div class="transcript-box">{{ $node["Update record"].json.fields["Interview Transcript"] }}</div>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="footer">
             <p><strong>Bloom Buddies Interview Analysis System</strong></p>
-            <p>Report generated on October 30, 2025 at 3:45:22 PM</p>
-            <p><em>Record ID: recRC6xe2QgzSLrJ4</em></p>
+            <p>Report generated on {{ new Date().toLocaleString() }}</p>
+            <p><em>Record ID: {{ $node["Update record"].json.id }}</em></p>
         </div>
     </div>
 </body>
 </html>
+`;
+
+// Export for n8n Gmail node configuration
+module.exports = {
+    subject: subjectLine,
+    htmlBody: htmlEmailBody,
+    config: config
+};

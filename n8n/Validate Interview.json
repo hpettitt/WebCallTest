@@ -1,0 +1,122 @@
+{
+  "name": "Validate Interview",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appni7Lgyrk5sjLXY",
+          "mode": "list",
+          "cachedResultName": "Candidate Tracker",
+          "cachedResultUrl": "https://airtable.com/appni7Lgyrk5sjLXY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZbvFHR0vV2pPCd",
+          "mode": "list",
+          "cachedResultName": "Candidates",
+          "cachedResultUrl": "https://airtable.com/appni7Lgyrk5sjLXY/tblZbvFHR0vV2pPCd"
+        },
+        "filterByFormula": "={{ '{token} = \"' + $json.body.token + '\"' }}\n\n",
+        "options": {
+          "fields": [
+            "Candidate Name",
+            "Email",
+            "Interview Time",
+            "token"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        528,
+        112
+      ],
+      "id": "ec2da276-84e0-4ddc-977b-dba9393ee989",
+      "name": "Search records",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "GlLleKlNhJoLBHNg",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "interview-verify",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "9af94d34-02e0-45e6-9389-29d2f011b824",
+      "name": "Index.htm2 n8n Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        304,
+        112
+      ],
+      "webhookId": "66fbeac1-d75a-41b1-8118-174cd4004cfd"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get the single record from Airtable (no records array)\nconst record = $input.first().json;\n\n// Debug: Log all field names\nconsole.log('Available fields:', Object.keys(record));\n\n// Extract required fields (adjust names if needed)\nconst fullName = record['Candidate Name'];\nconst interviewTimeStr = record['Interview Time'];\n\n// Validate presence\nif (fullName === undefined) {\n  throw new Error('Field \"Candidate Name\" not found. Available: ' + Object.keys(record).join(', '));\n}\nif (interviewTimeStr === undefined) {\n  throw new Error('Field \"Interview Time\" not found. Available: ' + Object.keys(record).join(', '));\n}\n\n// Extract first name (part before first space)\nconst firstName = fullName.trim().split(' ')[0] || fullName.trim();\n\n// Parse interview time\nconst interviewTime = new Date(interviewTimeStr);\nconst now = new Date();\n\n// Define window: 5 min before, 20 min after\nconst FIVE_MIN = 5 * 60 * 1000;\nconst TWENTY_MIN = 20 * 60 * 1000;\n\nconst windowStart = new Date(interviewTime.getTime() - FIVE_MIN);\nconst windowEnd = new Date(interviewTime.getTime() + TWENTY_MIN);\n\nconst isValid = now >= windowStart && now <= windowEnd;\n\n// Return clean response\nreturn [{\n  json: {\n    is_valid: isValid,\n    first_name: firstName\n  }\n}];"
+      },
+      "id": "515148a5-0b61-43fc-a203-62ada9b3ce19",
+      "name": "ValidateToken1",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        752,
+        112
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "ValidateToken1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Index.htm2 n8n Webhook": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a102ca5f-2085-4722-89ef-782780ae13cd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "284a84a1d400f6d1ada06109f828bbf4c037189cced3fee307ec4124b37731a0"
+  },
+  "id": "UV1Sv04NCwXCKozL",
+  "tags": []
+}

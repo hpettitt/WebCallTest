@@ -1,4 +1,4 @@
-﻿# Environment files - never commit these
+# Environment files - never commit these
 .env
 .env.local
 .env.production
@@ -18,10 +18,16 @@ logs/
 
 # OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # Editor files
 .vscode/settings.json
+.idea/
 
 # Temporary files
 *.tmp
