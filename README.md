@@ -102,4 +102,5 @@ Technical Data:
 Start development environment.
     1. load docker
     2. Play n8n Container
-    3. open cmd line: load 
+    3. open cmd line: load ngrok 
+    4. configure ngrok http http:https://kraig-unjustified-collinearly.ngrok-free.dev/ 
