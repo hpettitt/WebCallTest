@@ -78,6 +78,13 @@
     const token = urlParams.get('token');
     const testMode = urlParams.get('test') === 'true'; // Allow test mode with ?test=true
     
+    // Debug: Log the initial URL and token extraction
+    console.log('🔍 DEBUG: index.html initial load:');
+    console.log('- Full URL:', window.location.href);
+    console.log('- Raw token from URL:', token);
+    console.log('- Test mode:', testMode);
+    console.log('- All URL params:', Object.fromEntries(urlParams.entries()));
+    
     // Check if token exists (unless in test mode)
     if (!token && !testMode) {
       console.log('No token provided, redirecting to error page');
@@ -85,6 +92,7 @@
     } else {
       const finalToken = token || 'test-token'; // Use test token only in test mode
       console.log('Token found:', finalToken, testMode ? '(test mode)' : '');
+      console.log('✅ Proceeding with token:', finalToken);
       
       // Show loading state
       document.getElementById('loadingCard').innerHTML = `
@@ -95,7 +103,7 @@
       `;
 
       // Test n8n endpoint with token
-      fetch('https://kraig-unjustified-collinearly.ngrok-free.dev/webhook-test/interview-verify', {
+      fetch('https://kraig-unjustified-collinearly.ngrok-free.dev/webhook/interview-verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -263,9 +271,19 @@
 
     // New function to handle valid interviews
     function proceedWithInterview(firstName) {
-      // Create a simple session token for demo purposes
-      const sessionToken = btoa(`${firstName}-${Date.now()}`);
-      window.location.href = `interview.html?session=${encodeURIComponent(sessionToken)}&name=${encodeURIComponent(firstName)}`;
+      // Get the original token from the URL
+      const originalToken = urlParams.get('token') || 'test-token';
+      
+      // Debug: Log what we're passing to interview.html
+      console.log('🔍 DEBUG: Proceeding to interview.html with:');
+      console.log('- Original token from URL:', originalToken);
+      console.log('- First name:', firstName);
+      
+      // Pass original token as session and preserve it - simple approach
+      const interviewUrl = `interview.html?session=${encodeURIComponent(originalToken)}&name=${encodeURIComponent(firstName)}`;
+      console.log('- Interview URL:', interviewUrl);
+      
+      window.location.href = interviewUrl;
     }
   </script>
 </body>

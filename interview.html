@@ -63,6 +63,61 @@
     }
     #readyBtn:hover { background: #059669; transform: scale(1.03); }
     .footer { margin-top: 25px; font-size: 13px; color: #6b7280; }
+    
+    /* Hide VAPI SDK telephone icon after call starts */
+    .vapi-hidden {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
+    }
+    
+    /* Target common VAPI SDK button patterns - stronger rules */
+    .call-started [data-vapi],
+    .call-started .vapi-button,
+    .call-started .vapi-widget,
+    .call-started [class*="vapi"],
+    .call-started [class*="Vapi"],
+    .call-started button[aria-label*="call"],
+    .call-started button[aria-label*="phone"],
+    .call-started div[data-vapi-widget],
+    .call-started .vapi-widget-container,
+    .call-started [id*="vapi"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
+      z-index: -1000 !important;
+    }
+    
+    /* Style VAPI button to appear above our text */
+    [data-vapi],
+    .vapi-button,
+    .vapi-widget,
+    [class*="vapi"]:not(.vapi-hidden),
+    button[aria-label*="call"],
+    button[aria-label*="phone"] {
+      position: fixed !important;
+      top: calc(50% + 100px) !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      z-index: 1000 !important;
+      margin: 20px auto !important;
+      display: block !important;
+    }
+    
+    /* Ensure our button appears below VAPI button */
+    #readyBtn {
+      position: relative !important;
+      z-index: 999 !important;
+      margin-top: 100px !important;
+    }
   </style>
 </head>
 <body>
@@ -70,6 +125,7 @@
     // Declare variables in wider scope
     let sessionToken;
     let candidateName;
+    let originalToken; // This will be the same as sessionToken now
 
     // Add loadVapiSDK function
     async function loadVapiSDK() {
@@ -103,17 +159,29 @@
     // Update DOMContentLoaded event handler
     document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
+        
         // Assign to outer scope variables
         sessionToken = urlParams.get('session');
         candidateName = urlParams.get('name');
+        originalToken = sessionToken; // Use session token as original token (they're the same now)
+        
+        // Debug: Log what we received from index.html
+        console.log('🔍 DEBUG: URL parameters received in interview.html:');
+        console.log('- Full URL:', window.location.href);
+        console.log('- Session token (original token):', sessionToken);
+        console.log('- Candidate name:', candidateName);
+        console.log('- All URL params:', Object.fromEntries(urlParams.entries()));
         
         if (!sessionToken || !candidateName) {
+            console.error('❌ Missing required parameters:', { sessionToken, candidateName });
             window.location.href = 'error.html';
         } else {
             const nameSpan = document.getElementById('candidateNameSpan');
             if (nameSpan) {
                 nameSpan.textContent = candidateName;
             }
+            console.log('✅ Parameters validated, proceeding with interview setup');
+            console.log('🔑 Using original token for VAPI:', originalToken);
         }
     });
 
@@ -130,6 +198,7 @@
         const requestPayload = { 
           sessionToken,
           candidateName,
+          originalToken: originalToken, // Use the actual original token
           // Add additional context for server-side processing
           requestType: 'interview-start',
           timestamp: new Date().toISOString(),
@@ -138,6 +207,7 @@
           configureAssistantWith: {
             candidateName: candidateName,
             sessionId: sessionToken,
+            originalToken: originalToken, // Pass actual original token to n8n
             interviewType: 'phone',
             customInstructions: `Always address the candidate as ${candidateName} throughout the interview.`
           }
@@ -176,7 +246,7 @@
           apiKey: vapiKey,
           assistant: vapiAssistantId,
           // ADD WEBHOOK URL FOR TRANSCRIPT/CALL EVENTS
-          serverUrl: "https://kraig-unjustified-collinearly.ngrok-free.dev/webhook-test/vapi-call-completed",
+          serverUrl: "https://kraig-unjustified-collinearly.ngrok-free.dev/webhook/vapi-call-completed",
           config: { 
             disableDefaultButton: false,
             autoStart: false,
@@ -195,16 +265,18 @@
           name: candidateName,
           candidateName: candidateName,
           sessionId: sessionToken,
-          sessionToken: sessionToken  // Add token for n8n processing
+          sessionToken: sessionToken,  // Add token for n8n processing
+          originalToken: originalToken  // Include actual original token from index.html
         };
         
         console.log('🚀 Starting VAPI with config:', vapiConfig);
         console.log('👤 Candidate name being sent to VAPI:', candidateName);
         console.log('🎫 Session ID being sent to VAPI:', sessionToken);
-        console.log('🔖 Session Token for Airtable lookup:', sessionToken);
+        console.log('� Original Token for Airtable lookup:', originalToken);
+        console.log('🔍 Token comparison - Session vs Original:', { sessionToken, originalToken, same: sessionToken === originalToken });
         console.log('📊 Variable values for VAPI:', variableValues);
         console.log('🔗 Webhook URL configured:', vapiConfig.serverUrl);
-        console.log('🎯 VAPI will send transcript + token to n8n webhook');
+        console.log('🎯 VAPI will send transcript + original token to n8n webhook');
 
         window.vapiSDK.run({
           ...vapiConfig,
@@ -214,13 +286,15 @@
               name: candidateName,
               candidateName: candidateName,
               sessionId: sessionToken,
-              sessionToken: sessionToken  // Add session token for n8n lookup
+              sessionToken: sessionToken,  // Add session token for n8n lookup
+              originalToken: originalToken  // Include actual original token from index.html
             },
             // Also add to metadata for webhook processing
             metadata: {
               candidateName: candidateName,
               sessionId: sessionToken,
               sessionToken: sessionToken,  // Critical for Airtable lookup
+              originalToken: originalToken,  // Include actual original token for n8n processing
               interviewType: 'phone',
               source: 'bloom-buddies-interview'
             }
@@ -233,6 +307,7 @@
           onCallStart: (data) => {
             console.log('📞 Call started');
             console.log('📊 Call start data:', data);
+            
             if (data && data.call) {
               console.log('🔍 Call object:', data.call);
               if (data.call.metadata || data.call.meta) {
@@ -251,11 +326,86 @@
                 }
               }
             }
+            
+            // Hide our custom button but keep VAPI button visible during call
             button.style.display = 'none';
           },
-          onCallEnd: () => {
+          onCallEnd: (data) => {
             console.log('📴 Call ended');
-            window.location.href = 'thank-you.html';
+            console.log('📊 Call end data:', data);
+            
+            // Check if this is actually the end of the conversation, not just a disconnect
+            // Only hide VAPI elements if the call had a meaningful duration or transcript
+            const shouldHideElements = data && (
+              (data.call && data.call.duration && data.call.duration > 5) || // Call lasted more than 5 seconds
+              (data.transcript && data.transcript.length > 0) || // There was a transcript
+              (data.summary && data.summary.length > 0) // There was a summary
+            );
+            
+            if (shouldHideElements) {
+              console.log('✅ Call had content - hiding VAPI elements and redirecting');
+              
+              // IMMEDIATELY hide all VAPI elements to prevent additional calls
+              const hideVapiElements = () => {
+                const allSelectors = [
+                  '[data-vapi]',
+                  '.vapi-button', 
+                  '.vapi-widget',
+                  '[class*="vapi"]',
+                  'button[aria-label*="call"]',
+                  'button[aria-label*="phone"]',
+                  '.vapi-call-button',
+                  '[data-testid*="vapi"]',
+                  'button[data-vapi-button]',
+                  '[data-vapi-widget]',
+                  '.vapi-phone-button',
+                  '[class*="VapiButton"]',
+                  'div[data-vapi-widget]',
+                  '.vapi-widget-container',
+                  '[id*="vapi"]',
+                  '[class*="Vapi"]'
+                ];
+                
+                allSelectors.forEach(selector => {
+                  const elements = document.querySelectorAll(selector);
+                  elements.forEach(el => {
+                    if (el) {
+                      el.style.display = 'none !important';
+                      el.style.visibility = 'hidden !important';
+                      el.style.opacity = '0 !important';
+                      el.style.pointerEvents = 'none !important';
+                      el.style.position = 'absolute !important';
+                      el.style.left = '-9999px !important';
+                      el.classList.add('vapi-hidden');
+                      
+                      if (el.tagName === 'BUTTON') {
+                        el.disabled = true;
+                      }
+                    }
+                  });
+                });
+              };
+              
+              // Hide elements immediately
+              hideVapiElements();
+              setTimeout(hideVapiElements, 100);
+              
+              // Add CSS class to body for additional hiding
+              document.body.classList.add('call-started');
+              
+              // Redirect to thank you page
+              setTimeout(() => {
+                window.location.href = 'thank-you.html';
+              }, 300);
+              
+            } else {
+              console.log('⚠️ Call ended too quickly - might be a connection issue, keeping VAPI available');
+              // Don't hide elements, let user try again
+              // Show our button again in case they need to restart
+              button.style.display = 'inline-block';
+              button.textContent = 'Try Again';
+              button.disabled = false;
+            }
           },
           onMessage: (message) => {
             console.log('💬 VAPI Message:', message);
@@ -283,6 +433,43 @@
 
         button.textContent = 'Click on the telephone to connect!';
         button.style.backgroundColor = '#059669';
+
+        // Position VAPI button above our text after a short delay
+        setTimeout(() => {
+          const positionVapiButton = () => {
+            const vapiSelectors = [
+              '[data-vapi]',
+              '.vapi-button',
+              '.vapi-widget',
+              '[class*="vapi"]',
+              'button[aria-label*="call"]',
+              'button[aria-label*="phone"]',
+              '[data-testid*="vapi"]'
+            ];
+            
+            vapiSelectors.forEach(selector => {
+              const elements = document.querySelectorAll(selector);
+              elements.forEach(el => {
+                if (el && !el.classList.contains('vapi-hidden')) {
+                  // Position the VAPI button in the center, 200px lower than center
+                  el.style.position = 'fixed';
+                  el.style.top = 'calc(50% + 100px)';
+                  el.style.left = '50%';
+                  el.style.transform = 'translate(-50%, -50%)';
+                  el.style.zIndex = '1000';
+                  el.style.margin = '0';
+                  console.log('📍 Positioned VAPI element 200px lower:', el);
+                }
+              });
+            });
+          };
+          
+          // Try positioning multiple times to catch dynamically loaded elements
+          positionVapiButton();
+          setTimeout(positionVapiButton, 500);
+          setTimeout(positionVapiButton, 1000);
+          setTimeout(positionVapiButton, 2000);
+        }, 100);
 
       } catch (error) {
         console.error('Connection error:', error);

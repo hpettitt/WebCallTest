@@ -1,0 +1,15 @@
+{
+  "model": "gpt-4",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an expert interview analyst for Bloom Buddies. Analyze phone interview transcripts and provide comprehensive evaluations. Return your response as valid JSON only, no additional text."
+    },
+    {
+      "role": "user",
+      "content": "Analyze this interview transcript for candidate: {{ $node['Extract Call Data'].json.candidate.name }}\n\nTranscript: {{ $node['Extract Call Data'].json.transcript.full }}\n\nDuration: {{ $node['Extract Call Data'].json.callStats.duration.minutes }} minutes\n\nCandidate Details:\n- Session ID: {{ $node['Extract Call Data'].json.candidate.sessionId }}\n- Original Token: {{ $node['Extract Call Data'].json.candidate.originalToken }}\n- Interview Responses: {{ JSON.stringify($node['Extract Call Data'].json.candidate.responses) }}\n\nCall Statistics:\n- Total Messages: {{ $node['Extract Call Data'].json.conversation.totalMessages }}\n- Call ID: {{ $node['Extract Call Data'].json.callStats.callId }}\n- Ended Reason: {{ $node['Extract Call Data'].json.callStats.endedReason }}\n\nPlease analyze and return ONLY a JSON object with these exact fields:\n{\n  \"candidateName\": \"{{ $node['Extract Call Data'].json.candidate.name }}\",\n  \"sessionId\": \"{{ $node['Extract Call Data'].json.candidate.sessionId }}\",\n  \"originalToken\": \"{{ $node['Extract Call Data'].json.candidate.originalToken }}\",\n  \"overallScore\": number (1-10),\n  \"communicationSkillsScore\": number (1-10),\n  \"enthusiasmScore\": number (1-10),\n  \"professionalismScore\": number (1-10),\n  \"experienceScore\": number (1-10),\n  \"availabilityScore\": number (1-10),\n  \"keyStrengths\": [\"strength1\", \"strength2\"],\n  \"areasForImprovement\": [\"area1\", \"area2\"],\n  \"executiveSummary\": \"2-3 sentence summary\",\n  \"recommendation\": \"Hire|Interview Further|Pass\",\n  \"detailedFeedback\": \"detailed analysis\",\n  \"redFlags\": [\"any concerning behaviors\"],\n  \"standoutMoments\": [\"impressive responses or behaviors\"],\n  \"extractedResponses\": {\n    \"availability\": \"candidate's availability answer\",\n    \"experience\": \"candidate's experience answer\",\n    \"safetyPractices\": \"candidate's safety practices answer\"\n  }\n}"
+    }
+  ],
+  "temperature": 0.3,
+  "max_tokens": 2000
+}

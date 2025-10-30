@@ -96,3 +96,10 @@ Technical Data:
 - Transcript (full conversation)
 - Recording_URL (if available)
 - Processed_At (when AI analysis completed)
+
+
+
+Start development environment.
+    1. load docker
+    2. Play n8n Container
+    3. open cmd line: load 
