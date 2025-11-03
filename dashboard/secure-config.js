@@ -90,6 +90,12 @@ class SecureConfig {
 
     verifyPassword(inputPassword, storedHash) {
         const inputHash = this.hashPassword(inputPassword);
+        console.log('🔐 Password Debug:', {
+            inputPassword: inputPassword,
+            inputHash: inputHash,
+            storedHash: storedHash,
+            match: inputHash === storedHash
+        });
         return inputHash === storedHash;
     }
 
@@ -127,6 +133,12 @@ class SecureConfig {
 
     // Rate limiting for login attempts
     checkRateLimit(email) {
+        // Disable rate limiting for GitHub Pages demos
+        if (window.location.hostname.includes('github.io')) {
+            console.log('🎯 Rate limiting disabled for GitHub Pages demo');
+            return true;
+        }
+        
         const attempts = JSON.parse(localStorage.getItem('login_attempts') || '{}');
         const userAttempts = attempts[email] || { count: 0, lastAttempt: 0 };
         

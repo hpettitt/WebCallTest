@@ -27,6 +27,28 @@ For quick demo, replace 'your_token_here' with your actual Airtable token.
     
     showSetupHelp: function() {
         console.log(this.setupInstructions);
+    },
+    
+    // Debug helper for login issues
+    debugLogin: function() {
+        if (typeof SECURE_CONFIG !== 'undefined') {
+            console.log('🔐 Login Debug Info:');
+            console.log('Available users and their password hashes:');
+            const users = SECURE_CONFIG.validUsers;
+            Object.keys(users).forEach(email => {
+                console.log(`- ${email}: hash = ${users[email].passwordHash}`);
+            });
+            console.log('\n🧪 Test password hashes:');
+            console.log(`secure123 → ${SECURE_CONFIG.hashPassword('secure123')}`);
+            console.log(`admin123! → ${SECURE_CONFIG.hashPassword('admin123!')}`);
+            console.log('\n💡 Try: DEMO_HELPER.clearRateLimit() if locked out');
+        }
+    },
+    
+    // Clear rate limiting
+    clearRateLimit: function() {
+        localStorage.removeItem('login_attempts');
+        console.log('✅ Rate limiting cleared. You can try logging in again.');
     }
 };
 
