@@ -151,6 +151,15 @@ class AirtableManager {
         return `${this.baseUrl}/${this.baseId}/${encodedTableName}${endpoint}`;
     }
 
+    // Check if Airtable is properly configured
+    isConfigured() {
+        return !!(this.personalAccessToken && 
+                 this.personalAccessToken !== '' && 
+                 this.personalAccessToken !== 'YOUR_AIRTABLE_PAT_HERE' &&
+                 this.baseId && 
+                 this.tableName);
+    }
+
     // Fetch all candidates with caching and pagination
     async fetchCandidates(forceRefresh = false) {
         const cacheKey = 'candidates';
