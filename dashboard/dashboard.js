@@ -103,13 +103,20 @@ class Dashboard {
         }
 
         try {
-            // Check if Airtable is configured
-            if (!airtable.isConfigured()) {
-                this.showError('Airtable is not configured. Please update config.js with your API credentials.');
+            // Check if Airtable manager exists and is configured
+            if (!window.airtable) {
+                console.error('❌ Airtable manager not initialized');
+                this.showError('Airtable manager not initialized. Please refresh the page.');
                 return;
             }
 
-            this.candidates = await airtable.fetchCandidates();
+            if (!window.airtable.isConfigured()) {
+                console.log('ℹ️ Airtable not configured, showing setup instructions');
+                this.showError('Airtable is not configured. Please configure your token using the setup instructions.');
+                return;
+            }
+
+            this.candidates = await window.airtable.fetchCandidates();
             this.filteredCandidates = [...this.candidates];
             
             this.updateStatistics();
@@ -151,12 +158,12 @@ class Dashboard {
     }
 
     applyFilters() {
-        this.filteredCandidates = airtable.filterCandidates(this.candidates, this.currentFilters);
+        this.filteredCandidates = window.airtable.filterCandidates(this.candidates, this.currentFilters);
         this.renderCandidates();
     }
 
     updateStatistics() {
-        const stats = airtable.getStatistics(this.candidates);
+        const stats = window.airtable.getStatistics(this.candidates);
         
         this.updateStatElement('totalCandidates', stats.total);
         this.updateStatElement('pendingReviews', stats.pending);
@@ -187,7 +194,7 @@ class Dashboard {
         }
 
         // Sort candidates by most recent first
-        const sortedCandidates = airtable.sortCandidates(this.filteredCandidates, 'lastUpdated', 'desc');
+        const sortedCandidates = window.airtable.sortCandidates(this.filteredCandidates, 'lastUpdated', 'desc');
 
         grid.innerHTML = sortedCandidates.map((candidate, index) => 
             this.createCandidateCard(candidate, index)
@@ -430,7 +437,7 @@ class Dashboard {
             const newStatus = action === 'accept' ? 'accepted' : 'rejected';
             
             // Update in Airtable
-            await airtable.updateCandidateStatus(candidateId, newStatus);
+            await window.airtable.updateCandidateStatus(candidateId, newStatus);
             
             // Send webhook to n8n for email automation
             await this.triggerEmailWorkflow(candidateId, action);
