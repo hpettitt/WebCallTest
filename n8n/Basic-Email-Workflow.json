@@ -1,0 +1,122 @@
+{
+  "name": "Basic Email Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "status-change",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "basic-status-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "operation": "equal",
+              "value2": "accept"
+            }
+          ]
+        }
+      },
+      "id": "if-accept",
+      "name": "Is Accept?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "operation": "equal", 
+              "value2": "reject"
+            }
+          ]
+        }
+      },
+      "id": "if-reject",
+      "name": "Is Reject?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 500]
+    },
+    {
+      "parameters": {
+        "to": "={{ $json.email }}",
+        "subject": "Welcome to Bloom Buddies!",
+        "message": "Congratulations! You've been accepted."
+      },
+      "id": "email-accept",
+      "name": "Send Accept Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "to": "={{ $json.email }}",
+        "subject": "Thank you for applying",
+        "message": "Thank you for your interest. We've decided to move forward with other candidates."
+      },
+      "id": "email-reject", 
+      "name": "Send Reject Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [680, 600]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Accept?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Reject?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Accept?": {
+      "main": [
+        [
+          {
+            "node": "Send Accept Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Reject?": {
+      "main": [
+        [
+          {
+            "node": "Send Reject Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "basic-v1"
+}

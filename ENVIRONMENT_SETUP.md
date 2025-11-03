@@ -33,9 +33,14 @@
 - `GMAIL_APP_PASSWORD`: Gmail app-specific password (not your regular password)
 
 ### Airtable Configuration
-- `AIRTABLE_API_KEY`: Your Airtable API key
+- `AIRTABLE_PERSONAL_ACCESS_TOKEN`: Your Airtable Personal Access Token (PAT)
 - `AIRTABLE_BASE_ID`: Base ID from your Airtable URL
 - `AIRTABLE_TABLE_NAME`: Name of your records table
+
+**Getting Airtable PAT:**
+1. Go to https://airtable.com/create/tokens
+2. Create new token with `data.records:read`, `data.records:write`, `schema.bases:read` scopes
+3. Add your base to the token access
 
 ## Security Best Practices
 

@@ -8,6 +8,8 @@
 *.key
 secrets.json
 config.private.json
+**/config-local.js
+**/config.local.js
 
 # Node modules
 node_modules/

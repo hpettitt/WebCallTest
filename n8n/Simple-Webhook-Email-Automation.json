@@ -1,0 +1,172 @@
+{
+  "name": "Bloom Buddies Email Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "bloom-buddies-status"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "candidateName",
+              "value": "={{ $json.fields['Candidate Name'] }}"
+            },
+            {
+              "name": "email", 
+              "value": "={{ $json.fields.Email }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $json.fields.status }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-data",
+      "name": "Extract Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node['Extract Data'].json.status }}",
+              "operation": "equal",
+              "value2": "accept"
+            }
+          ]
+        }
+      },
+      "id": "check-accept",
+      "name": "Is Accept?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node['Extract Data'].json.status }}",
+              "operation": "equal",
+              "value2": "reject"
+            }
+          ]
+        }
+      },
+      "id": "check-reject",
+      "name": "Is Reject?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        680,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $node['Extract Data'].json.email }}",
+        "subject": "Welcome to Bloom Buddies!",
+        "message": "Dear {{ $node['Extract Data'].json.candidateName.split(' ')[0] }},\n\nWe are pleased to inform you that we appreciated your responses, as well as your experience and availability for childcare. As such, you have earned an invitation link to create your babysitter account with us today.\n\nPlease sign up here: https://bloom-buddies.fr/sinscrire-babysitter\n\nThen join our WhatsApp group: https://chat.whatsapp.com/LJ8xwMUpozjHITfuvvTYZV?mode=wwt\n\nLooking forward to seeing you signed up with us and working with us.\n\nTeam Bloom"
+      },
+      "id": "send-accept",
+      "name": "Send Accept Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $node['Extract Data'].json.email }}",
+        "subject": "Thank you for your interest - Bloom Buddies",
+        "message": "Dear {{ $node['Extract Data'].json.candidateName }},\n\nThank you for your interest in joining the Bloom Buddies team and for taking the time to speak with us about your experience and passion for childcare.\n\nAfter careful consideration, we've decided to move forward with other candidates whose experience and availability more closely match our current needs.\n\nWe keep all applications on file for 6 months and may reach out if future opportunities arise.\n\nBest regards,\nThe Bloom Buddies Team"
+      },
+      "id": "send-reject",
+      "name": "Send Reject Email", 
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        900,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Is Accept?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Reject?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Accept?": {
+      "main": [
+        [
+          {
+            "node": "Send Accept Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Reject?": {
+      "main": [
+        [
+          {
+            "node": "Send Reject Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1.0"
+}

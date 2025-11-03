@@ -1,0 +1,23 @@
+{
+  "name": "Webhook Node Only",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bloom-buddies-status",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [300, 300],
+      "webhookId": "bloom-buddies-webhook"
+    }
+  ],
+  "connections": {},
+  "active": false,
+  "settings": {},
+  "versionId": "webhook-only-v1"
+}

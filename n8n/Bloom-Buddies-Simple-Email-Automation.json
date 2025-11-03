@@ -1,0 +1,167 @@
+{
+  "name": "Bloom Buddies Email Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "events": [
+          "record.updated"
+        ],
+        "base": {
+          "__rl": true,
+          "value": "appni7Lgyrk5sjLXY",
+          "mode": "list"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Candidates",
+          "mode": "list"
+        },
+        "additionalFields": {
+          "triggerFields": [
+            "status"
+          ]
+        }
+      },
+      "id": "1",
+      "name": "Airtable Trigger",
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.fields.status }}",
+              "operation": "equal",
+              "value2": "accept"
+            },
+            {
+              "value1": "={{ $json.fields.status }}",
+              "operation": "equal",
+              "value2": "reject"
+            }
+          ],
+          "combineOperation": "any"
+        }
+      },
+      "id": "2",
+      "name": "Status Filter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.fields.status }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "accept",
+              "output": 0
+            },
+            {
+              "value2": "reject",
+              "output": 1
+            }
+          ]
+        }
+      },
+      "id": "3",
+      "name": "Route Status",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.fields.Email }}",
+        "subject": "🎉 Welcome to Bloom Buddies - Application Accepted!",
+        "emailType": "html",
+        "message": "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:Arial,sans-serif;color:#333;padding:20px}.container{max-width:600px;margin:0 auto;background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.header{background:linear-gradient(135deg,#10b981,#34d399);color:white;padding:30px;text-align:center;border-radius:8px 8px 0 0}.content{padding:30px}.button{display:inline-block;background:#10b981;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;margin:10px 0}</style></head><body><div class=\"container\"><div class=\"header\"><h1>🌸 Bloom Buddies</h1><p>Childcare with the Heart of a Family</p></div><div class=\"content\"><h2>🎉 Congratulations!</h2><p>Dear {{ $json.fields['Candidate Name'].split(' ')[0] }},</p><p>We are pleased to inform you that we appreciated your responses, as well as your experience and availability for childcare. As such, you have earned an invitation link to create your babysitter account with us today.</p><h3>Step 1: Create Your Account</h3><p>Kindly sign up as soon as possible:</p><a href=\"https://bloom-buddies.fr/sinscrire-babysitter\" class=\"button\">🌸 Create Account</a><h3>Step 2: Join WhatsApp Group</h3><p>Join our WhatsApp group for job alerts:</p><a href=\"https://chat.whatsapp.com/LJ8xwMUpozjHITfuvvTYZV?mode=wwt\" class=\"button\">💬 Join WhatsApp</a><p>Looking forward to seeing you signed up with us and working with us.</p><p><strong>Team Bloom</strong></p></div></div></body></html>"
+      },
+      "id": "4",
+      "name": "Accept Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.fields.Email }}",
+        "subject": "Thank you for your interest - Bloom Buddies",
+        "emailType": "html",
+        "message": "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:Arial,sans-serif;color:#333;padding:20px}.container{max-width:600px;margin:0 auto;background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.header{background:linear-gradient(135deg,#5dc399,#7be1b6);color:white;padding:30px;text-align:center;border-radius:8px 8px 0 0}.content{padding:30px}</style></head><body><div class=\"container\"><div class=\"header\"><h1>🌸 Bloom Buddies</h1><p>Childcare with the Heart of a Family</p></div><div class=\"content\"><h2>🙏 Thank you</h2><p>Dear {{ $json.fields['Candidate Name'] }},</p><p>Thank you for your interest in joining the Bloom Buddies team and for taking the time to speak with us about your experience and passion for childcare.</p><p>After careful consideration, we've decided to move forward with other candidates whose experience and availability more closely match our current needs.</p><p>We keep all applications on file for 6 months and may reach out if future opportunities arise.</p><p>Best regards,<br><strong>The Bloom Buddies Team</strong></p></div></div></body></html>"
+      },
+      "id": "5",
+      "name": "Reject Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        900,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Airtable Trigger": {
+      "main": [
+        [
+          {
+            "node": "Status Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status Filter": {
+      "main": [
+        [
+          {
+            "node": "Route Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Status": {
+      "main": [
+        [
+          {
+            "node": "Accept Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0.0"
+}

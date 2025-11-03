@@ -1,10 +1,186 @@
-Gmail Node Configuration for Interview Reports
+ACCEPTANCE EMAIL TEMPLATE
+=========================
+
+Subject: 🎉 Welcome to Bloom Buddies - Application Accepted!
+
+HTML Email Body:
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .link-button {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .whatsapp-button {
+            display: inline-block;
+            background: #25D366;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .signature {
+            margin-top: 30px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Welcome to Bloom Buddies!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear <strong>{{ $json.fields['Candidate Name'].split(' ')[0] }}</strong>,</p>
+        
+        <p>We are pleased to inform you that we appreciated your responses, as well as your experience and availability for childcare. As such, you have earned an invitation link to create your babysitter account with us today.</p>
+        
+        <div style="text-align: center; margin: 25px 0;">
+            <a href="https://bloom-buddies.fr/sinscrire-babysitter" class="link-button">Create Your Babysitter Account</a>
+        </div>
+        
+        <p>Kindly sign up as soon as possible, then join our WhatsApp Conversation Group to be made alert of well paying job offers from Bloom Buddies Babysitting.</p>
+        
+        <div style="text-align: center; margin: 25px 0;">
+            <a href="https://chat.whatsapp.com/LJ8xwMUpozjHITfuvvTYZV?mode=wwt" class="whatsapp-button">Join WhatsApp Group</a>
+        </div>
+        
+        <p>Looking forward to seeing you signed up with us and working with us.</p>
+        
+        <div class="signature">
+            <p><strong>Team Bloom</strong></p>
+        </div>
+    </div>
+</body>
+</html>
+
+Plain Text Version:
+Dear {{ $json.fields['Candidate Name'].split(' ')[0] }},
+
+We are pleased to inform you that we appreciated your responses, as well as your experience and availability for childcare. As such, you have earned an invitation link to create your babysitter account with us today.
+
+Sign up here: https://bloom-buddies.fr/sinscrire-babysitter
+
+Kindly sign up as soon as possible, then join our WhatsApp Conversation Group to be made alert of well paying job offers from Bloom Buddies Babysitting.
+
+Join WhatsApp: https://chat.whatsapp.com/LJ8xwMUpozjHITfuvvTYZV?mode=wwt
+
+Looking forward to seeing you signed up with us and working with us.
+
+Team Bloom
+
+n8n Gmail Node Configuration:
+- To: {{ $json.fields.Email }}
+- Subject: 🎉 Welcome to Bloom Buddies - Application Accepted!
+- Message Type: HTML
+- HTML Body: [Use the HTML Email Body above]
+
 =================================================
 
-SUBJECT LINE:
-🌸 Interview Report: {{ $node["Update record"].json.fields["Candidate Name"] }} - {{ $node["Update record"].json.fields.Recommandation }} ({{ $node["Update record"].json.fields.score }}/10)
+REJECTION EMAIL TEMPLATE
+========================
 
-HTML MESSAGE BODY:
+Subject: Thank you for your interest - Bloom Buddies
+
+HTML Email Body:
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .signature {
+            margin-top: 30px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Thank you for your interest</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{ $json.fields['Candidate Name'] }},</p>
+        
+        <p>Thank you for your interest in joining the Bloom Buddies team and for taking the time to speak with us about your experience and passion for childcare.</p>
+        
+        <p>After careful consideration, we've decided to move forward with other candidates whose experience and availability more closely match our current needs.</p>
+        
+        <p>We keep all applications on file for 6 months and may reach out if future opportunities arise.</p>
+        
+        <div class="signature">
+            <p>Best regards,<br>
+            <strong>The Bloom Buddies Team</strong></p>
+        </div>
+    </div>
+</body>
+</html>
+
+Plain Text Version:
+Dear {{ $json.fields['Candidate Name'] }},
+
+Thank you for your interest in joining the Bloom Buddies team and for taking the time to speak with us about your experience and passion for childcare.
+
+After careful consideration, we've decided to move forward with other candidates whose experience and availability more closely match our current needs.
+
+We keep all applications on file for 6 months and may reach out if future opportunities arise.
+
+Best regards,
+The Bloom Buddies Team
+
+n8n Gmail Node Configuration:
+- To: {{ $json.fields.Email }}
+- Subject: Thank you for your interest - Bloom Buddies
+- Message Type: HTML
+- HTML Body: [Use the HTML Email Body above]
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -300,6 +476,12 @@ HTML MESSAGE BODY:
             <p><strong>Bloom Buddies Interview Analysis System</strong></p>
             <p>Report generated on {{ new Date().toLocaleString() }}</p>
             <p><em>Record ID: {{ $node["Update record"].json.id }}</em></p>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                <p>
+                    <strong>👉 <a href="https://hpettitt.github.io/WebCallTest/dashboard/index.html" style="color: #007bff; text-decoration: none;">Access Bloom Buddies Dashboard</a></strong><br>
+                    <span style="font-size: 0.9em; color: #64748b;">Manage candidates, update status, and view all interview reports</span>
+                </p>
+            </div>
         </div>
     </div>
 </body>

@@ -1,0 +1,270 @@
+{
+  "name": "Airtable Status Email Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "event": "record.updated",
+        "base": {
+          "__rl": true,
+          "value": "appni7Lgyrk5sjLXY",
+          "mode": "list"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Candidates",
+          "mode": "list"
+        },
+        "additionalFields": {
+          "triggerFields": [
+            "status"
+          ]
+        }
+      },
+      "id": "airtable-trigger",
+      "name": "Airtable Status Change",
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "1",
+          "name": "Airtable PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "accept-condition",
+              "leftValue": "={{ $json.fields.status }}",
+              "rightValue": "accept",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "reject-condition", 
+              "leftValue": "={{ $json.fields.status }}",
+              "rightValue": "reject",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "status-filter",
+      "name": "Filter Accept/Reject Only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.fields.status }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "accept",
+              "output": 0
+            },
+            {
+              "value2": "reject", 
+              "output": 1
+            }
+          ]
+        }
+      },
+      "id": "status-switch",
+      "name": "Route by Status",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.fields.Email }}",
+        "subject": "🎉 Welcome to Bloom Buddies - Your Application Has Been Accepted!",
+        "emailType": "html",
+        "message": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Welcome to Bloom Buddies</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { \n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; \n            line-height: 1.6; \n            color: #333; \n            background-color: #f8fafc;\n            padding: 20px;\n        }\n        .container { \n            max-width: 600px; \n            margin: 0 auto; \n            background: white; \n            border-radius: 12px; \n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n            overflow: hidden;\n        }\n        .header { \n            background: linear-gradient(135deg, #10b981, #34d399); \n            color: white; \n            padding: 40px 30px; \n            text-align: center;\n        }\n        .header h1 { \n            font-size: 2.2em; \n            margin-bottom: 10px; \n            text-shadow: 0 2px 4px rgba(0,0,0,0.2);\n        }\n        .content { \n            padding: 40px 30px; \n        }\n        .congratulations {\n            background: linear-gradient(135deg, #d1fae5, #a7f3d0);\n            padding: 30px;\n            border-radius: 12px;\n            margin: 20px 0;\n            border-left: 6px solid #10b981;\n            text-align: center;\n        }\n        .action-section {\n            background: #f8fafc;\n            padding: 25px;\n            border-radius: 8px;\n            border-left: 4px solid #5dc399;\n            margin: 25px 0;\n        }\n        .link-button {\n            display: inline-block;\n            background: linear-gradient(135deg, #5dc399, #7be1b6);\n            color: white;\n            padding: 15px 30px;\n            text-decoration: none;\n            border-radius: 8px;\n            font-weight: bold;\n            margin: 10px 0;\n            text-align: center;\n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n        }\n        .whatsapp-section {\n            background: #f0fdf4;\n            padding: 20px;\n            border-radius: 8px;\n            border-left: 4px solid #22c55e;\n            margin: 20px 0;\n        }\n        .footer { \n            background: #f1f5f9;\n            text-align: center; \n            color: #64748b; \n            padding: 20px;\n            border-top: 1px solid #e2e8f0;\n        }\n        .emoji { font-size: 1.5em; margin-right: 8px; }\n        @media (max-width: 768px) {\n            body { padding: 10px; }\n            .header h1 { font-size: 1.8em; }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>🌸 Bloom Buddies</h1>\n            <p style=\"font-size: 1.2em; opacity: 0.9;\">Childcare with the Heart of a Family</p>\n        </div>\n\n        <div class=\"content\">\n            <div class=\"congratulations\">\n                <h2 style=\"color: #065f46; margin-bottom: 15px; font-size: 1.8em;\">\n                    🎉 Congratulations!\n                </h2>\n                <p style=\"font-size: 1.2em; color: #047857;\">\n                    Your application has been <strong>accepted</strong>!\n                </p>\n            </div>\n\n            <p style=\"font-size: 1.1em; margin-bottom: 20px;\">\n                Dear {{ $json.fields['Candidate Name'].split(' ')[0] }},\n            </p>\n            \n            <p style=\"margin-bottom: 20px;\">\n                We are pleased to inform you that we appreciated your responses, as well as your experience and availability for childcare. As such, you have earned an invitation link to create your babysitter account with us today.\n            </p>\n\n            <div class=\"action-section\">\n                <h3 style=\"color: #065f46; margin-bottom: 15px;\">\n                    <span class=\"emoji\">�</span>Step 1: Create Your Account\n                </h3>\n                <p style=\"margin-bottom: 15px;\">Kindly sign up as soon as possible using the link below:</p>\n                <div style=\"text-align: center;\">\n                    <a href=\"https://bloom-buddies.fr/sinscrire-babysitter\" class=\"link-button\" target=\"_blank\">\n                        🌸 Create Your Babysitter Account\n                    </a>\n                </div>\n            </div>\n\n            <div class=\"whatsapp-section\">\n                <h3 style=\"color: #059669; margin-bottom: 15px;\">\n                    <span class=\"emoji\">�</span>Step 2: Join Our WhatsApp Group\n                </h3>\n                <p style=\"margin-bottom: 15px;\">\n                    After signing up, join our WhatsApp Conversation Group to be alerted of well-paying job offers from Bloom Buddies Babysitting:\n                </p>\n                <div style=\"text-align: center;\">\n                    <a href=\"https://chat.whatsapp.com/LJ8xwMUpozjHITfuvvTYZV?mode=wwt\" class=\"link-button\" target=\"_blank\" style=\"background: linear-gradient(135deg, #22c55e, #4ade80);\">\n                        💬 Join WhatsApp Group\n                    </a>\n                </div>\n            </div>\n\n            <p style=\"margin-top: 30px; font-size: 1.1em;\">\n                Looking forward to seeing you signed up with us and working with us.\n            </p>\n\n            <p style=\"margin-top: 20px;\">\n                <strong>Team Bloom</strong>\n            </p>\n        </div>\n\n        <div class=\"footer\">\n            <p><strong>Bloom Buddies Childcare</strong></p>\n            <p>Caring for children with the heart of a family</p>\n            <p style=\"margin-top: 10px; font-size: 0.9em;\">\n                This is an automated message. Please reply to hr@bloombuddies.com for any inquiries.\n            </p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "accept-email",
+      "name": "Send Accept Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        900,
+        200
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2",
+          "name": "Gmail OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.fields.Email }}",
+        "subject": "Thank you for your interest - Bloom Buddies Interview Update",
+        "emailType": "html",
+        "message": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Thank you from Bloom Buddies</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { \n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; \n            line-height: 1.6; \n            color: #333; \n            background-color: #f8fafc;\n            padding: 20px;\n        }\n        .container { \n            max-width: 600px; \n            margin: 0 auto; \n            background: white; \n            border-radius: 12px; \n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n            overflow: hidden;\n        }\n        .header { \n            background: linear-gradient(135deg, #5dc399, #7be1b6); \n            color: white; \n            padding: 40px 30px; \n            text-align: center;\n        }\n        .header h1 { \n            font-size: 2.2em; \n            margin-bottom: 10px; \n            text-shadow: 0 2px 4px rgba(0,0,0,0.2);\n        }\n        .content { \n            padding: 40px 30px; \n        }\n        .thank-you {\n            background: linear-gradient(135deg, #fef3c7, #fde68a);\n            padding: 30px;\n            border-radius: 12px;\n            margin: 20px 0;\n            border-left: 6px solid #f59e0b;\n            text-align: center;\n        }\n        .feedback-section {\n            background: #f8fafc;\n            padding: 25px;\n            border-radius: 8px;\n            border-left: 4px solid #5dc399;\n            margin: 25px 0;\n        }\n        .future-opportunities {\n            background: #eff6ff;\n            padding: 20px;\n            border-radius: 8px;\n            border-left: 4px solid #3b82f6;\n            margin: 20px 0;\n        }\n        .footer { \n            background: #f1f5f9;\n            text-align: center; \n            color: #64748b; \n            padding: 20px;\n            border-top: 1px solid #e2e8f0;\n        }\n        .emoji { font-size: 1.5em; margin-right: 8px; }\n        @media (max-width: 768px) {\n            body { padding: 10px; }\n            .header h1 { font-size: 1.8em; }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>🌸 Bloom Buddies</h1>\n            <p style=\"font-size: 1.2em; opacity: 0.9;\">Childcare with the Heart of a Family</p>\n        </div>\n\n        <div class=\"content\">\n            <div class=\"thank-you\">\n                <h2 style=\"color: #92400e; margin-bottom: 15px; font-size: 1.8em;\">\n                    🙏 Thank you, {{ $json.fields['Candidate Name'] }}\n                </h2>\n                <p style=\"font-size: 1.2em; color: #78350f;\">\n                    We appreciate the time you took to interview with us and learn about Bloom Buddies.\n                </p>\n            </div>\n\n            <p style=\"font-size: 1.1em; margin-bottom: 20px;\">\n                Dear {{ $json.fields['Candidate Name'] }},\n            </p>\n            \n            <p style=\"margin-bottom: 20px;\">\n                Thank you for your interest in joining the Bloom Buddies team and for taking the time to speak with us about your experience and passion for childcare.\n            </p>\n\n            <p style=\"margin-bottom: 20px;\">\n                After careful consideration, we've decided to move forward with other candidates whose experience and availability more closely match our current needs. This was not an easy decision, as we were impressed by your enthusiasm for working with children.\n            </p>\n\n            <div class=\"feedback-section\">\n                <h3 style=\"color: #065f46; margin-bottom: 15px;\">\n                    <span class=\"emoji\">💡</span>We encourage you to:\n                </h3>\n                <ul style=\"margin-left: 20px; line-height: 1.8;\">\n                    <li>Continue gaining experience in childcare and early childhood development</li>\n                    <li>Consider obtaining certifications in CPR/First Aid if you haven't already</li>\n                    <li>Explore volunteer opportunities with children in your community</li>\n                    <li>Keep developing your skills in child engagement and safety practices</li>\n                </ul>\n            </div>\n\n            <div class=\"future-opportunities\">\n                <h3 style=\"color: #1e40af; margin-bottom: 15px;\">\n                    <span class=\"emoji\">🔮</span>Future Opportunities\n                </h3>\n                <p>\n                    We keep all applications on file for <strong>6 months</strong>. As our needs evolve and new positions become available, we may reach out if your profile matches our requirements. We encourage you to reapply in the future as you gain more experience.\n                </p>\n            </div>\n\n            <p style=\"margin-top: 30px;\">\n                We wish you all the best in your childcare journey and hope our paths may cross again in the future.\n            </p>\n\n            <p style=\"margin-top: 20px;\">\n                Best regards,<br>\n                <strong>The Bloom Buddies Hiring Team</strong>\n            </p>\n        </div>\n\n        <div class=\"footer\">\n            <p><strong>Bloom Buddies Childcare</strong></p>\n            <p>Caring for children with the heart of a family</p>\n            <p style=\"margin-top: 10px; font-size: 0.9em;\">\n                This is an automated message. Please reply to hr@bloombuddies.com for any inquiries.\n            </p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "reject-email",
+      "name": "Send Reject Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        900,
+        400
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2", 
+          "name": "Gmail OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appni7Lgyrk5sjLXY",
+          "mode": "list"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Candidates",
+          "mode": "list"
+        },
+        "id": "={{ $json.id }}",
+        "fieldsToSend": "defined",
+        "fields": {
+          "Last Email Sent": "={{ new Date().toISOString() }}",
+          "Email Status": "=Sent {{ $json.fields.status === 'accept' ? 'acceptance' : 'rejection' }} email"
+        }
+      },
+      "id": "update-email-status",
+      "name": "Update Email Status",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "1",
+          "name": "Airtable PAT"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Airtable Status Change": {
+      "main": [
+        [
+          {
+            "node": "Filter Accept/Reject Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Accept/Reject Only": {
+      "main": [
+        [
+          {
+            "node": "Route by Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Status": {
+      "main": [
+        [
+          {
+            "node": "Send Accept Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Reject Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Accept Email": {
+      "main": [
+        [
+          {
+            "node": "Update Email Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reject Email": {
+      "main": [
+        [
+          {
+            "node": "Update Email Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0.0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bloom-buddies-automation"
+  },
+  "id": "bloom-buddies-status-automation",
+  "tags": [
+    {
+      "createdAt": "2025-11-01T00:00:00.000Z",
+      "updatedAt": "2025-11-01T00:00:00.000Z",
+      "id": "bloom-buddies",
+      "name": "Bloom Buddies"
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airtable Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Airtable Connection Diagnostic</h1>
+    
+    <button onclick="testConnection()">Test Airtable Connection</button>
+    <button onclick="testFields()">Test Field Mapping</button>
+    <button onclick="fetchSampleRecord()">Fetch Sample Record</button>
+    <button onclick="testStatusUpdate()">Test Status Update</button>
+    <button onclick="checkWebhooks()">Check Webhook Config</button>
+    
+    <div id="results"></div>
+
+    <script src="config.js"></script>
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function clear() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testConnection() {
+            clear();
+            log('Testing Airtable connection...', 'info');
+            
+            try {
+                // Check configuration
+                log(`Base ID: ${CONFIG.airtable.baseId}`, 'info');
+                log(`Table Name: ${CONFIG.airtable.tableName}`, 'info');
+                log(`PAT configured: ${CONFIG.airtable.personalAccessToken ? 'Yes' : 'No'}`, 'info');
+                
+                // Test API call
+                const url = `${CONFIG.airtable.baseUrl}/${CONFIG.airtable.baseId}/${encodeURIComponent(CONFIG.airtable.tableName)}?maxRecords=1`;
+                log(`API URL: ${url}`, 'info');
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.airtable.personalAccessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                log(`Response Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`Error Response: ${errorText}`, 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                log(`Records found: ${data.records?.length || 0}`, 'success');
+                
+                if (data.records && data.records.length > 0) {
+                    log('✅ Connection successful!', 'success');
+                    log(`Sample record ID: ${data.records[0].id}`, 'info');
+                } else {
+                    log('⚠️ Connection works but no records found', 'info');
+                }
+                
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        async function testFields() {
+            clear();
+            log('Testing field mapping...', 'info');
+            
+            try {
+                const url = `${CONFIG.airtable.baseUrl}/${CONFIG.airtable.baseId}/${encodeURIComponent(CONFIG.airtable.tableName)}?maxRecords=1`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.airtable.personalAccessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    log(`❌ API call failed: ${response.status}`, 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.records && data.records.length > 0) {
+                    const fields = data.records[0].fields;
+                    log('Available fields in your table:', 'info');
+                    
+                    Object.keys(fields).forEach(field => {
+                        log(`- ${field}: ${typeof fields[field]} = ${fields[field]}`, 'info');
+                    });
+                    
+                    log('\\nExpected field mappings:', 'info');
+                    Object.entries(CONFIG.fields).forEach(([key, fieldName]) => {
+                        const exists = fields.hasOwnProperty(fieldName);
+                        log(`- ${key} → "${fieldName}": ${exists ? '✅ Found' : '❌ Not found'}`, exists ? 'success' : 'error');
+                    });
+                } else {
+                    log('❌ No records to test field mapping', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Field test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function fetchSampleRecord() {
+            clear();
+            log('Fetching sample record...', 'info');
+            
+            try {
+                const url = `${CONFIG.airtable.baseUrl}/${CONFIG.airtable.baseId}/${encodeURIComponent(CONFIG.airtable.tableName)}?maxRecords=1`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.airtable.personalAccessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                log('Raw API Response:', 'info');
+                log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+                
+            } catch (error) {
+                log(`❌ Fetch failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testStatusUpdate() {
+            clear();
+            log('Testing status update functionality...', 'info');
+            
+            try {
+                // First, get a sample record
+                const listUrl = `${CONFIG.airtable.baseUrl}/${CONFIG.airtable.baseId}/${encodeURIComponent(CONFIG.airtable.tableName)}?maxRecords=1`;
+                
+                const listResponse = await fetch(listUrl, {
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.airtable.personalAccessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!listResponse.ok) {
+                    log(`❌ Failed to fetch records: ${listResponse.status}`, 'error');
+                    return;
+                }
+                
+                const listData = await listResponse.json();
+                
+                if (!listData.records || listData.records.length === 0) {
+                    log('❌ No records found to test with', 'error');
+                    return;
+                }
+                
+                const record = listData.records[0];
+                log(`Testing with record ID: ${record.id}`, 'info');
+                log(`Current status field: ${record.fields[CONFIG.fields.status] || 'undefined'}`, 'info');
+                
+                // Test the update (but don't actually change it)
+                const updateUrl = `${CONFIG.airtable.baseUrl}/${CONFIG.airtable.baseId}/${encodeURIComponent(CONFIG.airtable.tableName)}/${record.id}`;
+                
+                log(`Update URL would be: ${updateUrl}`, 'info');
+                log(`Status field name: "${CONFIG.fields.status}"`, 'info');
+                
+                // Check if the status field exists
+                if (record.fields.hasOwnProperty(CONFIG.fields.status)) {
+                    log(`✅ Status field "${CONFIG.fields.status}" exists in record`, 'success');
+                } else {
+                    log(`❌ Status field "${CONFIG.fields.status}" NOT found in record`, 'error');
+                    log('Available fields:', 'info');
+                    Object.keys(record.fields).forEach(field => {
+                        log(`- ${field}`, 'info');
+                    });
+                }
+                
+            } catch (error) {
+                log(`❌ Status update test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function checkWebhooks() {
+            clear();
+            log('Checking webhook configuration...', 'info');
+            
+            log(`Accept webhook: ${CONFIG.webhooks.accept}`, 'info');
+            log(`Reject webhook: ${CONFIG.webhooks.reject}`, 'info');
+            
+            if (CONFIG.webhooks.accept.includes('your-n8n-instance')) {
+                log('⚠️ Accept webhook is not configured (still placeholder)', 'error');
+            } else {
+                log('✅ Accept webhook appears configured', 'success');
+            }
+            
+            if (CONFIG.webhooks.reject.includes('your-n8n-instance')) {
+                log('⚠️ Reject webhook is not configured (still placeholder)', 'error');
+            } else {
+                log('✅ Reject webhook appears configured', 'success');
+            }
+            
+            log('💡 Tip: For testing, you can disable webhook calls by setting them to empty strings', 'info');
+        }
+
+        // Auto-run connection test
+        window.onload = () => {
+            setTimeout(testConnection, 500);
+        };
+    </script>
+</body>
+</html>
