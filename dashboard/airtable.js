@@ -30,16 +30,18 @@ class AirtableManager {
     // Initialize when token is available
     initializeWithToken() {
         console.log('🔗 Airtable initialized with token');
-        // Test connection
-        this.testConnection().then(success => {
-            if (success) {
-                console.log('✅ Airtable connection test passed');
-                // Trigger dashboard to load data
-                if (window.dashboard) {
-                    window.dashboard.init();
-                }
-            } else {
-                console.error('❌ Airtable connection test failed');
+        // Test connection by trying to fetch candidates
+        this.fetchCandidates().then(candidates => {
+            console.log('✅ Airtable connection test passed');
+            // Trigger dashboard to load data
+            if (window.dashboard) {
+                window.dashboard.init();
+            }
+        }).catch(error => {
+            console.error('❌ Airtable connection test failed:', error);
+            // Still try to initialize dashboard so user can see error state
+            if (window.dashboard) {
+                window.dashboard.init();
             }
         });
     }
