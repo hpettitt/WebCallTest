@@ -10,8 +10,38 @@ class AirtableManager {
         
         // Check if token is provided
         if (!this.personalAccessToken || this.personalAccessToken === '' || this.personalAccessToken === 'YOUR_AIRTABLE_PAT_HERE') {
-            this.showTokenSetupInstructions();
+            console.log('⚠️ No Airtable token found, showing setup instructions');
+            
+            // If we're on GitHub Pages and user just logged in, show a friendly setup message
+            if (window.location.hostname.includes('github.io')) {
+                setTimeout(() => {
+                    this.showTokenSetupInstructions();
+                }, 500); // Small delay to ensure DOM is ready
+            } else {
+                this.showTokenSetupInstructions();
+            }
+        } else {
+            console.log('✅ Airtable token found, proceeding with initialization');
+            // Token is available, we can proceed normally
+            this.initializeWithToken();
         }
+    }
+
+    // Initialize when token is available
+    initializeWithToken() {
+        console.log('🔗 Airtable initialized with token');
+        // Test connection
+        this.testConnection().then(success => {
+            if (success) {
+                console.log('✅ Airtable connection test passed');
+                // Trigger dashboard to load data
+                if (window.dashboard) {
+                    window.dashboard.init();
+                }
+            } else {
+                console.error('❌ Airtable connection test failed');
+            }
+        });
     }
 
     // Show setup instructions when no token is provided
@@ -23,7 +53,10 @@ class AirtableManager {
             
             container.innerHTML = `
                 <div class="setup-instructions">
-                    <h2><i class="fas fa-key"></i> Airtable Configuration Required</h2>
+                    <h2><i class="fas fa-key"></i> Almost Ready! Final Step Required</h2>
+                    <div style="background: #e7f5e7; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #10b981;">
+                        <p><strong>✅ Login Successful!</strong> Now let's connect to your Airtable data.</p>
+                    </div>
                     <p>To load your candidate data, please configure your Airtable Personal Access Token.</p>
                     
                     ${setupContent}
