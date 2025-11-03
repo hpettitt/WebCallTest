@@ -52,7 +52,7 @@ class SecureConfig {
         // In production, these would be stored securely server-side
         return {
             'admin@bloombuddies.com': {
-                passwordHash: this.hashPassword('admin123!'), // Change this default password
+                passwordHash: this.hashPassword('secure123'), // Updated to match your current password
                 role: 'admin',
                 permissions: ['read', 'write', 'delete', 'accept', 'reject', 'manage_users'],
                 mfaEnabled: false

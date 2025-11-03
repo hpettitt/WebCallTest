@@ -187,18 +187,27 @@
                 auth = new AuthManager();
                 console.log('Auth manager initialized');
                 
-                // Initialize airtable
-                airtable = new AirtableManager();
-                console.log('Airtable manager initialized');
+                // Only initialize airtable if we have authentication or a token
+                const hasToken = CONFIG.airtable.personalAccessToken && 
+                                CONFIG.airtable.personalAccessToken !== '' &&
+                                CONFIG.airtable.personalAccessToken !== 'YOUR_AIRTABLE_PAT_HERE';
                 
-                // Test Airtable connection
-                airtable.testConnection().then(success => {
-                    if (success) {
-                        console.log('✅ Airtable connection test passed');
-                    } else {
-                        console.error('❌ Airtable connection test failed');
-                    }
-                });
+                if (auth.isAuthenticated() || hasToken) {
+                    // Initialize airtable
+                    airtable = new AirtableManager();
+                    console.log('Airtable manager initialized');
+                    
+                    // Test Airtable connection
+                    airtable.testConnection().then(success => {
+                        if (success) {
+                            console.log('✅ Airtable connection test passed');
+                        } else {
+                            console.error('❌ Airtable connection test failed');
+                        }
+                    });
+                } else {
+                    console.log('⏳ Waiting for authentication before initializing Airtable...');
+                }
                 
                 // Initialize dashboard after a short delay to let auth complete
                 setTimeout(() => {

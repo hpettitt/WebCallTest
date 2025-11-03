@@ -90,9 +90,20 @@ class AuthManager {
             this.hideLogin();
             this.showDashboard();
             
+            // Initialize Airtable after successful login if not already initialized
+            if (!window.airtable) {
+                console.log('🔗 Initializing Airtable after login...');
+                window.airtable = new AirtableManager();
+                console.log('Airtable manager initialized after login');
+            }
+            
             // Initialize dashboard
             if (window.dashboard) {
                 window.dashboard.init();
+            } else {
+                // Initialize dashboard if not already created
+                window.dashboard = new Dashboard();
+                console.log('Dashboard initialized after login');
             }
 
             this.showSuccess(`Welcome back, ${sessionUser.name}! Security level: ${SECURE_CONFIG.getEnvironmentInfo().securityLevel}`);
