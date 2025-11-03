@@ -163,17 +163,10 @@
     </div>
 
     <script src="config.js"></script>
-    <script>
-        // Try to load local config if available (for development)
-        try {
-            const localScript = document.createElement('script');
-            localScript.src = 'config-local.js';
-            localScript.onerror = () => console.log('Local config not found (expected for production)');
-            document.head.appendChild(localScript);
-        } catch (e) {
-            console.log('Local config not available');
-        }
-    </script>
+    <script src="config-local.js"></script>
+    <script src="secure-config.js"></script>
+    <script src="security.js"></script>
+    <script src="auth-local.js"></script>
     <script src="auth.js"></script>
     <script src="airtable.js"></script>
     <script src="dashboard.js"></script>
@@ -183,7 +176,10 @@
         let auth, airtable, dashboard;
         
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing app...');
+            console.log('🚀 DOM loaded, initializing secure app...');
+            console.log('📍 Current URL:', window.location.href);
+            console.log('🔐 SECURE_CONFIG available:', typeof SECURE_CONFIG !== 'undefined');
+            console.log('🛡️ SECURITY_MANAGER available:', typeof SECURITY_MANAGER !== 'undefined');
             
             try {
                 // Initialize auth first
@@ -207,6 +203,7 @@
                 setTimeout(() => {
                     if (auth && auth.isAuthenticated()) {
                         dashboard = new Dashboard();
+                        window.dashboard = dashboard; // Make dashboard globally available
                         console.log('Dashboard initialized');
                     } else {
                         console.log('Waiting for authentication...');
@@ -214,6 +211,7 @@
                         const checkAuth = setInterval(() => {
                             if (auth && auth.isAuthenticated() && !dashboard) {
                                 dashboard = new Dashboard();
+                                window.dashboard = dashboard; // Make dashboard globally available
                                 console.log('Dashboard initialized after login');
                                 clearInterval(checkAuth);
                             }

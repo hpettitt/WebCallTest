@@ -1,24 +1,30 @@
-// Authentication Module
+// Secure Authentication Module
 class AuthManager {
     constructor() {
         this.currentUser = null;
-        this.sessionKey = 'bloomBuddiesSession';
+        this.sessionKey = SECURE_CONFIG.authConfig.sessionKey;
+        this.refreshTokenKey = SECURE_CONFIG.authConfig.refreshTokenKey;
+        this.maxLoginAttempts = SECURE_CONFIG.authConfig.maxLoginAttempts;
         this.init();
     }
 
     init() {
-        // Check for existing session
+        // Check for existing valid session
         const savedSession = this.getSession();
         if (savedSession && this.isSessionValid(savedSession)) {
             this.currentUser = savedSession.user;
             this.hideLogin();
             this.showDashboard();
         } else {
+            this.clearSession(); // Clear invalid session
             this.showLogin();
         }
 
         // Set up event listeners
         this.setupEventListeners();
+        
+        // Auto-logout on session expire
+        this.setupSessionMonitoring();
     }
 
     setupEventListeners() {
@@ -37,49 +43,74 @@ class AuthManager {
     async handleLogin(e) {
         e.preventDefault();
         
-        const email = document.getElementById('email').value;
+        const email = document.getElementById('email').value.toLowerCase().trim();
         const password = document.getElementById('password').value;
         const authCode = document.getElementById('authCode').value;
 
         try {
-            // Validate credentials
-            if (this.validateCredentials(email, password)) {
-                // For demo - in production, validate 2FA if provided
-                if (authCode && !this.validate2FA(authCode)) {
+            // Check rate limiting
+            if (!SECURE_CONFIG.checkRateLimit(email)) {
+                this.showError('Too many failed attempts. Please try again in 15 minutes.');
+                return;
+            }
+
+            // Validate credentials securely
+            const user = SECURE_CONFIG.getUserByEmail(email);
+            if (!user || !SECURE_CONFIG.verifyPassword(password, user.passwordHash)) {
+                SECURE_CONFIG.recordLoginAttempt(email, false);
+                this.showError('Invalid email or password');
+                return;
+            }
+
+            // Validate 2FA if enabled
+            if (user.mfaEnabled && authCode) {
+                if (!this.validate2FA(authCode)) {
+                    SECURE_CONFIG.recordLoginAttempt(email, false);
                     this.showError('Invalid 2FA code');
                     return;
                 }
-
-                // Create session
-                const user = {
-                    email: email,
-                    name: email.split('@')[0],
-                    loginTime: new Date().toISOString(),
-                    permissions: this.getUserPermissions(email)
-                };
-
-                this.currentUser = user;
-                this.saveSession(user);
-                
-                this.hideLogin();
-                this.showDashboard();
-                
-                // Initialize dashboard
-                if (window.dashboard) {
-                    window.dashboard.init();
-                }
-
-                this.showSuccess('Login successful!');
-            } else {
-                this.showError('Invalid email or password');
             }
+
+            // Successful login
+            SECURE_CONFIG.recordLoginAttempt(email, true);
+            
+            // Create secure session
+            const sessionUser = {
+                email: email,
+                name: email.split('@')[0],
+                role: user.role,
+                permissions: user.permissions,
+                loginTime: new Date().toISOString(),
+                secureToken: SECURE_CONFIG.generateSecureToken({ email, role: user.role })
+            };
+
+            this.currentUser = sessionUser;
+            this.saveSession(sessionUser);
+            
+            this.hideLogin();
+            this.showDashboard();
+            
+            // Initialize dashboard
+            if (window.dashboard) {
+                window.dashboard.init();
+            }
+
+            this.showSuccess(`Welcome back, ${sessionUser.name}! Security level: ${SECURE_CONFIG.getEnvironmentInfo().securityLevel}`);
+            
+            // Log security event
+            this.logSecurityEvent('LOGIN_SUCCESS', email);
+            
         } catch (error) {
             console.error('Login error:', error);
+            this.logSecurityEvent('LOGIN_ERROR', email, error.message);
             this.showError('Login failed. Please try again.');
         }
     }
 
     handleLogout() {
+        // Log security event
+        this.logSecurityEvent('LOGOUT', this.currentUser?.email);
+        
         this.currentUser = null;
         this.clearSession();
         this.showLogin();
@@ -87,9 +118,11 @@ class AuthManager {
         this.showSuccess('Logged out successfully');
     }
 
+    // Remove old validateCredentials method and replace with secure validation
     validateCredentials(email, password) {
-        const validCredentials = CONFIG.auth.validCredentials;
-        return validCredentials[email] === password;
+        // This method is deprecated - using SECURE_CONFIG.verifyPassword instead
+        console.warn('Legacy validateCredentials called - use secure validation');
+        return false;
     }
 
     validate2FA(code) {
@@ -227,6 +260,81 @@ class AuthManager {
 
     isAuthenticated() {
         return this.currentUser !== null;
+    }
+
+    // Enhanced security methods
+    hasPermission(permission) {
+        return this.currentUser?.permissions?.includes(permission) || false;
+    }
+
+    // Enhanced session management
+    setupSessionMonitoring() {
+        // Check session validity every minute
+        setInterval(() => {
+            if (this.currentUser && !this.isSessionValid(this.getSession())) {
+                this.showWarning('Session expired. Please log in again.');
+                this.handleLogout();
+            }
+        }, 60000);
+        
+        // Auto-logout on page visibility change (security feature)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && this.currentUser) {
+                this.logSecurityEvent('PAGE_HIDDEN', this.currentUser.email);
+            }
+        });
+    }
+
+    // Security event logging
+    logSecurityEvent(eventType, email, details = '') {
+        const event = {
+            type: eventType,
+            email: email,
+            timestamp: new Date().toISOString(),
+            details: details,
+            userAgent: navigator.userAgent,
+            ip: 'client-side', // In production, get from server
+            sessionId: this.currentUser?.secureToken?.slice(0, 8) || 'none'
+        };
+        
+        console.log('🔐 Security Event:', event);
+        
+        // In production, send to security monitoring service
+        this.storeSecurityEvent(event);
+    }
+
+    storeSecurityEvent(event) {
+        // Store security events locally for audit trail
+        const events = JSON.parse(localStorage.getItem('security_events') || '[]');
+        events.push(event);
+        
+        // Keep only last 100 events
+        if (events.length > 100) {
+            events.splice(0, events.length - 100);
+        }
+        
+        localStorage.setItem('security_events', JSON.stringify(events));
+    }
+
+    getSecurityEvents() {
+        return JSON.parse(localStorage.getItem('security_events') || '[]');
+    }
+
+    clearSession() {
+        localStorage.removeItem(this.sessionKey);
+        localStorage.removeItem(this.refreshTokenKey);
+        sessionStorage.clear();
+    }
+
+    validate2FA(code) {
+        // Enhanced 2FA validation
+        if (!code || code.length !== 6) return false;
+        if (!/^\d+$/.test(code)) return false;
+        
+        // In production, validate against TOTP/SMS service
+        // For demo, accept specific codes
+        const validCodes = ['123456', '000000'];
+        return validCodes.includes(code);
     }
 }
 

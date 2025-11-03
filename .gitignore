@@ -10,6 +10,8 @@ secrets.json
 config.private.json
 **/config-local.js
 **/config.local.js
+**/auth-local.js
+**/auth.local.js
 
 # Node modules
 node_modules/

@@ -52,6 +52,14 @@ const CONFIG = {
     }
 };
 
+// Debug: Log that main config is loaded
+console.log('✅ Main config loaded:', {
+    baseId: CONFIG.airtable.baseId,
+    tableName: CONFIG.airtable.tableName,
+    hasToken: !!CONFIG.airtable.personalAccessToken,
+    tokenLength: CONFIG.airtable.personalAccessToken.length
+});
+
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = CONFIG;
