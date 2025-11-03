@@ -7,6 +7,39 @@ class AirtableManager {
         this.personalAccessToken = CONFIG.airtable.personalAccessToken;
         this.cache = new Map();
         this.cacheTimeout = 2 * 60 * 1000; // 2 minutes (reduced from 5 minutes for faster updates)
+        
+        // Check if token is provided
+        if (!this.personalAccessToken || this.personalAccessToken === '' || this.personalAccessToken === 'YOUR_AIRTABLE_PAT_HERE') {
+            this.showTokenSetupInstructions();
+        }
+    }
+
+    // Show setup instructions when no token is provided
+    showTokenSetupInstructions() {
+        const container = document.querySelector('.main-content');
+        if (container) {
+            container.innerHTML = `
+                <div class="setup-instructions">
+                    <h2><i class="fas fa-key"></i> Setup Required</h2>
+                    <p>To use this dashboard, you need to configure your Airtable Personal Access Token.</p>
+                    
+                    <div class="instruction-steps">
+                        <h3>Quick Setup:</h3>
+                        <ol>
+                            <li>Get your Airtable token from: <a href="https://airtable.com/developers/web/api/introduction" target="_blank">airtable.com/developers</a></li>
+                            <li>Open browser developer tools (F12)</li>
+                            <li>In the console, type: <code>CONFIG.airtable.personalAccessToken = 'your_token_here';</code></li>
+                            <li>Reload the page</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="setup-note">
+                        <p><strong>Note:</strong> For local development, create <code>dashboard/config-local.js</code> with your credentials.</p>
+                        <p>See <code>GITHUB_PAGES_SETUP.md</code> for detailed instructions.</p>
+                    </div>
+                </div>
+            `;
+        }
     }
 
     // Get API headers for Personal Access Token

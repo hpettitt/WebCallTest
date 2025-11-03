@@ -516,3 +516,84 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* Setup Instructions Styles */
+.setup-instructions {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+}
+
+.setup-instructions h2 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.setup-instructions h2 i {
+    margin-right: 0.5rem;
+}
+
+.instruction-steps {
+    margin: 2rem 0;
+    text-align: left;
+    background: var(--light-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.instruction-steps h3 {
+    color: var(--dark-text);
+    margin-bottom: 1rem;
+}
+
+.instruction-steps ol {
+    margin-left: 1.5rem;
+}
+
+.instruction-steps li {
+    margin-bottom: 0.5rem;
+}
+
+.instruction-steps code {
+    background: var(--warning-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.instruction-steps a {
+    color: var(--secondary-color);
+    text-decoration: none;
+}
+
+.instruction-steps a:hover {
+    text-decoration: underline;
+}
+
+.setup-note {
+    background: #fffbeb;
+    border: 1px solid var(--warning-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+}
+
+.setup-note p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.setup-note code {
+    background: #f3f4f6;
+    color: var(--dark-text);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+}
