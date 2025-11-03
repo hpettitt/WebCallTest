@@ -18,28 +18,88 @@ class AirtableManager {
     showTokenSetupInstructions() {
         const container = document.querySelector('.main-content');
         if (container) {
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const setupContent = isGitHubPages ? this.getGitHubPagesSetup() : this.getLocalSetup();
+            
             container.innerHTML = `
                 <div class="setup-instructions">
-                    <h2><i class="fas fa-key"></i> Setup Required</h2>
-                    <p>To use this dashboard, you need to configure your Airtable Personal Access Token.</p>
+                    <h2><i class="fas fa-key"></i> Airtable Configuration Required</h2>
+                    <p>To load your candidate data, please configure your Airtable Personal Access Token.</p>
                     
-                    <div class="instruction-steps">
-                        <h3>Quick Setup:</h3>
-                        <ol>
-                            <li>Get your Airtable token from: <a href="https://airtable.com/developers/web/api/introduction" target="_blank">airtable.com/developers</a></li>
-                            <li>Open browser developer tools (F12)</li>
-                            <li>In the console, type: <code>CONFIG.airtable.personalAccessToken = 'your_token_here';</code></li>
-                            <li>Reload the page</li>
-                        </ol>
-                    </div>
+                    ${setupContent}
                     
                     <div class="setup-note">
-                        <p><strong>Note:</strong> For local development, create <code>dashboard/config-local.js</code> with your credentials.</p>
-                        <p>See <code>GITHUB_PAGES_SETUP.md</code> for detailed instructions.</p>
+                        <p><strong>Note:</strong> Your token is only stored in browser memory and never saved to servers.</p>
+                        <p>This ensures your data remains secure and private.</p>
                     </div>
+                    
+                    ${isGitHubPages ? this.getInteractiveSetup() : ''}
                 </div>
             `;
         }
+    }
+
+    getInteractiveSetup() {
+        return `
+            <div style="margin-top: 2rem; padding: 1.5rem; background: #f8fafc; border-radius: 12px; border: 2px dashed #5dc399;">
+                <h3 style="color: #5dc399; margin-top: 0;">⚡ Quick Token Setup</h3>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="password" id="tokenInput" placeholder="Paste your Airtable token here" 
+                           style="flex: 1; min-width: 300px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                    <button onclick="window.configureToken()" 
+                            style="padding: 12px 24px; background: #5dc399; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        Configure & Load Data
+                    </button>
+                </div>
+                <p style="margin-top: 10px; font-size: 12px; color: #6b7280;">
+                    💡 Paste your token above and click the button. The page will automatically refresh with your data.
+                </p>
+            </div>
+        `;
+    }
+
+    getGitHubPagesSetup() {
+        return `
+            <div class="instruction-steps">
+                <h3>🚀 Demo Setup (GitHub Pages):</h3>
+                <ol>
+                    <li><strong>Option 1 - Use Demo Helper:</strong>
+                        <br>Open browser console (F12) and run:
+                        <br><code>DEMO_HELPER.configureAirtable('your_token_here')</code>
+                    </li>
+                    <li><strong>Option 2 - Direct Config:</strong>
+                        <br>In console, run:
+                        <br><code>CONFIG.airtable.personalAccessToken = 'your_token_here';</code>
+                    </li>
+                    <li><strong>Refresh</strong> the page to load your data</li>
+                </ol>
+                <p><small>💡 Replace 'your_token_here' with your actual Airtable token</small></p>
+                
+                <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+                    <h4>🔗 Get Your Airtable Token:</h4>
+                    <p>Visit: <a href="https://airtable.com/developers/web/api/introduction" target="_blank" style="color: #0ea5e9;">airtable.com/developers</a></p>
+                    <p>Create a token with <code>data.records:read</code> and <code>data.records:write</code> permissions</p>
+                </div>
+            </div>
+        `;
+    }
+
+    getLocalSetup() {
+        return `
+            <div class="instruction-steps">
+                <h3>🔧 Local Development Setup:</h3>
+                <ol>
+                    <li>Create <code>dashboard/config-local.js</code> with your token</li>
+                    <li>Or update <code>config.js</code> directly (not recommended)</li>
+                    <li>Or use browser console: <code>CONFIG.airtable.personalAccessToken = 'your_token';</code></li>
+                </ol>
+                
+                <div style="margin-top: 1rem; padding: 1rem; background: #fffbeb; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <h4>🔑 Get Your Airtable Token:</h4>
+                    <p>Visit: <a href="https://airtable.com/developers/web/api/introduction" target="_blank" style="color: #d97706;">airtable.com/developers</a></p>
+                </div>
+            </div>
+        `;
     }
 
     // Get API headers for Personal Access Token
@@ -406,64 +466,45 @@ class AirtableManager {
     clearCache() {
         this.cache.clear();
     }
-
-    // Test Airtable connection
-    async testConnection() {
-        try {
-            const url = this.getApiUrl('?maxRecords=1');
-            console.log('Testing connection to:', url);
-            console.log('Using headers:', this.getHeaders());
-            
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: this.getHeaders()
-            });
-
-            console.log('Test response status:', response.status);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Connection test failed:', errorText);
-                return false;
-            }
-
-            const data = await response.json();
-            console.log('Connection test successful. Sample data:', data);
-            return true;
-        } catch (error) {
-            console.error('Connection test error:', error);
-            return false;
-        }
-    }
-
-    // Check if API is configured
-    isConfigured() {
-        return this.baseId && this.baseId !== 'YOUR_AIRTABLE_BASE_ID' &&
-               this.personalAccessToken && this.personalAccessToken !== 'YOUR_AIRTABLE_PERSONAL_ACCESS_TOKEN';
-    }
-
-    // Test API connection
-    async testConnection() {
-        try {
-            const url = this.getApiUrl('?maxRecords=1');
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: this.getHeaders()
-            });
-
-            return {
-                success: response.ok,
-                status: response.status,
-                message: response.ok ? 'Connection successful' : `Error: ${response.statusText}`
-            };
-        } catch (error) {
-            return {
-                success: false,
-                status: 0,
-                message: `Connection failed: ${error.message}`
-            };
-        }
-    }
 }
+
+// Global function for interactive token configuration
+window.configureToken = function() {
+    const tokenInput = document.getElementById('tokenInput');
+    if (!tokenInput) {
+        alert('Token input not found');
+        return;
+    }
+    
+    const token = tokenInput.value.trim();
+    if (!token) {
+        alert('Please enter your Airtable token');
+        return;
+    }
+    
+    if (!token.startsWith('pat') || token.length < 20) {
+        alert('Invalid token format. Airtable tokens start with "pat" and are longer.');
+        return;
+    }
+    
+    // Configure the token
+    CONFIG.airtable.personalAccessToken = token;
+    
+    // Show success message
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = '✅ Configured! Refreshing...';
+    button.style.background = '#10b981';
+    
+    // Log success
+    console.log('✅ Airtable token configured successfully!');
+    
+    // Refresh after short delay
+    setTimeout(() => {
+        window.location.reload();
+    }, 1500);
+};
+
+// AirtableManager will be initialized by main script
 
 // Airtable manager will be initialized by main script
