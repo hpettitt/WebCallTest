@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+   <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #5dc399, #7be1b6);
+      color: #1f2937;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 500px;
+    }
+    h1 { margin-top: 0; color: #065f46; font-size: 28px; }
+    .lead { color: #374151; margin-bottom: 25px; }
+    .disclaimer {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 30px;
+      font-size: 15px;
+      color: #92400e;
+      text-align: left;
+    }
+    .cta-text {
+      font-size: 20px;
+      font-weight: bold;
+      color: #065f46;
+      margin: 20px 0;
+    }
+    #readyBtn {
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 16px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(16,185,129,0.5);
+      transition: transform 0.1s ease, background 0.2s ease;
+      margin: 0 auto;
+      display: inline-block;
+    }
+    #readyBtn:hover { background: #059669; transform: scale(1.03); }
+    .footer { margin-top: 25px; font-size: 13px; color: #6b7280; }
+  </style>
+<head>
+  <meta charset="utf-8" />
+  <title>Bloom Buddies — Interview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+ 
+</head>
+<body>
+  <div class="card" id="loadingCard">
+    <h1>Verifying your appointment...</h1>
+    <p>Please wait while we validate your session.</p>
+  </div>
+
+  <script>
+    // Get token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const testMode = urlParams.get('test') === 'true'; // Allow test mode with ?test=true
+    
+    // Debug: Log the initial URL and token extraction
+    console.log('🔍 DEBUG: index.html initial load:');
+    console.log('- Full URL:', window.location.href);
+    console.log('- Raw token from URL:', token);
+    console.log('- Test mode:', testMode);
+    console.log('- All URL params:', Object.fromEntries(urlParams.entries()));
+    
+    // Check if token exists (unless in test mode)
+    if (!token && !testMode) {
+      console.log('No token provided, redirecting to error page');
+      window.location.href = 'error.html';
+    } else {
+      const finalToken = token || 'test-token'; // Use test token only in test mode
+      console.log('Token found:', finalToken, testMode ? '(test mode)' : '');
+      console.log('✅ Proceeding with token:', finalToken);
+      
+      // Show loading state
+      document.getElementById('loadingCard').innerHTML = `
+        <h1>Verifying appointment...</h1>
+        <p>Connecting to verification service...</p>
+        <p>Token: ${finalToken}</p>
+        ${testMode ? '<p style="color: orange;"><strong>TEST MODE</strong></p>' : ''}
+      `;
+
+      // Test n8n endpoint with token
+      fetch('https://kraig-unjustified-collinearly.ngrok-free.dev/webhook/interview-verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        mode: 'cors',
+        body: JSON.stringify({ token: finalToken })
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', [...response.headers.entries()]);
+        
+        if (!response.ok) {
+          // Enhanced error handling for different status codes
+          let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          
+          if (response.status === 500) {
+            errorMessage += ' - Server Internal Error';
+          } else if (response.status === 502) {
+            errorMessage += ' - Bad Gateway (n8n might be down)';
+          } else if (response.status === 503) {
+            errorMessage += ' - Service Unavailable';
+          } else if (response.status === 404) {
+            errorMessage += ' - Webhook not found';
+          }
+          
+          throw new Error(errorMessage);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Debug: Display response and add continue button
+        document.getElementById('loadingCard').innerHTML = `
+          <h1>Verification Result</h1>
+          <div style="text-align: left; margin: 20px 0;">
+            <strong>Status:</strong> ${data.is_valid ? 'Valid' : 'Invalid'}<br>
+            <strong>Name:</strong> ${data.first_name}
+          </div>
+          <pre style="text-align: left; background: #f3f4f6; padding: 15px; border-radius: 8px; overflow: auto;">
+            ${JSON.stringify(data, null, 2)}
+          </pre>
+          ${data.is_valid ? `
+            <button onclick="proceedWithInterview('${data.first_name}')" 
+                    style="margin-top: 20px;" 
+                    id="readyBtn">
+              Start Interview
+            </button>
+          ` : `
+            <div class="support-info" style="background: #fee2e2; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              Sorry ${data.first_name}, we couldn't verify your appointment.
+            </div>
+            <button onclick="window.location.href='error.html'" 
+                    style="margin-top: 20px;" 
+                    id="readyBtn">
+              Contact Support
+            </button>
+          `}
+        `;
+      })
+      .catch((error) => {
+        console.error('Fetch Error:', error);
+        // Debug: Display detailed error information with specific 500 error guidance
+        const errorDisplay = `
+          <h1>Connection Error</h1>
+          <div style="text-align: left; margin: 20px 0;">
+            <strong>Endpoint:</strong> https://kraig-unjustified-collinearly.ngrok-free.dev/webhook-test/interview-verify<br>
+            <strong>Error Type:</strong> ${error.name}<br>
+            <strong>Message:</strong> ${error.message}<br>
+            <strong>Timestamp:</strong> ${new Date().toLocaleString()}
+          </div>
+          <div class="support-info" style="background: #fee2e2; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <strong>🚨 500 Error Troubleshooting:</strong>
+            <ul>
+              <li><strong>Check n8n workflow:</strong> Is the "interview-verify" workflow active?</li>
+              <li><strong>Check workflow errors:</strong> Look at n8n execution history for error details</li>
+              <li><strong>Check payload:</strong> Workflow might expect different data format</li>
+              <li><strong>Check dependencies:</strong> External services (databases, APIs) might be down</li>
+              <li><strong>Check n8n logs:</strong> Server-side errors in n8n instance logs</li>
+            </ul>
+            <strong>💡 Quick fixes to try:</strong>
+            <ul>
+              <li>Restart the workflow in n8n</li>
+              <li>Check if n8n instance is running</li>
+              <li>Verify webhook URL is correct</li>
+              <li>Test workflow manually in n8n</li>
+            </ul>
+          </div>
+          <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <strong>Debug Info:</strong><br>
+            <code>Token: ${token}</code><br>
+            <code>Payload: ${JSON.stringify({ token }, null, 2)}</code>
+          </div>
+        `;
+        
+        document.getElementById('loadingCard').innerHTML = errorDisplay + `
+          <button onclick="location.reload()" 
+                  style="margin: 10px;" 
+                  id="readyBtn">
+            Try Again
+          </button>
+          <button onclick="testWebhookDirectly()" 
+                  style="margin: 10px; background: #f59e0b;" 
+                  id="testBtn">
+            Test Webhook
+          </button>
+          <button onclick="window.location.href='error.html'" 
+                  style="margin: 10px;" 
+                  id="readyBtn">
+            Error Page
+          </button>
+        `;
+      });
+    }
+
+    // Function to test webhook with different payloads
+    async function testWebhookDirectly() {
+      const testPayloads = [
+        { token: 'test-token' },
+        { token: urlParams.get('token') },
+        { sessionToken: urlParams.get('token') },
+        { id: urlParams.get('token') },
+        {}
+      ];
+
+      for (let i = 0; i < testPayloads.length; i++) {
+        console.log(`Testing payload ${i + 1}:`, testPayloads[i]);
+        try {
+          const response = await fetch('https://kraig-unjustified-collinearly.ngrok-free.dev/webhook/interview-verify', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            mode: 'cors',
+            body: JSON.stringify(testPayloads[i])
+          });
+          
+          console.log(`Payload ${i + 1} response:`, response.status, response.statusText);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`Payload ${i + 1} success:`, data);
+            alert(`Success with payload ${i + 1}: ${JSON.stringify(testPayloads[i])}`);
+            return;
+          } else {
+            const errorText = await response.text();
+            console.log(`Payload ${i + 1} error:`, errorText);
+          }
+        } catch (error) {
+          console.log(`Payload ${i + 1} failed:`, error.message);
+        }
+      }
+      
+      alert('All test payloads failed. Check console for details.');
+    }
+
+    // Function to handle the continue button click
+    function proceedWithResponse(data) {
+      if (data.valid) {
+        window.location.href = `interview.html?session=${data.sessionToken}`;
+      } else {
+        window.location.href = 'error.html';
+      }
+    }
+
+    // New function to handle valid interviews
+    function proceedWithInterview(firstName) {
+      // Get the original token from the URL
+      const originalToken = urlParams.get('token') || 'test-token';
+      
+      // Debug: Log what we're passing to interview.html
+      console.log('🔍 DEBUG: Proceeding to interview.html with:');
+      console.log('- Original token from URL:', originalToken);
+      console.log('- First name:', firstName);
+      
+      // Pass original token as session and preserve it - simple approach
+      const interviewUrl = `interview.html?session=${encodeURIComponent(originalToken)}&name=${encodeURIComponent(firstName)}`;
+      console.log('- Interview URL:', interviewUrl);
+      
+      window.location.href = interviewUrl;
+    }
+  </script>
+</body>
+</html>
