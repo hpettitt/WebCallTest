@@ -31,8 +31,8 @@ async function findCandidateByToken(token) {
       id: record.id,
       token: record.fields.Token,
       email: record.fields.Email,
-      name: record.fields.Name,
-      appointmentTime: record.fields.AppointmentTime,
+      name: record.fields['Candidate Name'] || record.fields.Name,
+      appointmentTime: record.fields['Interview Time'] || record.fields.AppointmentTime,
       status: record.fields.Status || 'pending',
       interviewCompleted: record.fields.InterviewCompleted || false,
       ...record.fields

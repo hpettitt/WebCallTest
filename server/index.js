@@ -110,6 +110,42 @@ app.post('/api/validate-token', async (req, res) => {
   }
 });
 
+/**
+ * Get VAPI credentials for interview
+ * Returns API key and Assistant ID from environment variables
+ */
+app.post('/api/get-vapi-credentials', (req, res) => {
+  try {
+    const { sessionToken, candidateName } = req.body;
+    
+    // Log the request for debugging
+    console.log('VAPI credentials requested for:', { sessionToken, candidateName });
+
+    // Get credentials from environment variables
+    const vapiKey = process.env.VAPI_API_KEY;
+    const vapiAssistantId = process.env.VAPI_ASSISTANT_ID;
+
+    if (!vapiKey || !vapiAssistantId) {
+      return res.status(500).json({
+        error: 'VAPI credentials not configured on server'
+      });
+    }
+
+    // Return credentials
+    res.json({
+      vapiKey: vapiKey,
+      vapiAssistantId: vapiAssistantId,
+      success: true
+    });
+
+  } catch (error) {
+    console.error('Error getting VAPI credentials:', error);
+    res.status(500).json({
+      error: 'Server error getting VAPI credentials'
+    });
+  }
+});
+
 // Get candidate info (for dashboard)
 app.get('/api/candidates', async (req, res) => {
   try {
