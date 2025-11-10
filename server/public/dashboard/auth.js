@@ -63,10 +63,14 @@ class AuthManager {
             }
 
             // Validate 2FA if enabled
-            if (user.mfaEnabled && authCode) {
+            if (user.mfaEnabled) {
+                if (!authCode) {
+                    this.showError('2FA code is required for this account');
+                    return;
+                }
                 if (!this.validate2FA(authCode)) {
                     SECURE_CONFIG.recordLoginAttempt(email, false);
-                    this.showError('Invalid 2FA code');
+                    this.showError('Invalid 2FA code. Please try again.');
                     return;
                 }
             }

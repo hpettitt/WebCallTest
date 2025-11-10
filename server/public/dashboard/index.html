@@ -44,8 +44,14 @@
                         <input type="password" id="password" required>
                     </div>
                     <div class="form-group">
-                        <label for="authCode">2FA Code (optional):</label>
-                        <input type="text" id="authCode" placeholder="Enter 6-digit code">
+                        <label for="authCode">
+                            <i class="fas fa-shield-alt"></i> 2FA Code:
+                            <small style="color: #6b7280; font-weight: normal;">(Required for admin accounts)</small>
+                        </label>
+                        <input type="text" id="authCode" placeholder="Enter 6-digit code (e.g., 123456)" maxlength="6" pattern="[0-9]{6}">
+                        <small style="color: #6b7280; font-size: 0.8em; display: block; margin-top: 4px;">
+                            Demo codes: <strong>123456</strong> or <strong>000000</strong>
+                        </small>
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-sign-in-alt"></i> Login

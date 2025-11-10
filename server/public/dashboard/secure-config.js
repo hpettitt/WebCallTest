@@ -50,24 +50,28 @@ class SecureConfig {
     getSecureUserConfig() {
         // Secure user configuration with hashed passwords
         // In production, these would be stored securely server-side
+        // 
+        // 2FA CODES (for demo purposes):
+        // - Valid codes: 123456, 000000
+        // - In production, integrate with Google Authenticator, Authy, or SMS service
         return {
             'admin@bloombuddies.com': {
                 passwordHash: this.hashPassword('secure123'), // Updated to match your current password
                 role: 'admin',
                 permissions: ['read', 'write', 'delete', 'accept', 'reject', 'manage_users'],
-                mfaEnabled: false
+                mfaEnabled: true // 2FA REQUIRED - Use code: 123456 or 000000
             },
             'hr@bloombuddies.com': {
                 passwordHash: this.hashPassword('hr2024secure!'),
                 role: 'hr_manager', 
                 permissions: ['read', 'write', 'accept', 'reject'],
-                mfaEnabled: false
+                mfaEnabled: false // 2FA Optional
             },
             'interviewer@bloombuddies.com': {
                 passwordHash: this.hashPassword('interviewer2024!'),
                 role: 'interviewer',
                 permissions: ['read', 'write'],
-                mfaEnabled: false
+                mfaEnabled: false // 2FA Optional
             }
         };
     }
