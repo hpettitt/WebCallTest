@@ -146,6 +146,36 @@ app.post('/api/get-vapi-credentials', (req, res) => {
   }
 });
 
+/**
+ * Dashboard Configuration Endpoint
+ * Returns Airtable credentials from environment variables for the dashboard
+ */
+app.get('/api/dashboard-config', (req, res) => {
+  try {
+    const airtableToken = process.env.AIRTABLE_API_KEY;
+    const baseId = process.env.AIRTABLE_BASE_ID;
+    const tableName = process.env.AIRTABLE_TABLE_NAME;
+
+    if (!airtableToken || !baseId || !tableName) {
+      return res.status(500).json({
+        error: 'Dashboard configuration not available'
+      });
+    }
+
+    res.json({
+      airtable: {
+        personalAccessToken: airtableToken,
+        baseId: baseId,
+        tableName: tableName,
+        baseUrl: 'https://api.airtable.com/v0'
+      }
+    });
+  } catch (error) {
+    console.error('Error getting dashboard config:', error);
+    res.status(500).json({ error: 'Server error getting dashboard config' });
+  }
+});
+
 // Get candidate info (for dashboard)
 app.get('/api/candidates', async (req, res) => {
   try {

@@ -182,13 +182,18 @@
         // Initialize the application
         let auth, airtable, dashboard;
         
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('🚀 DOM loaded, initializing secure app...');
             console.log('📍 Current URL:', window.location.href);
             console.log('🔐 SECURE_CONFIG available:', typeof SECURE_CONFIG !== 'undefined');
             console.log('🛡️ SECURITY_MANAGER available:', typeof SECURITY_MANAGER !== 'undefined');
             
             try {
+                // Load configuration from server first
+                if (typeof loadConfigFromServer === 'function') {
+                    await loadConfigFromServer();
+                }
+                
                 // Initialize auth first
                 auth = new AuthManager();
                 console.log('Auth manager initialized');

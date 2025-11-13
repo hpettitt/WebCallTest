@@ -1,10 +1,10 @@
 // Dashboard Configuration
 const CONFIG = {
-    // Airtable Configuration
+    // Airtable Configuration - will be loaded from server endpoint
     airtable: {
         baseId: 'appni7Lgyrk5sjLXY', // Your actual base ID (just the app part)
         tableName: 'Candidates', // Your table name
-        personalAccessToken: '', // Will be prompted for or loaded from local config
+        personalAccessToken: '', // Will be loaded from /api/dashboard-config
         baseUrl: 'https://api.airtable.com/v0'
     },
 
@@ -52,12 +52,43 @@ const CONFIG = {
     }
 };
 
+/**
+ * Load configuration from server endpoint
+ * This fetches secure credentials from environment variables
+ */
+async function loadConfigFromServer() {
+    try {
+        console.log('📡 Fetching dashboard config from server...');
+        const response = await fetch('/api/dashboard-config');
+        
+        if (response.ok) {
+            const serverConfig = await response.json();
+            
+            // Merge server config with local config
+            if (serverConfig.airtable) {
+                Object.assign(CONFIG.airtable, serverConfig.airtable);
+                console.log('✅ Server config loaded:', {
+                    baseId: CONFIG.airtable.baseId,
+                    tableName: CONFIG.airtable.tableName,
+                    hasToken: !!CONFIG.airtable.personalAccessToken,
+                    tokenLength: CONFIG.airtable.personalAccessToken?.length || 0
+                });
+            }
+        } else {
+            console.warn('⚠️ Could not load server config, using local config');
+        }
+    } catch (error) {
+        console.warn('⚠️ Error loading server config:', error.message);
+        console.log('Using local config instead');
+    }
+}
+
 // Debug: Log that main config is loaded
 console.log('✅ Main config loaded:', {
     baseId: CONFIG.airtable.baseId,
     tableName: CONFIG.airtable.tableName,
     hasToken: !!CONFIG.airtable.personalAccessToken,
-    tokenLength: CONFIG.airtable.personalAccessToken.length
+    tokenLength: CONFIG.airtable.personalAccessToken?.length || 0
 });
 
 // Export for use in other modules
