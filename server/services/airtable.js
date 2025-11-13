@@ -35,6 +35,15 @@ async function findCandidateByToken(token) {
       appointmentTime: record.fields['Interview Time'] || record.fields.AppointmentTime,
       status: record.fields.Status || 'pending',
       interviewCompleted: record.fields.InterviewCompleted || false,
+      // CV/Resume fields
+      cvUrl: record.fields['CV URL'] || record.fields['Resume URL'] || record.fields.CV || null,
+      cvText: record.fields['CV Text'] || record.fields['Resume Text'] || null,
+      cvSummary: record.fields['CV Summary'] || record.fields['Resume Summary'] || null,
+      // Additional candidate info that might be useful for interview
+      experience: record.fields['Years of Experience'] || record.fields.Experience || null,
+      position: record.fields['Position Applied'] || record.fields.Position || null,
+      skills: record.fields.Skills || null,
+      education: record.fields.Education || null,
       ...record.fields
     };
   } catch (error) {

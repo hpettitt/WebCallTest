@@ -156,6 +156,9 @@
       });
     }
 
+    // Store candidate data globally
+    let candidateFullData = null;
+
     // Update DOMContentLoaded event handler
     document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -165,12 +168,24 @@
         candidateName = urlParams.get('name');
         originalToken = sessionToken; // Use session token as original token (they're the same now)
         
+        // Retrieve full candidate data from sessionStorage
+        const candidateDataStr = sessionStorage.getItem('candidateData');
+        if (candidateDataStr) {
+            try {
+                candidateFullData = JSON.parse(candidateDataStr);
+                console.log('📋 Retrieved candidate data:', candidateFullData);
+            } catch (e) {
+                console.error('❌ Failed to parse candidate data:', e);
+            }
+        }
+        
         // Debug: Log what we received from index.html
         console.log('🔍 DEBUG: URL parameters received in interview.html:');
         console.log('- Full URL:', window.location.href);
         console.log('- Session token (original token):', sessionToken);
         console.log('- Candidate name:', candidateName);
         console.log('- All URL params:', Object.fromEntries(urlParams.entries()));
+        console.log('- Candidate full data available:', !!candidateFullData);
         
         if (!sessionToken || !candidateName) {
             console.error('❌ Missing required parameters:', { sessionToken, candidateName });
@@ -260,21 +275,61 @@
           }
         };
         
+        // Build CV context for VAPI
+        let cvContext = '';
+        if (candidateFullData) {
+          const cvParts = [];
+          
+          if (candidateFullData.cvText) {
+            cvParts.push(`CV/Resume: ${candidateFullData.cvText}`);
+          } else if (candidateFullData.cvSummary) {
+            cvParts.push(`CV Summary: ${candidateFullData.cvSummary}`);
+          }
+          
+          if (candidateFullData.position) {
+            cvParts.push(`Position Applied: ${candidateFullData.position}`);
+          }
+          
+          if (candidateFullData.experience) {
+            cvParts.push(`Experience: ${candidateFullData.experience}`);
+          }
+          
+          if (candidateFullData.skills) {
+            cvParts.push(`Skills: ${candidateFullData.skills}`);
+          }
+          
+          if (candidateFullData.education) {
+            cvParts.push(`Education: ${candidateFullData.education}`);
+          }
+          
+          cvContext = cvParts.join('. ');
+        }
+        
         // VAPI variable values for dynamic content
         const variableValues = {
           name: candidateName,
           candidateName: candidateName,
           sessionId: sessionToken,
           sessionToken: sessionToken,  // Add token for n8n processing
-          originalToken: originalToken  // Include actual original token from index.html
+          originalToken: originalToken,  // Include actual original token from index.html
+          // CV/Resume data for VAPI agent
+          candidateCV: cvContext,
+          cvUrl: candidateFullData?.cvUrl || '',
+          cvSummary: candidateFullData?.cvSummary || '',
+          position: candidateFullData?.position || '',
+          experience: candidateFullData?.experience || '',
+          skills: candidateFullData?.skills || '',
+          education: candidateFullData?.education || ''
         };
         
         console.log('🚀 Starting VAPI with config:', vapiConfig);
         console.log('👤 Candidate name being sent to VAPI:', candidateName);
         console.log('🎫 Session ID being sent to VAPI:', sessionToken);
-        console.log('� Original Token for Airtable lookup:', originalToken);
+        console.log('🔍 Original Token for Airtable lookup:', originalToken);
         console.log('🔍 Token comparison - Session vs Original:', { sessionToken, originalToken, same: sessionToken === originalToken });
         console.log('📊 Variable values for VAPI:', variableValues);
+        console.log('📄 CV Context available:', !!cvContext);
+        if (cvContext) console.log('📋 CV Preview:', cvContext.substring(0, 200) + '...');
         console.log('🔗 Webhook URL configured:', vapiConfig.serverUrl);
         console.log('🎯 VAPI will send transcript + original token to n8n webhook');
 
@@ -287,7 +342,15 @@
               candidateName: candidateName,
               sessionId: sessionToken,
               sessionToken: sessionToken,  // Add session token for n8n lookup
-              originalToken: originalToken  // Include actual original token from index.html
+              originalToken: originalToken,  // Include actual original token from index.html
+              // CV/Resume data for VAPI agent
+              candidateCV: cvContext,
+              cvUrl: candidateFullData?.cvUrl || '',
+              cvSummary: candidateFullData?.cvSummary || '',
+              position: candidateFullData?.position || '',
+              experience: candidateFullData?.experience || '',
+              skills: candidateFullData?.skills || '',
+              education: candidateFullData?.education || ''
             },
             // Also add to metadata for webhook processing
             metadata: {
@@ -296,7 +359,11 @@
               sessionToken: sessionToken,  // Critical for Airtable lookup
               originalToken: originalToken,  // Include actual original token for n8n processing
               interviewType: 'phone',
-              source: 'bloom-buddies-interview'
+              source: 'bloom-buddies-interview',
+              // Include CV data in metadata too
+              hasCV: !!cvContext,
+              cvUrl: candidateFullData?.cvUrl || '',
+              position: candidateFullData?.position || ''
             }
           },
           onError: (error) => {

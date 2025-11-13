@@ -150,6 +150,9 @@
       // Get candidate data from the validation response
       const candidateData = window.candidateData;
       if (candidateData) {
+        // Store full candidate data in sessionStorage for interview page
+        sessionStorage.setItem('candidateData', JSON.stringify(candidateData));
+        
         // Pass token and name as URL parameters for interview.html
         const params = new URLSearchParams({
           session: token,
