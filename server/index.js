@@ -148,7 +148,7 @@ app.post('/api/get-vapi-credentials', (req, res) => {
 
 /**
  * Dashboard Configuration Endpoint
- * Returns Airtable credentials from environment variables for the dashboard
+ * Returns Airtable credentials and auth settings from environment variables
  */
 app.get('/api/dashboard-config', (req, res) => {
   try {
@@ -162,12 +162,28 @@ app.get('/api/dashboard-config', (req, res) => {
       });
     }
 
+    // Parse dashboard credentials from environment variable
+    // Format: email1:password1,email2:password2
+    const dashboardAuth = {};
+    const authString = process.env.DASHBOARD_AUTH || 'admin@bloombuddies.com:secure123,hr@bloombuddies.com:hr2023!';
+    
+    authString.split(',').forEach(pair => {
+      const [email, password] = pair.trim().split(':');
+      if (email && password) {
+        dashboardAuth[email.trim()] = password.trim();
+      }
+    });
+
     res.json({
       airtable: {
         personalAccessToken: airtableToken,
         baseId: baseId,
         tableName: tableName,
         baseUrl: 'https://api.airtable.com/v0'
+      },
+      auth: {
+        validCredentials: dashboardAuth,
+        sessionTimeout: 3600000
       }
     });
   } catch (error) {

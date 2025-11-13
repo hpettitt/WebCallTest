@@ -15,13 +15,9 @@ const CONFIG = {
         refresh: '' // Optional - for refresh notifications
     },
 
-    // Authentication settings
+    // Authentication settings - will be loaded from server endpoint
     auth: {
-        // For demo purposes - in production, use proper auth service
-        validCredentials: {
-            'admin@bloombuddies.com': 'secure123',
-            'hr@bloombuddies.com': 'hr2023!'
-        },
+        validCredentials: {}, // Will be loaded from /api/dashboard-config
         sessionTimeout: 3600000 // 1 hour in milliseconds
     },
 
@@ -67,11 +63,21 @@ async function loadConfigFromServer() {
             // Merge server config with local config
             if (serverConfig.airtable) {
                 Object.assign(CONFIG.airtable, serverConfig.airtable);
-                console.log('✅ Server config loaded:', {
+                console.log('✅ Airtable config loaded:', {
                     baseId: CONFIG.airtable.baseId,
                     tableName: CONFIG.airtable.tableName,
                     hasToken: !!CONFIG.airtable.personalAccessToken,
                     tokenLength: CONFIG.airtable.personalAccessToken?.length || 0
+                });
+            }
+            
+            // Merge auth credentials from server
+            if (serverConfig.auth && serverConfig.auth.validCredentials) {
+                CONFIG.auth.validCredentials = serverConfig.auth.validCredentials;
+                CONFIG.auth.sessionTimeout = serverConfig.auth.sessionTimeout || 3600000;
+                console.log('✅ Auth credentials loaded:', {
+                    userCount: Object.keys(CONFIG.auth.validCredentials).length,
+                    users: Object.keys(CONFIG.auth.validCredentials)
                 });
             }
         } else {
