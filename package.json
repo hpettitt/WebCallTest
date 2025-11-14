@@ -1,0 +1,24 @@
+{
+  "name": "webcall-test-workspace",
+  "version": "1.0.0",
+  "description": "Bloom Buddies Interview System - Workspace Root",
+  "private": true,
+  "scripts": {
+    "start": "cd server && npm start",
+    "dev": "cd server && npm run dev",
+    "setup-admin": "cd server && npm run setup-admin",
+    "install-server": "cd server && npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hpettitt/WebCallTest"
+  },
+  "keywords": [
+    "interview",
+    "webcall",
+    "vapi",
+    "airtable"
+  ],
+  "author": "",
+  "license": "ISC"
+}

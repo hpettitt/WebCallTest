@@ -1,51 +1,129 @@
-This page is used by candidates to connect to Bloom buddies virtural interviewer.
-🚀 Complete Workflow Features:
-1. VAPI Webhook Trigger
-Receives call completion data from VAPI
-Webhook path: /vapi-call-completed
-2. Data Processing Pipeline
-Extract Call Data: Structures incoming VAPI data
-AI Analysis: Uses OpenAI GPT-4 for comprehensive interview evaluation
-Statistics Calculation: Computes detailed call metrics and scores
-3. Scoring System
-Overall Score (1-10)
-Communication Skills (1-10)
-Enthusiasm (1-10)
-Professionalism (1-10)
-Composite scores and hire probability
-4. Data Storage
-Airtable Integration: Updates candidate records with all scores and analysis
-Comprehensive field mapping for interview data
-5. Reporting System
-Professional HTML Report: Beautiful, responsive design with scores, charts, and analysis
-Email Notifications: Sends reports to HR team automatically
-Responsive Design: Works on desktop and mobile
-6. Advanced Analytics
-Word count and speaking rate analysis
-Sentence structure analysis
-Call completion metrics
-Cost tracking
-Red flags and standout moments identification
-📋 Setup Instructions:
-1. Import the Workflow
-Copy the JSON content from the file I created
-Go to your n8n instance
-Click "Import from JSON"
-Paste the content and import
-2. Configure Credentials
-You'll need to set up these credentials in n8n:
+# WebCall Interview System
 
-OpenAI API: For AI analysis
-Airtable: For database updates
-Email Send: For sending reports
-3. Update Configuration
-Airtable Base ID: Replace YOUR_AIRTABLE_BASE_ID with your actual base ID
-Email addresses: Update sender/receiver emails
-Field mappings: Match your Airtable field names
-4. Configure VAPI Webhook
-In your VAPI dashboard, set the webhook URL to:
+Bloom Buddies AI-powered interview platform with Airtable integration.
 
+## 📁 Project Structure
 
+```
+WebCallTest/
+├── server/              # Backend server (deployed to Railway)
+│   ├── public/         # Frontend files (HTML, CSS, JS)
+│   ├── services/       # Backend services (Airtable, Email, Users)
+│   ├── scripts/        # Setup and utility scripts
+│   ├── index.js        # Main server entry point
+│   ├── package.json    # Server dependencies
+│   └── .env            # Environment variables
+├── n8n/                # n8n workflow configurations
+├── .github/            # GitHub configuration and Copilot instructions
+└── README.md           # This file
+```
+
+## 🚀 Quick Start
+
+### Local Development
+
+1. **Install dependencies:**
+   ```bash
+   npm run install-server
+   ```
+
+2. **Configure environment:**
+   - Copy `server/.env.example` to `server/.env`
+   - Add your API keys and configuration
+
+3. **Start the server:**
+   ```bash
+   npm start
+   ```
+   Server runs on `http://localhost:3000`
+
+### Railway Deployment
+
+Railway is configured to run from the `server/` directory automatically.
+
+**Build Command:** `npm install`  
+**Start Command:** `npm start`  
+**Root Directory:** `server`
+
+## 📚 Documentation
+
+- **[Setup Guide](server/SETUP_GUIDE.md)** - Complete setup instructions
+- **[Environment Setup](server/ENV_SETUP.md)** - Environment variables configuration
+- **[Password Reset Setup](server/PASSWORD_RESET_SETUP.md)** - Email and password reset
+- **[Testing Guide](server/TESTING.md)** - How to test features
+- **[CV Integration Guide](server/CV_INTEGRATION_GUIDE.md)** - Resume/CV integration
+
+## 🔑 Key Features
+
+- **Token-based interview access** - Secure candidate verification
+- **VAPI phone interviews** - AI-powered voice interviews
+- **Airtable integration** - Candidate data management
+- **Admin dashboard** - Review and manage candidates
+- **Password reset** - Secure email-based password recovery
+- **n8n automation** - Email notifications and workflows
+
+## 🛠️ Management Commands
+
+```bash
+# Start server (from root)
+npm start
+
+# Create admin user (from root)
+npm run setup-admin
+
+# Development mode (from root)
+npm run dev
+```
+
+## 📦 Environment Variables
+
+See `server/.env.example` for all required variables:
+- `AIRTABLE_API_KEY` - Airtable Personal Access Token
+- `AIRTABLE_BASE_ID` - Your Airtable base ID
+- `VAPI_API_KEY` - VAPI API key for interviews
+- `EMAIL_USER` / `EMAIL_PASSWORD` - Email service credentials
+
+## 🌐 Endpoints
+
+- `/` - Interview landing page
+- `/interview.html` - Phone interview interface
+- `/dashboard/` - Admin dashboard
+- `/api/*` - Backend API endpoints
+
+---
+
+## 🚀 n8n Workflow Features
+
+### 1. VAPI Webhook Trigger
+- Receives call completion data from VAPI
+- Webhook path: `/vapi-call-completed`
+
+### 2. Data Processing Pipeline
+- Extract Call Data: Structures incoming VAPI data
+- AI Analysis: Uses OpenAI GPT-4 for comprehensive interview evaluation
+- Statistics Calculation: Computes detailed call metrics and scores
+
+### 3. Scoring System
+- Overall Score (1-10)
+- Communication Skills (1-10)
+- Enthusiasm (1-10)
+- Professionalism (1-10)
+- Composite scores and hire probability
+
+### 4. Data Storage
+- Airtable Integration: Updates candidate records with all scores and analysis
+- Comprehensive field mapping for interview data
+
+### 5. Reporting System
+- Professional HTML Report: Beautiful, responsive design with scores, charts, and analysis
+- Email Notifications: Sends reports to HR team automatically
+- Responsive Design: Works on desktop and mobile
+
+### n8n Setup Instructions
+
+1. Import the workflow from `n8n/` directory
+2. Configure credentials (OpenAI, Airtable, Email)
+3. Update webhook URL in VAPI dashboard:
 ```
 https://kraig-unjustified-collinearly.ngrok-free.dev/webhook/vapi-call-completed
 ```
