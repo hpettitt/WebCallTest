@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Thank You — Bloom Buddies</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #5dc399, #7be1b6);
+      color: #1f2937;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 { 
+      margin-top: 0; 
+      color: #065f46; 
+      font-size: 32px; 
+      margin-bottom: 10px;
+    }
+    .candidate-name {
+      color: #10b981;
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .lead { 
+      color: #374151; 
+      margin-bottom: 25px; 
+      font-size: 18px;
+      line-height: 1.6;
+    }
+    .success-icon {
+      font-size: 64px;
+      color: #10b981;
+      margin-bottom: 20px;
+    }
+    .info-box {
+      background: #f0fdf4;
+      border: 2px solid #10b981;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 25px 0;
+      text-align: left;
+    }
+    .info-box h3 {
+      margin-top: 0;
+      color: #065f46;
+      font-size: 20px;
+    }
+    .info-box p { 
+      margin: 10px 0; 
+      color: #065f46;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="success-icon">✓</div>
+    <h1>Thank You for Completing Your Interview!</h1>
+    <div class="candidate-name" id="candidateName">Candidate</div>
+    
+    <p class="lead">
+      Your interview has been successfully completed and recorded. Our team will review your responses and get back to you soon.
+    </p>
+
+    <div class="info-box">
+      <h3>What happens next?</h3>
+      <p>
+        • Our hiring team will carefully review your interview<br>
+        • You will receive an email update within 3-5 business days<br>
+        • If selected for the next stage, we'll be in touch to schedule a follow-up<br>
+        • Check your email regularly for updates from Bloom Buddies
+      </p>
+    </div>
+
+    <p class="lead">
+      We appreciate your time and interest in joining the Bloom Buddies team!
+    </p>
+
+    <div class="footer">
+      <p>If you have any questions, please contact us at <strong>careers@bloombuddies.com</strong></p>
+    </div>
+  </div>
+
+  <script>
+    // Get candidate name from URL parameters or sessionStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    let candidateName = urlParams.get('name');
+    
+    // If no name in URL, try to get from sessionStorage
+    if (!candidateName) {
+      const candidateDataStr = sessionStorage.getItem('candidateData');
+      if (candidateDataStr) {
+        try {
+          const candidateData = JSON.parse(candidateDataStr);
+          candidateName = candidateData.name;
+        } catch (e) {
+          console.error('Failed to parse candidate data:', e);
+        }
+      }
+    }
+    
+    // Display the candidate name
+    if (candidateName) {
+      const nameElement = document.getElementById('candidateName');
+      if (nameElement) {
+        nameElement.textContent = candidateName;
+      }
+      console.log('✅ Displaying thank you page for:', candidateName);
+    } else {
+      console.log('⚠️ No candidate name available');
+      // Hide the name element if no name available
+      const nameElement = document.getElementById('candidateName');
+      if (nameElement) {
+        nameElement.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

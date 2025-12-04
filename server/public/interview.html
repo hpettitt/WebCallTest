@@ -224,7 +224,7 @@
             
             // Redirect to thank you page after a moment
             setTimeout(() => {
-              window.location.href = 'thank-you.html';
+              window.location.href = `thank-you.html?name=${encodeURIComponent(candidateName)}`;
             }, 2000);
             return;
           }
@@ -243,7 +243,7 @@
           
           // Redirect to thank you page
           setTimeout(() => {
-            window.location.href = 'thank-you.html';
+            window.location.href = `thank-you.html?name=${encodeURIComponent(candidateName)}`;
           }, 2000);
           return;
         }
@@ -570,7 +570,7 @@
               
               // Redirect to thank you page
               setTimeout(() => {
-                window.location.href = 'thank-you.html';
+                window.location.href = `thank-you.html?name=${encodeURIComponent(candidateName)}`;
               }, 300);
               
             } else {
