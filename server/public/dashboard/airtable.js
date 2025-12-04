@@ -225,6 +225,7 @@ class AirtableManager {
                 id: record.id,
                 candidateName: fields[CONFIG.fields.candidateName] || 'Unknown',
                 email: fields[CONFIG.fields.email] || '',
+                phone: fields[CONFIG.fields.phone] || '',
                 status: this.normalizeStatus(rawStatus),
                 rawStatus: rawStatus, // Keep original Airtable status for filtering
                 overallScore: parseInt(fields[CONFIG.fields.overallScore]) || 0,

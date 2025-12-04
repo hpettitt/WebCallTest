@@ -32,6 +32,7 @@ const CONFIG = {
     fields: {
         candidateName: 'Candidate Name',
         email: 'Email',
+        phone: 'Phone',
         status: 'status',
         overallScore: 'score',
         communication: 'Communication',

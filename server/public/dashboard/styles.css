@@ -259,6 +259,13 @@ body {
     font-size: 0.9rem;
 }
 
+.candidate-phone {
+    opacity: 0.8;
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
 .status-badge {
     position: absolute;
     top: 1rem;

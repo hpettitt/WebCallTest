@@ -255,6 +255,7 @@ class Dashboard {
                 <div class="candidate-header">
                     <div class="candidate-name">${this.escapeHtml(candidate.candidateName)}</div>
                     <div class="candidate-email">${this.escapeHtml(candidate.email)}</div>
+                    ${candidate.phone ? `<div class="candidate-phone">${this.escapeHtml(candidate.phone)}</div>` : ''}
                     <div class="status-badge ${candidate.statusClass}">
                         ${this.formatStatus(candidate.status)}
                     </div>
