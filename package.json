@@ -4,7 +4,7 @@
   "description": "Bloom Buddies Interview System - Workspace Root",
   "private": true,
   "scripts": {
-    "postinstall": "cd server && npm install",
+    "build": "cd server && npm install",
     "start": "node index.js",
     "dev": "cd server && npm run dev",
     "setup-admin": "cd server && npm run setup-admin"
