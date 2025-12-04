@@ -1,4 +1,5 @@
 # Use Node.js 22 LTS
+# Dockerfile for Railway deployment with server root directory
 FROM node:22-alpine
 
 # Set working directory
