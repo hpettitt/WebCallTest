@@ -1,8 +1,10 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd server && npm install"
 
 [deploy]
-startCommand = "cd server && npm start"
+startCommand = "npm start --prefix server"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
+
+[variables]
+NPM_CONFIG_PRODUCTION = "false"
