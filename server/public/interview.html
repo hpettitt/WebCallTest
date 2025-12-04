@@ -128,6 +128,7 @@
     let originalToken; // This will be the same as sessionToken now
     let vapiInstance = null; // Store VAPI instance globally
     let callHasStarted = false; // Track if any call has started
+    let isStartingInterview = false; // Prevent multiple simultaneous startInterview calls
 
     // Add loadVapiSDK function
     async function loadVapiSDK() {
@@ -204,6 +205,14 @@
 
     // Update VAPI SDK configuration
     async function startInterview() {
+      // CRITICAL: Prevent multiple simultaneous calls to this function
+      if (isStartingInterview || callHasStarted) {
+        console.error('🚫 BLOCKED: Interview already started or starting');
+        return;
+      }
+      
+      isStartingInterview = true;
+      
       const webhookUrl = '/api/get-vapi-credentials';
       const button = document.getElementById('readyBtn');
       
@@ -381,6 +390,18 @@
         console.log('🔗 Webhook URL configured:', vapiConfig.serverUrl);
         console.log('🎯 VAPI will send transcript + original token to n8n webhook');
 
+        // DOUBLE-CHECK: Verify one more time that interview hasn't started
+        const finalCheck = await fetch(`/api/check-interview-status?token=${encodeURIComponent(sessionToken)}`);
+        if (finalCheck.ok) {
+          const finalData = await finalCheck.json();
+          if (finalData.completed === true || finalData.interviewCompleted === true) {
+            console.error('🚫 RACE CONDITION DETECTED: Interview was started by another process!');
+            alert('This interview has already been started. Redirecting...');
+            window.location.href = `thank-you.html?name=${encodeURIComponent(candidateName)}`;
+            return;
+          }
+        }
+
         // Store the VAPI instance globally so we can control it
         vapiInstance = window.vapiSDK.run({
           ...vapiConfig,
@@ -449,7 +470,17 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ token: originalToken })
             }).then(r => r.json()).then(result => {
-              console.log('✅ IMMEDIATELY marked interview as started in Airtable (on call start):', result);
+              if (result.alreadyStarted) {
+                console.error('🚫 DUPLICATE DETECTED: Server reports interview already started!');
+                // Stop this call immediately
+                if (vapiInstance && vapiInstance.stop) {
+                  vapiInstance.stop();
+                }
+                alert('This interview has already been started. Redirecting to thank you page.');
+                window.location.href = `thank-you.html?name=${encodeURIComponent(candidateName)}`;
+              } else {
+                console.log('✅ IMMEDIATELY marked interview as started in Airtable (on call start):', result);
+              }
             }).catch(err => {
               console.error('❌ Failed to mark interview started (on call start):', err);
             });
@@ -672,6 +703,11 @@
         console.error('Connection error:', error);
         button.textContent = 'Error - Try Again';
         button.disabled = false;
+        // Only reset flags if call never actually started
+        if (!callHasStarted) {
+          isStartingInterview = false;
+          console.log('⚠️ Reset isStartingInterview flag due to error before call started');
+        }
       }
     }
   </script>
@@ -693,8 +729,25 @@
     </div>
 
     <div>
-      <button id="readyBtn" onclick="startInterview()">Start Phone Interview</button>
+      <button id="readyBtn" onclick="handleStartInterview()">Start Phone Interview</button>
     </div>
+    
+    <script>
+      // Wrapper function to prevent multiple clicks
+      function handleStartInterview() {
+        const button = document.getElementById('readyBtn');
+        if (callHasStarted || isStartingInterview) {
+          console.error('🚫 Button click blocked - interview already started');
+          return;
+        }
+        
+        // Remove onclick to prevent further clicks
+        button.onclick = null;
+        button.style.pointerEvents = 'none';
+        
+        startInterview();
+      }
+    </script>
   </div>
 </body>
 </html>

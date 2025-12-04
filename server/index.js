@@ -191,6 +191,17 @@ app.post('/api/mark-interview-started', async (req, res) => {
     }
 
     const record = records[0];
+    const fields = record.fields;
+
+    // CRITICAL: Check if interview was already marked as started
+    if (fields.InterviewCompleted === true || fields.action === 'interviewed') {
+      console.log('⚠️ Interview already marked as started - rejecting duplicate request');
+      return res.status(409).json({ 
+        success: false, 
+        error: 'Interview already started',
+        alreadyStarted: true 
+      });
+    }
 
     // Update the record to mark interview as started
     // Change status from 'scheduled' to 'pending' (awaiting review)
@@ -200,6 +211,7 @@ app.post('/api/mark-interview-started', async (req, res) => {
       'status': 'pending',
     });
 
+    console.log('✅ Successfully marked interview as started for token:', token);
     res.json({ success: true, message: 'Interview marked as started' });
   } catch (error) {
     console.error('Error marking interview started:', error);
