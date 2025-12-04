@@ -1,8 +1,11 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd server && npm ci"
+watchPatterns = ["server/**"]
 
 [deploy]
-startCommand = "cd server && npm start"
+startCommand = "cd server && node index.js"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
+
+[nixpacks]
+configFile = "server"
