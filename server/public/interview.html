@@ -126,6 +126,8 @@
     let sessionToken;
     let candidateName;
     let originalToken; // This will be the same as sessionToken now
+    let vapiInstance = null; // Store VAPI instance globally
+    let callHasStarted = false; // Track if any call has started
 
     // Add loadVapiSDK function
     async function loadVapiSDK() {
@@ -379,7 +381,8 @@
         console.log('🔗 Webhook URL configured:', vapiConfig.serverUrl);
         console.log('🎯 VAPI will send transcript + original token to n8n webhook');
 
-        window.vapiSDK.run({
+        // Store the VAPI instance globally so we can control it
+        vapiInstance = window.vapiSDK.run({
           ...vapiConfig,
           // Use VAPI's variableValues instead of metadata
           assistantOverrides: {
@@ -421,11 +424,35 @@
             console.log('📞 Call started');
             console.log('📊 Call start data:', data);
             
+            // CRITICAL: Set flag immediately when call starts
+            if (callHasStarted) {
+              console.error('🚫 DUPLICATE CALL DETECTED - A call is already in progress!');
+              // Stop this call immediately
+              if (vapiInstance && vapiInstance.stop) {
+                vapiInstance.stop();
+              }
+              return;
+            }
+            
+            callHasStarted = true;
+            console.log('✅ First call started - flag set to prevent duplicates');
+            
             // Store call start time to measure duration
             window.callStartTime = Date.now();
             
             // Mark as in-progress in browser storage (temporary)
             sessionStorage.setItem('callInProgress_' + sessionToken, 'true');
+            
+            // IMMEDIATELY mark as started in Airtable to prevent any duplicate calls
+            fetch('/api/mark-interview-started', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: originalToken })
+            }).then(r => r.json()).then(result => {
+              console.log('✅ IMMEDIATELY marked interview as started in Airtable (on call start):', result);
+            }).catch(err => {
+              console.error('❌ Failed to mark interview started (on call start):', err);
+            });
             
             if (data && data.call) {
               console.log('🔍 Call object:', data.call);
@@ -448,6 +475,19 @@
             
             // Hide our custom button but keep VAPI button visible during call
             button.style.display = 'none';
+            
+            // IMMEDIATELY disable all VAPI buttons to prevent double-clicks
+            setTimeout(() => {
+              const vapiButtons = document.querySelectorAll('[data-vapi], .vapi-button, button[aria-label*="call"], button[aria-label*="phone"]');
+              vapiButtons.forEach(btn => {
+                if (btn && btn.tagName === 'BUTTON') {
+                  btn.disabled = true;
+                  btn.style.opacity = '0.5';
+                  btn.style.cursor = 'not-allowed';
+                  console.log('🔒 Disabled VAPI button to prevent duplicate calls');
+                }
+              });
+            }, 100);
           },
           onCallEnd: (data) => {
             console.log('📴 Call ended');
@@ -473,20 +513,12 @@
             if (shouldMarkCompleted) {
               console.log('✅ Call had meaningful content - marking as completed');
               
-              // NOW mark interview as completed in storage and Airtable
+              // Mark interview as completed in storage (Airtable already marked on call start)
               sessionStorage.setItem('interviewStarted_' + sessionToken, 'true');
               localStorage.setItem('interviewStarted_' + sessionToken, 'true');
               
-              // Update Airtable to mark interview as completed
-              fetch('/api/mark-interview-started', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: originalToken })
-              }).then(r => r.json()).then(result => {
-                console.log('✅ Marked interview as completed in Airtable:', result);
-              }).catch(err => {
-                console.error('❌ Failed to mark interview completed:', err);
-              });
+              // Note: We already marked in Airtable on call START to prevent duplicates
+              console.log('✅ Interview already marked as started in Airtable (done on call start)');
               
               // IMMEDIATELY hide all VAPI elements to prevent additional calls
               const hideVapiElements = () => {
@@ -577,6 +609,28 @@
         button.textContent = 'Click on the telephone to connect!';
         button.style.backgroundColor = '#059669';
 
+        // Add global click interceptor to prevent any VAPI button clicks after first call
+        document.addEventListener('click', (e) => {
+          if (callHasStarted) {
+            const target = e.target;
+            // Check if click is on a VAPI button
+            if (target && (
+              target.hasAttribute('data-vapi') ||
+              target.classList.contains('vapi-button') ||
+              target.getAttribute('aria-label')?.includes('call') ||
+              target.getAttribute('aria-label')?.includes('phone') ||
+              target.closest('[data-vapi]') ||
+              target.closest('.vapi-button')
+            )) {
+              console.log('🚫 BLOCKED: Preventing duplicate call - call already in progress');
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              return false;
+            }
+          }
+        }, true); // Use capture phase to intercept before VAPI
+
         // Position VAPI button above our text after a short delay
         setTimeout(() => {
           const positionVapiButton = () => {
@@ -633,6 +687,7 @@
           <li>Please ensure you are in a quiet environment</li>
           <li>Check that your phone has a good signal</li>
           <li>Have a pen and paper ready</li>
+           <li><strong>NOTE: THIS INTERVIEW IS BEING RECORDED FOR QUALITY AND TRAINING PURPOSES</strong></li>
         </ul>
       </div>
     </div>
