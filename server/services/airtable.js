@@ -35,6 +35,15 @@ async function findCandidateByToken(token) {
       appointmentTime: record.fields['Interview Time'] || record.fields.AppointmentTime,
       status: record.fields.Status || 'pending',
       interviewCompleted: record.fields.InterviewCompleted || false,
+      // CV/Resume fields
+      cvUrl: record.fields['CV URL'] || record.fields['Resume URL'] || record.fields.CV || null,
+      cvText: record.fields['CV Text'] || record.fields['Resume Text'] || null,
+      cvSummary: record.fields['CV Summary'] || record.fields['Resume Summary'] || null,
+      // Additional candidate info that might be useful for interview
+      experience: record.fields['Years of Experience'] || record.fields.Experience || null,
+      position: record.fields['Position Applied'] || record.fields.Position || null,
+      skills: record.fields.Skills || null,
+      education: record.fields.Education || null,
       ...record.fields
     };
   } catch (error) {
@@ -64,9 +73,29 @@ function validateAppointmentTime(appointmentTime) {
   if (diffMinutes < BEFORE_WINDOW) {
     // Too early
     const minutesUntil = Math.abs(diffMinutes);
+    
+    // Calculate days, hours, and minutes
+    const days = Math.floor(minutesUntil / (60 * 24));
+    const hours = Math.floor((minutesUntil % (60 * 24)) / 60);
+    const minutes = minutesUntil % 60;
+    
+    // Build time string
+    let timeString = '';
+    if (days > 0) {
+      timeString += `${days} day${days !== 1 ? 's' : ''}`;
+    }
+    if (hours > 0) {
+      if (timeString) timeString += ', ';
+      timeString += `${hours} hour${hours !== 1 ? 's' : ''}`;
+    }
+    if (minutes > 0 || timeString === '') {
+      if (timeString) timeString += ', and ';
+      timeString += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    }
+    
     return {
       valid: false,
-      message: `Interview window opens in ${minutesUntil} minutes`,
+      message: `Interview window opens in ${timeString}`,
       minutesUntil: minutesUntil,
       tooEarly: true
     };
@@ -140,9 +169,36 @@ async function getAllCandidates(filters = {}) {
   }
 }
 
+/**
+ * Get candidate by ID
+ * @param {string} recordId - Airtable record ID
+ * @returns {Promise<Object|null>} - Candidate record or null
+ */
+async function getCandidateById(recordId) {
+  try {
+    const record = await base(tableName).find(recordId);
+    
+    return {
+      id: record.id,
+      email: record.fields.Email,
+      name: record.fields['Candidate Name'] || record.fields.Name,
+      interviewDate: record.fields['Interview Date'],
+      interviewStatus: record.fields['Interview Status'] || record.fields.Status,
+      ...record.fields
+    };
+  } catch (error) {
+    if (error.statusCode === 404) {
+      return null;
+    }
+    console.error('Error getting candidate by ID:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   findCandidateByToken,
   validateAppointmentTime,
   updateCandidate,
-  getAllCandidates
+  getAllCandidates,
+  getCandidateById
 };

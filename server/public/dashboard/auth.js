@@ -54,25 +54,28 @@ class AuthManager {
                 return;
             }
 
-            // Validate credentials securely
-            const user = SECURE_CONFIG.getUserByEmail(email);
-            if (!user || !SECURE_CONFIG.verifyPassword(password, user.passwordHash)) {
+            // Authenticate against server
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
                 SECURE_CONFIG.recordLoginAttempt(email, false);
-                this.showError('Invalid email or password');
+                this.showError(data.error || 'Invalid email or password');
                 return;
             }
 
-            // Validate 2FA if enabled
-            if (user.mfaEnabled) {
-                if (!authCode) {
-                    this.showError('2FA code is required for this account');
-                    return;
-                }
-                if (!this.validate2FA(authCode)) {
-                    SECURE_CONFIG.recordLoginAttempt(email, false);
-                    this.showError('Invalid 2FA code. Please try again.');
-                    return;
-                }
+            // Check if 2FA is required (optional for now)
+            if (authCode && !this.validate2FA(authCode)) {
+                SECURE_CONFIG.recordLoginAttempt(email, false);
+                this.showError('Invalid 2FA code. Please try again.');
+                return;
             }
 
             // Successful login
@@ -80,12 +83,12 @@ class AuthManager {
             
             // Create secure session
             const sessionUser = {
-                email: email,
-                name: email.split('@')[0],
-                role: user.role,
-                permissions: user.permissions,
+                email: data.user.email,
+                name: data.user.name,
+                role: data.user.role,
+                permissions: this.getPermissionsForRole(data.user.role),
                 loginTime: new Date().toISOString(),
-                secureToken: SECURE_CONFIG.generateSecureToken({ email, role: user.role })
+                secureToken: SECURE_CONFIG.generateSecureToken({ email: data.user.email, role: data.user.role })
             };
 
             this.currentUser = sessionUser;
@@ -154,6 +157,17 @@ class AuthManager {
         } else {
             return ['read'];
         }
+    }
+
+    getPermissionsForRole(role) {
+        // Map role to permissions
+        const rolePermissions = {
+            'admin': ['read', 'write', 'delete', 'accept', 'reject', 'manage_users'],
+            'hr_manager': ['read', 'write', 'accept', 'reject'],
+            'interviewer': ['read', 'write'],
+            'user': ['read']
+        };
+        return rolePermissions[role] || ['read'];
     }
 
     saveSession(user) {

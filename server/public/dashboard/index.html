@@ -56,6 +56,11 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-sign-in-alt"></i> Login
                     </button>
+                    <div style="text-align: center; margin-top: 16px;">
+                        <a href="/reset-password-request.html" style="color: #667eea; text-decoration: none; font-size: 14px;">
+                            <i class="fas fa-key"></i> Forgot Password?
+                        </a>
+                    </div>
                 </form>
             </div>
         </div>
@@ -65,28 +70,35 @@
     <main class="dashboard">
         <!-- Stats Overview -->
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" data-filter="all">
                 <i class="fas fa-users"></i>
                 <div>
                     <h3 id="totalCandidates">0</h3>
                     <p>Total Candidates</p>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-filter="scheduled">
+                <i class="fas fa-calendar-check"></i>
+                <div>
+                    <h3 id="scheduled">0</h3>
+                    <p>Scheduled</p>
+                </div>
+            </div>
+            <div class="stat-card" data-filter="pending">
                 <i class="fas fa-clock"></i>
                 <div>
                     <h3 id="pendingReviews">0</h3>
                     <p>Pending Reviews</p>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-filter="accepted">
                 <i class="fas fa-check-circle"></i>
                 <div>
                     <h3 id="accepted">0</h3>
                     <p>Accepted</p>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-filter="rejected">
                 <i class="fas fa-times-circle"></i>
                 <div>
                     <h3 id="rejected">0</h3>
@@ -99,7 +111,8 @@
         <div class="filters">
             <select id="statusFilter">
                 <option value="all">All Status</option>
-                <option value="pending">Pending</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="pending">Pending Review</option>
                 <option value="accepted">Accepted</option>
                 <option value="rejected">Rejected</option>
             </select>

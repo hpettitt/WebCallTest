@@ -44,7 +44,9 @@ const CONFIG = {
         analysis: 'Interview Analysis',
         transcript: 'Interview Transcript',
         availability: 'availability',
-        nextAction: 'Next Action Recommendation'
+        nextAction: 'Next Action Recommendation',
+        action: 'action',
+        interviewCompleted: 'InterviewCompleted'
     }
 };
 
