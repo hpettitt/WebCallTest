@@ -206,8 +206,30 @@
       const button = document.getElementById('readyBtn');
       
       try {
-        // Check if interview was already completed successfully
-        const interviewStarted = sessionStorage.getItem('interviewStarted_' + sessionToken);
+        // FIRST: Check with server if interview was already completed
+        button.disabled = true;
+        button.textContent = 'Checking status...';
+        
+        const statusResponse = await fetch(`/api/check-interview-status?token=${encodeURIComponent(sessionToken)}`);
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          
+          if (statusData.completed === true || statusData.interviewCompleted === true) {
+            console.log('🚫 Interview already completed in Airtable');
+            button.textContent = 'Interview Already Completed';
+            button.style.background = '#6b7280';
+            alert('You have already completed your interview. Thank you! If there was an issue, please contact support.');
+            
+            // Redirect to thank you page after a moment
+            setTimeout(() => {
+              window.location.href = 'thank-you.html';
+            }, 2000);
+            return;
+          }
+        }
+        
+        // Also check local storage as backup
+        const interviewStarted = sessionStorage.getItem('interviewStarted_' + sessionToken) || localStorage.getItem('interviewStarted_' + sessionToken);
         const callInProgress = sessionStorage.getItem('callInProgress_' + sessionToken);
         
         // Allow retry if call was in progress but didn't complete
@@ -216,6 +238,11 @@
           button.disabled = true;
           button.style.background = '#6b7280';
           alert('You have already completed your interview. If there was an issue, please contact support.');
+          
+          // Redirect to thank you page
+          setTimeout(() => {
+            window.location.href = 'thank-you.html';
+          }, 2000);
           return;
         }
         

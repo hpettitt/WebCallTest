@@ -111,6 +111,59 @@ app.post('/api/validate-token', async (req, res) => {
 /**
  * Mark interview as started to prevent multiple calls
  */
+/**
+ * Check if interview was already completed
+ * Prevents duplicate interviews by checking Airtable status
+ */
+app.get('/api/check-interview-status', async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ success: false, error: 'Token required' });
+    }
+
+    const Airtable = require('airtable');
+    const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(
+      process.env.AIRTABLE_BASE_ID
+    );
+    const tableName = process.env.AIRTABLE_TABLE_NAME || 'Candidates';
+
+    // Find the record by token
+    const records = await base(tableName)
+      .select({
+        filterByFormula: `{token} = '${token}'`,
+        maxRecords: 1,
+      })
+      .firstPage();
+
+    if (records.length === 0) {
+      return res.status(404).json({ success: false, error: 'Candidate not found' });
+    }
+
+    const record = records[0];
+    const fields = record.fields;
+    
+    // Check if interview was completed
+    const completed = fields.InterviewCompleted === true || 
+                     fields.action === 'interviewed' ||
+                     fields.status === 'pending' ||
+                     fields.status === 'accepted' ||
+                     fields.status === 'rejected';
+
+    res.json({ 
+      success: true, 
+      completed: completed,
+      interviewCompleted: fields.InterviewCompleted,
+      status: fields.status,
+      action: fields.action
+    });
+  } catch (error) {
+    console.error('Error checking interview status:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 app.post('/api/mark-interview-started', async (req, res) => {
   try {
     const { token } = req.body;
