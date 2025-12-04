@@ -25,13 +25,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Basic route
+// Basic route - redirect to demo portal
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'WebCall Interview Server',
-    timestamp: new Date().toISOString(),
-    port: PORT
-  });
+  res.redirect('/demo-portal.html');
 });
 
 // Health check endpoint
@@ -533,8 +529,8 @@ app.post('/api/register-candidate', async (req, res) => {
     const crypto = require('crypto');
     const token = crypto.randomBytes(16).toString('hex');
 
-    // Combine date and time
-    const interviewDateTime = `${interviewDate}T${interviewTime}:00`;
+    // Combine date and time - store as UTC to avoid timezone issues
+    const interviewDateTime = `${interviewDate}T${interviewTime}:00.000Z`;
 
     // Create candidate record in Airtable
     console.log('Creating Airtable record...');
@@ -557,7 +553,7 @@ app.post('/api/register-candidate', async (req, res) => {
 
     // Generate interview link
     const baseUrl = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
-    const interviewLink = `${baseUrl}/index.html?token=${token}`;
+    const interviewLink = `${baseUrl}/interview-validation.html?token=${token}`;
     console.log('Interview link:', interviewLink);
 
     // Send confirmation email with interview link
