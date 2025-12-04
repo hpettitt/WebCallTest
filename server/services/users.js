@@ -1,6 +1,6 @@
 // User Management Service - Handles authentication and password resets
 const Airtable = require('airtable');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 // Initialize Airtable

@@ -321,8 +321,206 @@ async function testEmailConfig() {
   }
 }
 
+/**
+ * Send interview confirmation email
+ * @param {Object} options - Email options
+ * @param {string} options.email - Recipient email
+ * @param {string} options.name - Recipient name
+ * @param {string} options.interviewDate - Interview date (YYYY-MM-DD)
+ * @param {string} options.interviewTime - Interview time (HH:MM)
+ * @returns {Promise<boolean>} - Success status
+ */
+async function sendInterviewConfirmation({ email, name, interviewDate, interviewTime, interviewLink }) {
+  try {
+    const transporter = createTransporter();
+    
+    // interviewDate and interviewTime are already formatted strings from the backend
+    const formattedDate = interviewDate;
+    const formattedTime = interviewTime;
+    
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to: email,
+      subject: 'Interview Confirmed - Bloom Buddies',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              background-color: #f4f4f4;
+              margin: 0;
+              padding: 0;
+            }
+            .container {
+              max-width: 600px;
+              margin: 40px auto;
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              overflow: hidden;
+            }
+            .header {
+              background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+              color: white;
+              padding: 30px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+            }
+            .content {
+              padding: 40px 30px;
+            }
+            .content p {
+              margin: 0 0 20px 0;
+            }
+            .interview-details {
+              background: #f0fdf4;
+              border-left: 4px solid #48bb78;
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 4px;
+            }
+            .interview-details h2 {
+              margin: 0 0 10px 0;
+              color: #22543d;
+              font-size: 18px;
+            }
+            .detail-row {
+              display: flex;
+              margin: 8px 0;
+              font-size: 16px;
+            }
+            .detail-label {
+              font-weight: 600;
+              color: #2d3748;
+              min-width: 80px;
+            }
+            .detail-value {
+              color: #4a5568;
+            }
+            .footer {
+              background: #f9f9f9;
+              padding: 20px 30px;
+              text-align: center;
+              font-size: 12px;
+              color: #666;
+              border-top: 1px solid #eee;
+            }
+            .info-box {
+              background: #e6fffa;
+              border-left: 4px solid #319795;
+              padding: 12px;
+              margin: 20px 0;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>✓ Interview Confirmed!</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${name},</p>
+              
+              <p>Great news! Your interview with Bloom Buddies has been successfully scheduled.</p>
+              
+              <div class="interview-details">
+                <h2>Interview Details</h2>
+                <div class="detail-row">
+                  <span class="detail-label">Date:</span>
+                  <span class="detail-value">${formattedDate}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Time:</span>
+                  <span class="detail-value">${formattedTime}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Duration:</span>
+                  <span class="detail-value">Approximately 30 minutes</span>
+                </div>
+              </div>
+              
+              <div class="info-box">
+                <strong>📞 Your Interview Link:</strong><br>
+                On the day of your interview, click the button below to start your phone interview:<br><br>
+                <a href="${interviewLink}" style="display: inline-block; padding: 12px 24px; background: #48bb78; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 10px;">
+                  🎙️ Start My Interview
+                </a>
+              </div>
+              
+              <p><strong>What to prepare:</strong></p>
+              <ul>
+                <li>Review your application and resume</li>
+                <li>Have a pen and paper ready for notes</li>
+                <li>Be in a quiet location with good phone reception</li>
+                <li>Click the interview link at the scheduled time</li>
+                <li>Allow extra time in case the interview runs longer</li>
+              </ul>
+              
+              <p><strong>Important:</strong> Please save this email with your interview link. You will need it on ${formattedDate} at ${formattedTime}.</p>
+              
+              <p>If you need to reschedule for any reason, please contact us as soon as possible at <a href="mailto:${process.env.EMAIL_FROM}">${process.env.EMAIL_FROM}</a>.</p>
+              
+              <p>We're looking forward to speaking with you!</p>
+              
+              <p>Best regards,<br>
+              <strong>The Bloom Buddies Team</strong></p>
+            </div>
+            <div class="footer">
+              <p>This is an automated message from Bloom Buddies.</p>
+              <p>If you have any questions, please reply to this email or contact us at ${process.env.EMAIL_FROM}</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+Hi ${name},
+
+Your interview with Bloom Buddies has been confirmed!
+
+Interview Details:
+- Date: ${formattedDate}
+- Time: ${formattedTime}
+- Duration: Approximately 30 minutes
+
+You will receive a phone call at the scheduled time. Please ensure you're in a quiet location.
+
+What to prepare:
+- Review your application and resume
+- Have a pen and paper ready for notes
+- Be in a quiet location with good reception
+
+If you need to reschedule, please contact us at ${process.env.EMAIL_FROM}.
+
+We look forward to speaking with you!
+
+Best regards,
+The Bloom Buddies Team
+      `
+    };
+    
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Interview confirmation email sent:', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending interview confirmation email:', error);
+    return false;
+  }
+}
+
 module.exports = {
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
   testEmailConfig,
+  sendInterviewConfirmation,
 };

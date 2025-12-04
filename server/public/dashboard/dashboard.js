@@ -39,6 +39,7 @@ class Dashboard {
             statusFilter.addEventListener('change', (e) => {
                 this.currentFilters.status = e.target.value;
                 this.applyFilters();
+                this.updateStatCardActive(e.target.value);
             });
         }
 
@@ -60,8 +61,34 @@ class Dashboard {
             });
         }
 
+        // Stat card click listeners
+        this.setupStatCardListeners();
+
         // Modal event listeners
         this.setupModalEventListeners();
+    }
+
+    setupStatCardListeners() {
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                const filter = card.dataset.filter;
+                
+                // Update active state
+                statCards.forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                
+                // Update status filter dropdown
+                const statusFilter = document.getElementById('statusFilter');
+                if (statusFilter) {
+                    statusFilter.value = filter;
+                }
+                
+                // Apply filter
+                this.currentFilters.status = filter;
+                this.applyFilters();
+            });
+        });
     }
 
     setupModalEventListeners() {
@@ -122,6 +149,9 @@ class Dashboard {
             this.updateStatistics();
             this.renderCandidates();
             
+            // Set "all" stat card as active by default
+            this.updateStatCardActive('all');
+            
             if (showLoading) {
                 this.showLoading(false);
             }
@@ -162,10 +192,22 @@ class Dashboard {
         this.renderCandidates();
     }
 
+    updateStatCardActive(filter) {
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach(card => {
+            if (card.dataset.filter === filter) {
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+            }
+        });
+    }
+
     updateStatistics() {
         const stats = window.airtable.getStatistics(this.candidates);
         
         this.updateStatElement('totalCandidates', stats.total);
+        this.updateStatElement('scheduled', stats.scheduled);
         this.updateStatElement('pendingReviews', stats.pending);
         this.updateStatElement('accepted', stats.accepted);
         this.updateStatElement('rejected', stats.rejected);
@@ -249,7 +291,7 @@ class Dashboard {
                         <button class="btn btn-warning btn-small view-details" data-candidate-id="${candidate.id}">
                             <i class="fas fa-eye"></i> View Details
                         </button>
-                        ${hasPermission && candidate.status === 'pending' ? `
+                        ${hasPermission && candidate.status === 'pending' && (candidate.action === 'interviewed' || candidate.interviewCompleted === true) ? `
                             <button class="btn btn-success btn-small quick-accept" data-candidate-id="${candidate.id}">
                                 <i class="fas fa-check"></i> Accept
                             </button>
@@ -311,13 +353,17 @@ class Dashboard {
         const modalBody = document.querySelector('#interviewModal .modal-body');
         modalBody.innerHTML = this.createCandidateDetailsHTML(candidate);
         
-        // Show/hide action buttons based on status and permissions
+        // Show/hide action buttons based on status, permissions, and interview completion
         const acceptBtn = document.getElementById('acceptBtn');
         const rejectBtn = document.getElementById('rejectBtn');
         const hasPermission = auth.hasPermission('write');
         
+        // Check if interview has been completed or started
+        const interviewStarted = candidate.action === 'interviewed' || candidate.interviewCompleted === true;
+        
         if (acceptBtn && rejectBtn) {
-            if (hasPermission && candidate.status === 'pending') {
+            // Only show buttons if: has permission, status is pending, AND interview has been completed
+            if (hasPermission && candidate.status === 'pending' && interviewStarted) {
                 acceptBtn.style.display = 'inline-flex';
                 rejectBtn.style.display = 'inline-flex';
             } else {

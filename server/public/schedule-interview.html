@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Your Interview - Bloom Buddies</title>
+    <style>
+        :root {
+            --primary-color: #5dc399;
+            --primary-light: #7be1b6;
+            --secondary-color: #2563eb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --light-bg: #f8fafc;
+            --dark-text: #1f2937;
+            --light-text: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark-text);
+        }
+
+        .page-subtitle {
+            color: var(--light-text);
+            margin-bottom: 2rem;
+        }
+
+        /* Split Layout */
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        /* Left Side - Form */
+        .form-section {
+            padding: 2rem;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-text);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Right Side - Calendar */
+        .calendar-section {
+            padding: 2rem;
+        }
+
+        .calendar-container {
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-header h3 {
+            font-size: 1.3rem;
+            color: var(--dark-text);
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .calendar-nav button {
+            padding: 0.5rem 1rem;
+            background: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-nav button:hover {
+            background: var(--border-color);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.25rem;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            padding: 0.25rem;
+            color: var(--light-text);
+            font-size: 0.7rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            font-size: 0.75rem;
+            padding: 0.25rem;
+        }
+
+        .calendar-day.other-month {
+            color: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .calendar-day.past {
+            color: #d1d5db;
+            cursor: not-allowed;
+            background: #fafafa;
+        }
+
+        .calendar-day.today {
+            border-color: var(--primary-color);
+            background: #f0fdf4;
+        }
+
+        .calendar-day.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .calendar-day:not(.past):not(.other-month):hover {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Time Slots - Speedometer Style */
+        .time-slots-section {
+            margin-top: 2rem;
+            max-width: 400px;
+        }
+
+        .time-slots-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark-text);
+        }
+
+        .time-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            background: white;
+            cursor: pointer;
+        }
+
+        .time-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Messages */
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .message.error {
+            background: #fef2f2;
+            color: var(--danger-color);
+            border: 1px solid #fecaca;
+        }
+
+        .message.success {
+            background: #f0fdf4;
+            color: var(--success-color);
+            border: 1px solid #bbf7d0;
+        }
+
+        .message.info {
+            background: #eff6ff;
+            color: var(--secondary-color);
+            border: 1px solid #dbeafe;
+        }
+
+        /* Success State */
+        .success-container {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--success-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 40px;
+            color: white;
+        }
+
+        .success-container h2 {
+            color: var(--dark-text);
+            margin-bottom: 1rem;
+        }
+
+        .success-container p {
+            color: var(--light-text);
+            line-height: 1.8;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .form-section {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">🌱 Bloom Buddies</div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <h1 class="page-title">Schedule your interview</h1>
+        <p class="page-subtitle">Complete the form and select your preferred interview date and time</p>
+
+        <div id="messageDiv" class="message"></div>
+
+        <div id="mainContent" class="content-wrapper">
+            <!-- Left Side - Form -->
+            <div class="form-section">
+                <form id="scheduleForm">
+                    <div class="form-group">
+                        <label for="name">Name *</label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            placeholder="John Doe"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="john.doe@example.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            name="phone" 
+                            placeholder="(555) 123-4567"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Time Zone</label>
+                        <div style="padding: 0.75rem; background: #f8fafc; border: 2px solid #e5e7eb; border-radius: 8px; color: #4a5568;">
+                            Central European Time (CET)
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="selectedDate" name="selectedDate">
+                    <input type="hidden" id="selectedTime" name="selectedTime">
+                </form>
+            </div>
+
+            <!-- Right Side - Calendar and Time Slots -->
+            <div class="calendar-section">
+                <!-- Calendar -->
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <h3 id="calendarMonth">December 2025</h3>
+                        <div class="calendar-nav">
+                            <button type="button" id="prevMonth">‹ Prev</button>
+                            <button type="button" id="nextMonth">Next ›</button>
+                        </div>
+                    </div>
+
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Day headers -->
+                        <div class="calendar-day-header">Sun</div>
+                        <div class="calendar-day-header">Mon</div>
+                        <div class="calendar-day-header">Tue</div>
+                        <div class="calendar-day-header">Wed</div>
+                        <div class="calendar-day-header">Thu</div>
+                        <div class="calendar-day-header">Fri</div>
+                        <div class="calendar-day-header">Sat</div>
+                        <!-- Days will be inserted by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Time Slots -->
+                <div class="time-slots-section">
+                    <div class="time-slots-title">Select Interview Time</div>
+                    <select id="timeSelect" class="time-select">
+                        <option value="">Choose a time...</option>
+                        <!-- Time slots will be inserted by JavaScript -->
+                    </select>
+                    
+                    <button type="submit" form="scheduleForm" class="btn" id="submitBtn">
+                        Confirm My Interview Time
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div id="successContainer" class="success-container">
+            <div class="success-icon">✓</div>
+            <h2>Registration Complete!</h2>
+            <p id="scheduledDateTime"></p>
+            <p>You will receive a confirmation email shortly with your interview link and all the details.</p>
+            <p style="margin-top: 24px; color: #6b7280;">Please check your email for the interview link. We look forward to speaking with you!</p>
+        </div>
+    </div>
+
+    <script>
+        // Calendar state
+        let currentMonth = new Date();
+        let selectedDate = null;
+        let selectedTime = null;
+
+        // Available time slots (24-hour format) - 7am to 7pm at 30 min increments
+        const timeSlots = [
+            '07:00', '07:30', '08:00', '08:30', '09:00', '09:30',
+            '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
+            '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
+            '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00'
+        ];
+
+        // Initialize
+        function init() {
+            renderCalendar();
+            renderTimeSlots();
+            setupEventListeners();
+        }
+
+        // Render calendar
+        function renderCalendar() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            
+            // Update month display
+            document.getElementById('calendarMonth').textContent = 
+                currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Get calendar grid (skip the header row)
+            const grid = document.getElementById('calendarGrid');
+            const dayHeaders = Array.from(grid.querySelectorAll('.calendar-day-header'));
+            grid.innerHTML = '';
+            dayHeaders.forEach(header => grid.appendChild(header));
+
+            // Add empty cells for days before month starts
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day other-month';
+                grid.appendChild(emptyDay);
+            }
+
+            // Add days of month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                dayEl.textContent = day;
+                dayEl.dataset.date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                const dayDate = new Date(year, month, day);
+                dayDate.setHours(0, 0, 0, 0);
+
+                // Mark past days
+                if (dayDate < today) {
+                    dayEl.classList.add('past');
+                }
+                // Mark today
+                else if (dayDate.getTime() === today.getTime()) {
+                    dayEl.classList.add('today');
+                }
+
+                // Mark selected
+                if (selectedDate && dayEl.dataset.date === selectedDate) {
+                    dayEl.classList.add('selected');
+                }
+
+                // Click handler
+                if (!dayEl.classList.contains('past')) {
+                    dayEl.addEventListener('click', function() {
+                        selectDate(this.dataset.date);
+                    });
+                }
+
+                grid.appendChild(dayEl);
+            }
+        }
+
+        // Select date
+        function selectDate(date) {
+            selectedDate = date;
+            document.getElementById('selectedDate').value = date;
+            
+            // Update visual selection
+            document.querySelectorAll('.calendar-day').forEach(day => {
+                day.classList.remove('selected');
+                if (day.dataset.date === date) {
+                    day.classList.add('selected');
+                }
+            });
+
+            showMessage('info', `Selected: ${new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`);
+        }
+
+        // Render time slots
+        function renderTimeSlots() {
+            const select = document.getElementById('timeSelect');
+            
+            timeSlots.forEach(time => {
+                const option = document.createElement('option');
+                option.value = time;
+                option.textContent = formatTime12Hour(time);
+                select.appendChild(option);
+            });
+
+            // Add change event listener
+            select.addEventListener('change', function() {
+                selectTime(this.value);
+            });
+        }
+
+        // Select time
+        function selectTime(time) {
+            selectedTime = time;
+            document.getElementById('selectedTime').value = time;
+        }
+
+        // Format time to 12-hour
+        function formatTime12Hour(time24) {
+            const [hours, minutes] = time24.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Month navigation
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentMonth.setMonth(currentMonth.getMonth() - 1);
+                renderCalendar();
+            });
+
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentMonth.setMonth(currentMonth.getMonth() + 1);
+                renderCalendar();
+            });
+
+            // Form submission
+            document.getElementById('scheduleForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+
+                if (!selectedDate) {
+                    showMessage('error', 'Please select an interview date');
+                    return;
+                }
+
+                if (!selectedTime) {
+                    showMessage('error', 'Please select an interview time');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Scheduling <span class="loading"></span>';
+
+                try {
+                    const response = await fetch('/api/register-candidate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            email: email,
+                            phone: phone,
+                            interviewDate: selectedDate,
+                            interviewTime: selectedTime,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Show success message
+                        document.getElementById('mainContent').style.display = 'none';
+                        document.getElementById('messageDiv').style.display = 'none';
+                        document.getElementById('successContainer').style.display = 'block';
+                        
+                        // Format the scheduled date/time
+                        const dateObj = new Date(`${selectedDate}T${selectedTime}`);
+                        const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        });
+                        const formattedTime = formatTime12Hour(selectedTime);
+                        
+                        document.getElementById('scheduledDateTime').textContent = 
+                            `Your interview is scheduled for ${formattedDate} at ${formattedTime} EST`;
+                    } else {
+                        showMessage('error', data.error || 'Failed to register. Please try again.');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Confirm My Interview Time';
+                    }
+                } catch (error) {
+                    console.error('Form submission error:', error);
+                    showMessage('error', 'Error scheduling interview. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Confirm My Interview Time';
+                }
+            });
+        }
+
+        function showMessage(type, text) {
+            const messageDiv = document.getElementById('messageDiv');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Initialize on page load
+        init();
+    </script>
+</body>
+</html>

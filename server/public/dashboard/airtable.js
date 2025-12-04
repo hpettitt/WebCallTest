@@ -239,6 +239,8 @@ class AirtableManager {
                 transcript: fields[CONFIG.fields.transcript] || '',
                 availability: fields[CONFIG.fields.availability] || '',
                 nextAction: fields[CONFIG.fields.nextAction] || '',
+                action: fields[CONFIG.fields.action] || '',
+                interviewCompleted: fields[CONFIG.fields.interviewCompleted] || false,
                 lastUpdated: new Date(record.createdTime)
             };
 
@@ -262,6 +264,8 @@ class AirtableManager {
             return 'accepted'; // Display as 'accepted' in UI
         } else if (normalizedStatus === 'reject') {
             return 'rejected'; // Display as 'rejected' in UI
+        } else if (normalizedStatus === 'scheduled') {
+            return 'scheduled'; // Display as 'scheduled' - interview scheduled but not yet completed
         } else if (normalizedStatus === 'waiting for interview' || 
                    normalizedStatus === 'interviewed' || 
                    normalizedStatus === 'rescheduled' ||
@@ -425,6 +429,7 @@ class AirtableManager {
     getStatistics(candidates) {
         const stats = {
             total: candidates.length,
+            scheduled: 0,
             pending: 0,
             accepted: 0,
             rejected: 0,
@@ -435,6 +440,9 @@ class AirtableManager {
 
         candidates.forEach(candidate => {
             switch (candidate.status) {
+                case 'scheduled':
+                    stats.scheduled++;
+                    break;
                 case 'pending':
                     stats.pending++;
                     break;

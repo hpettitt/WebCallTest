@@ -61,11 +61,11 @@ app.post('/api/validate-token', async (req, res) => {
       });
     }
 
-    // Check if interview already completed
-    if (candidate.interviewCompleted) {
+    // Check if interview already completed or started
+    if (candidate.interviewCompleted || candidate.action === 'interviewed') {
       return res.status(400).json({
         valid: false,
-        error: 'Interview has already been completed',
+        error: 'Interview has already been started or completed. If there was an issue, please contact support.',
         candidate: {
           name: candidate.name,
           email: candidate.email
@@ -109,6 +109,52 @@ app.post('/api/validate-token', async (req, res) => {
       valid: false,
       error: 'Server error during validation'
     });
+  }
+});
+
+/**
+ * Mark interview as started to prevent multiple calls
+ */
+app.post('/api/mark-interview-started', async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ success: false, error: 'Token required' });
+    }
+
+    const Airtable = require('airtable');
+    const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(
+      process.env.AIRTABLE_BASE_ID
+    );
+    const tableName = process.env.AIRTABLE_TABLE_NAME || 'Candidates';
+
+    // Find the record by token
+    const records = await base(tableName)
+      .select({
+        filterByFormula: `{token} = '${token}'`,
+        maxRecords: 1,
+      })
+      .firstPage();
+
+    if (records.length === 0) {
+      return res.status(404).json({ success: false, error: 'Candidate not found' });
+    }
+
+    const record = records[0];
+
+    // Update the record to mark interview as started
+    // Change status from 'scheduled' to 'pending' (awaiting review)
+    await base(tableName).update(record.id, {
+      'action': 'interviewed',
+      'InterviewCompleted': true,
+      'status': 'pending',
+    });
+
+    res.json({ success: true, message: 'Interview marked as started' });
+  } catch (error) {
+    console.error('Error marking interview started:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -408,6 +454,216 @@ app.put('/api/candidates/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating candidate:', error);
     res.status(500).json({ error: 'Failed to update candidate' });
+  }
+});
+
+/**
+ * Get candidate info for scheduling page
+ */
+app.get('/api/candidate/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Token is required',
+      });
+    }
+
+    // Verify token matches candidate
+    const candidate = await airtableService.getCandidateById(id);
+    
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        error: 'Candidate not found',
+      });
+    }
+
+    // Simple token verification (you can enhance this with actual token generation/validation)
+    const expectedToken = Buffer.from(candidate.email).toString('base64').substring(0, 16);
+    
+    if (token !== expectedToken) {
+      return res.status(403).json({
+        success: false,
+        error: 'Invalid token',
+      });
+    }
+
+    res.json({
+      success: true,
+      candidate: {
+        name: candidate.name,
+        email: candidate.email,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching candidate:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error',
+    });
+  }
+});
+
+/**
+ * Register candidate and schedule interview
+ * This is the main entry point for new candidates
+ */
+app.post('/api/register-candidate', async (req, res) => {
+  console.log('=== REGISTER CANDIDATE REQUEST ===');
+  console.log('Request body:', req.body);
+  
+  try {
+    const { name, email, phone, interviewDate, interviewTime } = req.body;
+
+    if (!name || !email || !phone || !interviewDate || !interviewTime) {
+      console.log('Missing required fields');
+      return res.status(400).json({
+        success: false,
+        error: 'All fields are required',
+      });
+    }
+    
+    console.log('All fields present, proceeding with registration...');
+
+    // Generate a unique token for this candidate
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(16).toString('hex');
+
+    // Combine date and time
+    const interviewDateTime = `${interviewDate}T${interviewTime}:00`;
+
+    // Create candidate record in Airtable
+    console.log('Creating Airtable record...');
+    const Airtable = require('airtable');
+    const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(
+      process.env.AIRTABLE_BASE_ID
+    );
+    const tableName = process.env.AIRTABLE_TABLE_NAME || 'Candidates';
+
+    const record = await base(tableName).create({
+      'Candidate Name': name,
+      'Email': email,
+      'Phone': phone,
+      'Interview Time': interviewDateTime,
+      'token': token,
+      'status': 'scheduled',
+    });
+
+    console.log('Airtable record created:', record.id);
+
+    // Generate interview link
+    const baseUrl = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
+    const interviewLink = `${baseUrl}/index.html?token=${token}`;
+    console.log('Interview link:', interviewLink);
+
+    // Send confirmation email with interview link
+    console.log('Sending confirmation email to:', email);
+    
+    // Format date and time for email
+    const dateObj = new Date(interviewDateTime);
+    const formattedDate = dateObj.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const formattedTime = dateObj.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    }) + ' CET';
+    
+    await emailService.sendInterviewConfirmation({
+      email: email,
+      name: name,
+      interviewDate: formattedDate,
+      interviewTime: formattedTime,
+      interviewLink: interviewLink,
+    });
+    
+    console.log('Email sent successfully!');
+
+    res.json({
+      success: true,
+      message: 'Registration successful',
+      candidateId: record.id,
+    });
+    
+    console.log('=== REGISTRATION COMPLETE ===');
+  } catch (error) {
+    console.error('Error registering candidate:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error registering candidate',
+      details: error.message,
+    });
+  }
+});
+
+/**
+ * Schedule interview endpoint (legacy - kept for compatibility)
+ */
+app.post('/api/schedule-interview', async (req, res) => {
+  try {
+    const { candidateId, token, interviewDate, interviewTime } = req.body;
+
+    if (!candidateId || !token || !interviewDate || !interviewTime) {
+      return res.status(400).json({
+        success: false,
+        error: 'All fields are required',
+      });
+    }
+
+    // Verify token
+    const candidate = await airtableService.getCandidateById(candidateId);
+    
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        error: 'Candidate not found',
+      });
+    }
+
+    const expectedToken = Buffer.from(candidate.email).toString('base64').substring(0, 16);
+    
+    if (token !== expectedToken) {
+      return res.status(403).json({
+        success: false,
+        error: 'Invalid token',
+      });
+    }
+
+    // Combine date and time
+    const interviewDateTime = `${interviewDate}T${interviewTime}:00`;
+
+    // Update candidate in Airtable
+    const updated = await airtableService.updateCandidate(candidateId, {
+      'Interview Date': interviewDateTime,
+      'Interview Status': 'Scheduled',
+    });
+
+    // Send confirmation email
+    await emailService.sendInterviewConfirmation({
+      email: candidate.email,
+      name: candidate.name,
+      interviewDate: interviewDate,
+      interviewTime: interviewTime,
+    });
+
+    res.json({
+      success: true,
+      message: 'Interview scheduled successfully',
+    });
+  } catch (error) {
+    console.error('Error scheduling interview:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error scheduling interview',
+    });
   }
 });
 

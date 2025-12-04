@@ -206,6 +206,25 @@
       const button = document.getElementById('readyBtn');
       
       try {
+        // Check if interview was already completed successfully
+        const interviewStarted = sessionStorage.getItem('interviewStarted_' + sessionToken);
+        const callInProgress = sessionStorage.getItem('callInProgress_' + sessionToken);
+        
+        // Allow retry if call was in progress but didn't complete
+        if (interviewStarted === 'true' && callInProgress !== 'true') {
+          button.textContent = 'Interview Already Completed';
+          button.disabled = true;
+          button.style.background = '#6b7280';
+          alert('You have already completed your interview. If there was an issue, please contact support.');
+          return;
+        }
+        
+        // Clear any stale in-progress flag
+        if (callInProgress === 'true') {
+          console.log('⚠️ Found stale call-in-progress flag, clearing it');
+          sessionStorage.removeItem('callInProgress_' + sessionToken);
+        }
+        
         button.disabled = true;
         button.textContent = 'Connecting...';
 
@@ -375,6 +394,12 @@
             console.log('📞 Call started');
             console.log('📊 Call start data:', data);
             
+            // Store call start time to measure duration
+            window.callStartTime = Date.now();
+            
+            // Mark as in-progress in browser storage (temporary)
+            sessionStorage.setItem('callInProgress_' + sessionToken, 'true');
+            
             if (data && data.call) {
               console.log('🔍 Call object:', data.call);
               if (data.call.metadata || data.call.meta) {
@@ -401,16 +426,40 @@
             console.log('📴 Call ended');
             console.log('📊 Call end data:', data);
             
-            // Check if this is actually the end of the conversation, not just a disconnect
-            // Only hide VAPI elements if the call had a meaningful duration or transcript
-            const shouldHideElements = data && (
-              (data.call && data.call.duration && data.call.duration > 5) || // Call lasted more than 5 seconds
-              (data.transcript && data.transcript.length > 0) || // There was a transcript
+            // Clear the in-progress flag
+            sessionStorage.removeItem('callInProgress_' + sessionToken);
+            
+            // Calculate call duration
+            const callDuration = window.callStartTime ? (Date.now() - window.callStartTime) / 1000 : 0;
+            console.log('⏱️ Call duration:', callDuration, 'seconds');
+            
+            // Check if this is actually the end of a successful conversation
+            // Only mark as completed if the call had meaningful content
+            const MIN_CALL_DURATION = 30; // 30 seconds minimum
+            const shouldMarkCompleted = data && (
+              (callDuration > MIN_CALL_DURATION) || // Call lasted more than 30 seconds
+              (data.call && data.call.duration && data.call.duration > MIN_CALL_DURATION) ||
+              (data.transcript && data.transcript.length > 100) || // Has substantial transcript
               (data.summary && data.summary.length > 0) // There was a summary
             );
             
-            if (shouldHideElements) {
-              console.log('✅ Call had content - hiding VAPI elements and redirecting');
+            if (shouldMarkCompleted) {
+              console.log('✅ Call had meaningful content - marking as completed');
+              
+              // NOW mark interview as completed in storage and Airtable
+              sessionStorage.setItem('interviewStarted_' + sessionToken, 'true');
+              localStorage.setItem('interviewStarted_' + sessionToken, 'true');
+              
+              // Update Airtable to mark interview as completed
+              fetch('/api/mark-interview-started', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: originalToken })
+              }).then(r => r.json()).then(result => {
+                console.log('✅ Marked interview as completed in Airtable:', result);
+              }).catch(err => {
+                console.error('❌ Failed to mark interview completed:', err);
+              });
               
               // IMMEDIATELY hide all VAPI elements to prevent additional calls
               const hideVapiElements = () => {
