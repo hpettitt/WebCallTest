@@ -617,7 +617,18 @@ app.post('/api/register-candidate', async (req, res) => {
     console.log('Airtable record created:', record.id);
 
     // Generate interview link
-    const baseUrl = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
+    // Try to auto-detect Railway URL or use environment variable
+    let baseUrl = process.env.FRONTEND_URL;
+    if (!baseUrl || baseUrl.includes('localhost')) {
+      // Check for Railway environment
+      if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+        baseUrl = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+      } else if (process.env.RAILWAY_STATIC_URL) {
+        baseUrl = process.env.RAILWAY_STATIC_URL;
+      } else {
+        baseUrl = `http://localhost:${PORT}`;
+      }
+    }
     const interviewLink = `${baseUrl}/interview-validation.html?token=${token}`;
     console.log('Interview link:', interviewLink);
 
@@ -638,7 +649,8 @@ app.post('/api/register-candidate', async (req, res) => {
       hour12: true 
     }) + ' CET';
     
-    await emailService.sendInterviewConfirmation({
+    // Send email with retry logic
+    const emailResult = await emailService.sendInterviewConfirmation({
       email: email,
       name: name,
       interviewDate: formattedDate,
@@ -646,17 +658,47 @@ app.post('/api/register-candidate', async (req, res) => {
       interviewLink: interviewLink,
     });
     
-    console.log('Email sent successfully!');
+    // Update Airtable with email status
+    if (emailResult.success) {
+      console.log('✅ Email sent successfully!');
+      await base(tableName).update(record.id, {
+        'emailSent': true,
+        'emailSentAt': new Date().toISOString(),
+        'emailMessageId': emailResult.messageId
+      });
+    } else {
+      console.error('🚫 Email failed after all retries. Recording failure in Airtable.');
+      await base(tableName).update(record.id, {
+        'emailSent': false,
+        'emailError': emailResult.error,
+        'emailAttempts': emailResult.attempts,
+        'notes': `Email delivery failed: ${emailResult.error}. Interview link: ${interviewLink}`
+      });
+    }
 
     res.json({
       success: true,
       message: 'Registration successful',
       candidateId: record.id,
+      emailSent: emailResult.success,
+      emailWarning: !emailResult.success ? 'Email delivery failed but registration complete. Please contact support.' : null
     });
     
     console.log('=== REGISTRATION COMPLETE ===');
   } catch (error) {
-    console.error('Error registering candidate:', error);
+    console.error('❌ Error registering candidate:', error);
+    
+    // Check if this is an email-only error after successful Airtable creation
+    if (error.message && error.message.includes('email')) {
+      console.error('⚠️ Registration succeeded but email failed');
+      return res.status(200).json({
+        success: true,
+        message: 'Registration successful',
+        emailSent: false,
+        emailWarning: 'Registration complete but email delivery failed. Please check your spam folder or contact support for your interview link.'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error registering candidate',

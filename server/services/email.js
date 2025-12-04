@@ -330,7 +330,16 @@ async function testEmailConfig() {
  * @param {string} options.interviewTime - Interview time (HH:MM)
  * @returns {Promise<boolean>} - Success status
  */
-async function sendInterviewConfirmation({ email, name, interviewDate, interviewTime, interviewLink }) {
+/**
+ * Send interview confirmation with retry logic
+ * @param {Object} options - Email options
+ * @param {number} retryCount - Current retry attempt (internal use)
+ * @returns {Promise<boolean>} - Success status
+ */
+async function sendInterviewConfirmation({ email, name, interviewDate, interviewTime, interviewLink }, retryCount = 0) {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000; // 2 seconds
+  
   try {
     const transporter = createTransporter();
     
@@ -510,11 +519,21 @@ The Bloom Buddies Team
     };
     
     const info = await transporter.sendMail(mailOptions);
-    console.log('Interview confirmation email sent:', info.messageId);
-    return true;
+    console.log(`✅ Interview confirmation email sent successfully to ${email}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending interview confirmation email:', error);
-    return false;
+    console.error(`❌ Error sending interview confirmation email (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error.message);
+    
+    // Retry logic
+    if (retryCount < MAX_RETRIES) {
+      console.log(`⏳ Retrying email send in ${RETRY_DELAY / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return sendInterviewConfirmation({ email, name, interviewDate, interviewTime, interviewLink }, retryCount + 1);
+    }
+    
+    // All retries failed
+    console.error(`🚫 FAILED to send interview confirmation email after ${MAX_RETRIES + 1} attempts`);
+    return { success: false, error: error.message, attempts: retryCount + 1 };
   }
 }
 
