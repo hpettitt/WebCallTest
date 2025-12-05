@@ -81,8 +81,14 @@ class AuthManager {
             // Successful login
             SECURE_CONFIG.recordLoginAttempt(email, true);
             
+            // Store JWT token
+            if (data.token) {
+                localStorage.setItem('authToken', data.token);
+            }
+            
             // Create secure session
             const sessionUser = {
+                id: data.user.id,
                 email: data.user.email,
                 name: data.user.name,
                 role: data.user.role,
@@ -193,7 +199,12 @@ class AuthManager {
         return session && session.expires > Date.now();
     }
 
+    getToken() {
+        return localStorage.getItem('authToken');
+    }
+
     clearSession() {
+        localStorage.removeItem('authToken');
         localStorage.removeItem(this.sessionKey);
     }
 

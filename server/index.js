@@ -325,9 +325,24 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
 
+    // Generate JWT token
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.TOKEN_EXPIRY || '24h' }
+    );
+
     res.json({
       success: true,
+      token,
       user: {
+        id: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
