@@ -498,6 +498,155 @@ app.post('/api/auth/reset-password', async (req, res) => {
   }
 });
 
+/**
+ * Middleware to verify JWT token and admin role
+ */
+function requireAdmin(req, res, next) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const token = authHeader.substring(7);
+  
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+    
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+/**
+ * Get all users (admin only)
+ */
+app.get('/api/users', requireAdmin, async (req, res) => {
+  try {
+    const users = await userService.getAllUsers();
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('Error getting users:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve users',
+    });
+  }
+});
+
+/**
+ * Create a new user (admin only)
+ */
+app.post('/api/users', requireAdmin, async (req, res) => {
+  try {
+    const { email, password, name, role } = req.body;
+    
+    if (!email || !password || !name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email, password, and name are required',
+      });
+    }
+    
+    // Validate password
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters',
+      });
+    }
+    
+    const user = await userService.createUser({ email, password, name, role: role || 'user' });
+    
+    res.json({
+      success: true,
+      message: 'User created successfully',
+      user,
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create user',
+    });
+  }
+});
+
+/**
+ * Update a user (admin only)
+ */
+app.put('/api/users/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, password, name, role } = req.body;
+    
+    // Validate password if provided
+    if (password && password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters',
+      });
+    }
+    
+    const userData = {};
+    if (email) userData.email = email;
+    if (name) userData.name = name;
+    if (role) userData.role = role;
+    if (password) userData.password = password;
+    
+    const user = await userService.updateUser(id, userData);
+    
+    res.json({
+      success: true,
+      message: 'User updated successfully',
+      user,
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update user',
+    });
+  }
+});
+
+/**
+ * Delete a user (admin only)
+ */
+app.delete('/api/users/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Prevent deleting yourself
+    if (req.user.id === id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot delete your own account',
+      });
+    }
+    
+    await userService.deleteUser(id);
+    
+    res.json({
+      success: true,
+      message: 'User deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete user',
+    });
+  }
+});
+
 // Get candidate info (for dashboard)
 app.get('/api/candidates', async (req, res) => {
   try {

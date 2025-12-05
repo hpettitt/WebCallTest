@@ -288,13 +288,91 @@ async function getAllUsers() {
   }
 }
 
+/**
+ * Update an existing user
+ * @param {string} userId - User's Airtable record ID
+ * @param {Object} userData - User data to update { email, password, name, role }
+ * @returns {Promise<Object>} - Updated user record
+ */
+async function updateUser(userId, userData) {
+  try {
+    const { email, password, name, role } = userData;
+    
+    const updateFields = {};
+    
+    if (email) updateFields.Email = email;
+    if (name) updateFields.Name = name;
+    if (role) updateFields.Role = role;
+    
+    // Hash password if provided
+    if (password) {
+      updateFields['Password Hash'] = await bcrypt.hash(password, SALT_ROUNDS);
+    }
+    
+    const record = await base(USERS_TABLE).update(userId, updateFields);
+    
+    return {
+      id: record.id,
+      email: record.fields.Email,
+      name: record.fields.Name,
+      role: record.fields.Role,
+      createdAt: record.fields['Created At'],
+      lastLogin: record.fields['Last Login'],
+    };
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a user
+ * @param {string} userId - User's Airtable record ID
+ * @returns {Promise<boolean>} - Success status
+ */
+async function deleteUser(userId) {
+  try {
+    await base(USERS_TABLE).destroy(userId);
+    return true;
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
+}
+
+/**
+ * Find user by ID
+ * @param {string} userId - User's Airtable record ID
+ * @returns {Promise<Object|null>} - User record or null
+ */
+async function findUserById(userId) {
+  try {
+    const record = await base(USERS_TABLE).find(userId);
+    
+    return {
+      id: record.id,
+      email: record.fields.Email,
+      name: record.fields.Name,
+      role: record.fields.Role,
+      createdAt: record.fields['Created At'],
+      lastLogin: record.fields['Last Login'],
+    };
+  } catch (error) {
+    console.error('Error finding user by ID:', error);
+    return null;
+  }
+}
+
 module.exports = {
   findUserByEmail,
+  findUserById,
   verifyCredentials,
   createPasswordResetToken,
   verifyResetToken,
   resetPassword,
   createUser,
+  updateUser,
+  deleteUser,
   updatePassword,
   getAllUsers,
 };

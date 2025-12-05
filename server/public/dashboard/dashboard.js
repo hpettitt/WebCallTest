@@ -18,6 +18,14 @@ class Dashboard {
             return; // Wait for authentication
         }
 
+        // Show user management button for admins
+        if (authManager.currentUser && authManager.currentUser.role === 'admin') {
+            const userManagementBtn = document.getElementById('userManagementBtn');
+            if (userManagementBtn) {
+                userManagementBtn.style.display = 'inline-block';
+            }
+        }
+
         this.setupEventListeners();
         this.loadCandidates();
         this.startAutoRefresh();
