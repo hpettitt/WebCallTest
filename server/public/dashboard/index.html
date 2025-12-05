@@ -195,6 +195,27 @@
     <script src="dashboard.js?v=1130-2"></script>
     
     <script>
+        // One-time cleanup of old sessions (before JWT implementation)
+        (function() {
+            const cleanupVersion = 'jwt-migration-v1';
+            const cleanupDone = localStorage.getItem('auth-cleanup-version');
+            
+            if (cleanupDone !== cleanupVersion) {
+                console.log('🧹 Cleaning up old session data...');
+                // Clear all auth-related items
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('session') || key.includes('auth') || key.includes('token') || key.includes('user'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                localStorage.setItem('auth-cleanup-version', cleanupVersion);
+                console.log('✅ Old session data cleaned');
+            }
+        })();
+
         // Initialize the application
         let auth, airtable, dashboard;
         
