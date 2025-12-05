@@ -19,6 +19,9 @@
                 <span>Bloom Buddies Interviews Dashboard</span>
             </div>
             <div class="nav-actions">
+                <span id="currentUserDisplay" style="margin-right: 15px; color: #667eea; font-weight: 500; display: none;">
+                    <i class="fas fa-user-circle"></i> <span id="currentUserName"></span>
+                </span>
                 <button id="userManagementBtn" class="btn btn-secondary" style="display: none;" onclick="window.location.href='users.html'">
                     <i class="fas fa-users-cog"></i> Users
                 </button>
@@ -256,9 +259,22 @@
                     console.log('⏳ Waiting for authentication before initializing Airtable...');
                 }
                 
+                // Function to update user display
+                function updateUserDisplay() {
+                    if (auth && auth.currentUser) {
+                        const userDisplay = document.getElementById('currentUserDisplay');
+                        const userName = document.getElementById('currentUserName');
+                        if (userDisplay && userName) {
+                            userName.textContent = auth.currentUser.name || auth.currentUser.email;
+                            userDisplay.style.display = 'inline';
+                        }
+                    }
+                }
+
                 // Initialize dashboard after a short delay to let auth complete
                 setTimeout(() => {
                     if (auth && auth.isAuthenticated()) {
+                        updateUserDisplay();
                         dashboard = new Dashboard();
                         window.dashboard = dashboard; // Make dashboard globally available
                         console.log('Dashboard initialized');
@@ -267,6 +283,7 @@
                         // Set up a listener for when authentication completes
                         const checkAuth = setInterval(() => {
                             if (auth && auth.isAuthenticated() && !dashboard) {
+                                updateUserDisplay();
                                 dashboard = new Dashboard();
                                 window.dashboard = dashboard; // Make dashboard globally available
                                 console.log('Dashboard initialized after login');
