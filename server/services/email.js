@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 // Create email transporter
 function createTransporter() {
   // Support multiple email providers
-  const emailProvider = process.env.EMAIL_PROVIDER || 'gmail';
+  const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
   
   if (emailProvider === 'sendgrid') {
     return nodemailer.createTransport({
