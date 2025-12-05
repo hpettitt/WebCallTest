@@ -19,7 +19,7 @@ class Dashboard {
         }
 
         // Show user management button for admins
-        if (authManager.currentUser && authManager.currentUser.role === 'admin') {
+        if (auth.currentUser && auth.currentUser.role === 'admin') {
             const userManagementBtn = document.getElementById('userManagementBtn');
             if (userManagementBtn) {
                 userManagementBtn.style.display = 'inline-block';
@@ -134,7 +134,7 @@ class Dashboard {
 
     async loadCandidates(showLoading = true) {
         // Verify user is authenticated
-        if (!authManager.currentUser) {
+        if (!auth.currentUser) {
             console.log('⚠️ No authenticated user, redirecting to login');
             this.showLoading(false);
             return;
