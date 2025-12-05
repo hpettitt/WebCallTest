@@ -239,6 +239,7 @@
                 if (auth.isAuthenticated() || hasToken) {
                     // Initialize airtable
                     airtable = new AirtableManager();
+                    window.airtable = airtable; // Make airtable globally available
                     console.log('Airtable manager initialized');
                     
                     // Test Airtable connection if method exists
