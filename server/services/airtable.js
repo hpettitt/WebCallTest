@@ -220,7 +220,7 @@ async function getCandidateByManagementToken(managementToken) {
       managementToken: record.fields['Management Token'],
       email: record.fields.Email,
       name: record.fields['Candidate Name'] || record.fields.Name,
-      interviewDateTime: record.fields['Interview Date'],
+      interviewDateTime: record.fields['Interview Time'],
       status: record.fields['Interview Status'] || record.fields.Status || 'scheduled',
       ...record.fields
     };

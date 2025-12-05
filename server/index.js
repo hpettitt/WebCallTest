@@ -937,7 +937,7 @@ app.post('/api/schedule-interview', async (req, res) => {
 
     // Update candidate in Airtable
     const updated = await airtableService.updateCandidate(candidateId, {
-      'Interview Date': interviewDateTime,
+      'Interview Time': interviewDateTime,
       'Interview Status': 'Scheduled',
       'Management Token': managementToken,
     });
@@ -1007,6 +1007,10 @@ app.get('/api/interview/verify-token', async (req, res) => {
       }
     }
 
+    // Create interview link
+    const baseUrl = process.env.BASE_URL || 'https://bloombuddies.up.railway.app';
+    const interviewLink = candidate.token ? `${baseUrl}/interview.html?token=${candidate.token}` : null;
+
     res.json({
       success: true,
       interview: {
@@ -1014,6 +1018,7 @@ app.get('/api/interview/verify-token', async (req, res) => {
         email: candidate.email,
         interviewDateTime: candidate.interviewDateTime,
         status: candidate.status || 'scheduled',
+        interviewLink: interviewLink,
       },
     });
   } catch (error) {
@@ -1057,8 +1062,9 @@ app.post('/api/interview/reschedule', async (req, res) => {
 
     // Update interview date/time
     await airtableService.updateCandidateByManagementToken(token, {
-      'Interview Date': newDateTime,
+      'Interview Time': newDateTime,
       'Interview Status': 'Rescheduled',
+      'Status': 'Rescheduled',
       'Last Modified': new Date().toISOString(),
     });
 

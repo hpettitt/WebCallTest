@@ -291,6 +291,21 @@
                     <li><i class="fas fa-check-circle"></i> Update branding & URLs</li>
                 </ul>
             </a>
+
+            <!-- Interview Management -->
+            <div class="portal-card" onclick="openManagementDemo()">
+                <div class="card-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h2>Interview Management <span class="badge new">New</span></h2>
+                <p>Self-service portal where candidates can reschedule or cancel their interviews.</p>
+                <ul class="card-features">
+                    <li><i class="fas fa-check-circle"></i> Secure token-based access</li>
+                    <li><i class="fas fa-check-circle"></i> Reschedule to new date/time</li>
+                    <li><i class="fas fa-check-circle"></i> Cancel interview option</li>
+                    <li><i class="fas fa-check-circle"></i> Zero admin intervention</li>
+                </ul>
+            </div>
         </div>
 
         <!-- Quick Actions -->
@@ -350,6 +365,10 @@
 
         function openInterviewDemo() {
             alert('To demo the interview page:\n\n1. First schedule an interview using the Scheduling Page\n2. Check your email for the interview link\n3. Or generate a test link using the Quick Actions below\n\nThe interview page requires a valid token from registration.');
+        }
+
+        function openManagementDemo() {
+            alert('To demo the Interview Management page:\n\n1. First schedule an interview using the Scheduling Page\n2. Check your confirmation email for the "Manage My Interview" button\n3. Click the button to access the management portal\n\nFeatures:\n• View your interview details\n• Reschedule to a new date/time\n• Cancel your interview\n• Access your interview link\n\nNote: Each candidate gets a unique, secure management link that works without login.');
         }
 
         function generateTestLink() {
