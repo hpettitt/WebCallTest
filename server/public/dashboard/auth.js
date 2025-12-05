@@ -27,6 +27,7 @@ class AuthManager {
             }
         } else {
             this.clearSession(); // Clear invalid session
+            this.hideDashboard(); // Ensure dashboard is hidden
             this.showLogin();
         }
 
@@ -78,6 +79,9 @@ class AuthManager {
             if (!data.success) {
                 SECURE_CONFIG.recordLoginAttempt(email, false);
                 this.showError(data.error || 'Invalid email or password');
+                // Ensure dashboard stays hidden on failed login
+                this.hideDashboard();
+                this.showLogin();
                 return;
             }
 

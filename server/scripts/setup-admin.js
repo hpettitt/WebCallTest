@@ -2,7 +2,7 @@
 // Run this once to create your first admin user
 
 require('dotenv').config();
-const userService = require('./services/users');
+const userService = require('../services/users');
 
 async function setupAdmin() {
   console.log('🚀 Setting up admin user...\n');
