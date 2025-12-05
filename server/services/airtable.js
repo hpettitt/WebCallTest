@@ -195,10 +195,80 @@ async function getCandidateById(recordId) {
   }
 }
 
+/**
+ * Find a candidate by management token
+ * @param {string} managementToken - The management token to search for
+ * @returns {Promise<Object|null>} - Candidate record or null if not found
+ */
+async function getCandidateByManagementToken(managementToken) {
+  try {
+    const records = await base(tableName)
+      .select({
+        filterByFormula: `{Management Token} = '${managementToken}'`,
+        maxRecords: 1,
+      })
+      .firstPage();
+
+    if (records.length === 0) {
+      return null;
+    }
+
+    const record = records[0];
+    return {
+      id: record.id,
+      token: record.fields.Token,
+      managementToken: record.fields['Management Token'],
+      email: record.fields.Email,
+      name: record.fields['Candidate Name'] || record.fields.Name,
+      interviewDateTime: record.fields['Interview Date'],
+      status: record.fields['Interview Status'] || record.fields.Status || 'scheduled',
+      ...record.fields
+    };
+  } catch (error) {
+    console.error('Error finding candidate by management token:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update a candidate by management token
+ * @param {string} managementToken - The management token
+ * @param {Object} updates - Fields to update
+ * @returns {Promise<Object>} - Updated candidate record
+ */
+async function updateCandidateByManagementToken(managementToken, updates) {
+  try {
+    // First find the record
+    const candidate = await getCandidateByManagementToken(managementToken);
+    
+    if (!candidate) {
+      throw new Error('Candidate not found');
+    }
+
+    // Update the record
+    const updatedRecords = await base(tableName).update([
+      {
+        id: candidate.id,
+        fields: updates
+      }
+    ]);
+
+    return {
+      id: updatedRecords[0].id,
+      ...updatedRecords[0].fields
+    };
+  } catch (error) {
+    console.error('Error updating candidate by management token:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   findCandidateByToken,
   validateAppointmentTime,
   updateCandidate,
   getAllCandidates,
-  getCandidateById
+  getCandidateById,
+  getCandidateByManagementToken,
+  updateCandidateByManagementToken
 };

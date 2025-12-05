@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 const airtableService = require('./services/airtable');
 const userService = require('./services/users');
 const emailService = require('./services/email');
@@ -931,11 +932,22 @@ app.post('/api/schedule-interview', async (req, res) => {
     // Combine date and time
     const interviewDateTime = `${interviewDate}T${interviewTime}:00`;
 
+    // Generate unique management token (secure random string)
+    const managementToken = crypto.randomBytes(32).toString('hex');
+
     // Update candidate in Airtable
     const updated = await airtableService.updateCandidate(candidateId, {
       'Interview Date': interviewDateTime,
       'Interview Status': 'Scheduled',
+      'Management Token': managementToken,
     });
+
+    // Create management link
+    const baseUrl = process.env.BASE_URL || 'https://bloombuddies.up.railway.app';
+    const managementLink = `${baseUrl}/manage-interview.html?token=${managementToken}`;
+
+    // Create interview link
+    const interviewLink = `${baseUrl}/interview.html?token=${token}`;
 
     // Send confirmation email
     await emailService.sendInterviewConfirmation({
@@ -943,6 +955,8 @@ app.post('/api/schedule-interview', async (req, res) => {
       name: candidate.name,
       interviewDate: interviewDate,
       interviewTime: interviewTime,
+      interviewLink: interviewLink,
+      managementLink: managementLink,
     });
 
     res.json({
@@ -954,6 +968,184 @@ app.post('/api/schedule-interview', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Server error scheduling interview',
+    });
+  }
+});
+
+// Interview Management - Verify Token
+app.get('/api/interview/verify-token', async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Token is required',
+      });
+    }
+
+    // Find candidate by management token
+    const candidate = await airtableService.getCandidateByManagementToken(token);
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        error: 'Interview not found or link has expired',
+      });
+    }
+
+    // Check if token is expired (24 hours after interview)
+    if (candidate.interviewDateTime) {
+      const interviewDate = new Date(candidate.interviewDateTime);
+      const expiryDate = new Date(interviewDate.getTime() + 24 * 60 * 60 * 1000);
+      
+      if (new Date() > expiryDate) {
+        return res.status(410).json({
+          success: false,
+          error: 'This management link has expired',
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      interview: {
+        name: candidate.name,
+        email: candidate.email,
+        interviewDateTime: candidate.interviewDateTime,
+        status: candidate.status || 'scheduled',
+      },
+    });
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error verifying token',
+    });
+  }
+});
+
+// Interview Management - Reschedule
+app.post('/api/interview/reschedule', async (req, res) => {
+  try {
+    const { token, newDateTime } = req.body;
+
+    if (!token || !newDateTime) {
+      return res.status(400).json({
+        success: false,
+        error: 'Token and new date/time are required',
+      });
+    }
+
+    // Find candidate
+    const candidate = await airtableService.getCandidateByManagementToken(token);
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        error: 'Interview not found',
+      });
+    }
+
+    // Check if already cancelled
+    if (candidate.status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot reschedule a cancelled interview',
+      });
+    }
+
+    // Update interview date/time
+    await airtableService.updateCandidateByManagementToken(token, {
+      'Interview Date': newDateTime,
+      'Interview Status': 'Rescheduled',
+      'Last Modified': new Date().toISOString(),
+    });
+
+    // Send confirmation email
+    const dt = new Date(newDateTime);
+    const formattedDate = dt.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const formattedTime = dt.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+
+    // Get the interview link and management link for this candidate
+    const baseUrl = process.env.BASE_URL || 'https://bloombuddies.up.railway.app';
+    const interviewLink = `${baseUrl}/interview.html?token=${candidate.token}`;
+    const managementLink = `${baseUrl}/manage-interview.html?token=${token}`;
+
+    await emailService.sendInterviewConfirmation({
+      email: candidate.email,
+      name: candidate.name,
+      interviewDate: formattedDate,
+      interviewTime: formattedTime,
+      interviewLink: interviewLink,
+      managementLink: managementLink,
+    });
+
+    res.json({
+      success: true,
+      message: 'Interview rescheduled successfully',
+    });
+  } catch (error) {
+    console.error('Error rescheduling interview:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error rescheduling interview',
+    });
+  }
+});
+
+// Interview Management - Cancel
+app.post('/api/interview/cancel', async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Token is required',
+      });
+    }
+
+    // Find candidate
+    const candidate = await airtableService.getCandidateByManagementToken(token);
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        error: 'Interview not found',
+      });
+    }
+
+    // Update status to cancelled
+    await airtableService.updateCandidateByManagementToken(token, {
+      'Interview Status': 'Cancelled',
+      'Status': 'cancelled',
+      'Last Modified': new Date().toISOString(),
+    });
+
+    // Send cancellation confirmation email
+    await emailService.sendCancellationConfirmation({
+      email: candidate.email,
+      name: candidate.name,
+    });
+
+    res.json({
+      success: true,
+      message: 'Interview cancelled successfully',
+    });
+  } catch (error) {
+    console.error('Error cancelling interview:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error cancelling interview',
     });
   }
 });

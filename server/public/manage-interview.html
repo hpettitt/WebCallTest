@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Your Interview - Bloom Buddies</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .loading i {
+            font-size: 48px;
+            color: #667eea;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee;
+            border-left: 4px solid #e53e3e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .error-message i {
+            color: #e53e3e;
+            margin-right: 10px;
+        }
+
+        .success-message {
+            background: #f0fdf4;
+            border-left: 4px solid #48bb78;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .success-message i {
+            color: #48bb78;
+            margin-right: 10px;
+        }
+
+        .interview-details {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .interview-details h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-scheduled {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .status-cancelled {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #c53030;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
+        }
+
+        .reschedule-form {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .reschedule-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #cbd5e0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #a0aec0;
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2c5282;
+            margin-bottom: 20px;
+        }
+
+        .footer {
+            background: #f7fafc;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #718096;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 600px) {
+            .actions {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="fas fa-calendar-check"></i>
+            <h1>Manage Your Interview</h1>
+            <p>Reschedule or cancel your interview with Bloom Buddies</p>
+        </div>
+
+        <div class="content">
+            <!-- Loading State -->
+            <div id="loadingState" class="loading">
+                <i class="fas fa-spinner"></i>
+                <p style="margin-top: 15px; color: #718096;">Loading your interview details...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" style="display: none;">
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="errorMessage">Unable to load interview details.</span>
+                </div>
+            </div>
+
+            <!-- Success State -->
+            <div id="successState" style="display: none;">
+                <div class="success-message">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="successMessage"></span>
+                </div>
+            </div>
+
+            <!-- Interview Details -->
+            <div id="interviewDetails" style="display: none;">
+                <div class="interview-details">
+                    <h2><i class="far fa-calendar"></i> Your Interview</h2>
+                    <div class="detail-row">
+                        <span class="detail-label">Name</span>
+                        <span class="detail-value" id="candidateName">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value" id="candidateEmail">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Interview Date</span>
+                        <span class="detail-value" id="interviewDate">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Interview Time</span>
+                        <span class="detail-value" id="interviewTime">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value"><span id="interviewStatus" class="status-badge status-scheduled">Scheduled</span></span>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i> <strong>Need to make changes?</strong> You can reschedule your interview to a different date and time, or cancel if you're no longer interested.
+                </div>
+
+                <!-- Action Buttons -->
+                <div id="actionButtons" class="actions">
+                    <button class="btn btn-primary" onclick="showRescheduleForm()">
+                        <i class="fas fa-calendar-alt"></i> Reschedule
+                    </button>
+                    <button class="btn btn-danger" onclick="cancelInterview()">
+                        <i class="fas fa-times-circle"></i> Cancel Interview
+                    </button>
+                </div>
+
+                <!-- Reschedule Form -->
+                <div id="rescheduleForm" class="reschedule-form">
+                    <h3 style="margin-bottom: 20px; color: #2d3748;">
+                        <i class="fas fa-calendar-alt"></i> Choose New Date & Time
+                    </h3>
+                    <form id="rescheduleFormElement" onsubmit="handleReschedule(event)">
+                        <div class="form-group">
+                            <label for="newDate">New Interview Date</label>
+                            <input type="date" id="newDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newTime">New Interview Time</label>
+                            <input type="time" id="newTime" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Confirm Reschedule
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="hideRescheduleForm()">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><i class="fas fa-envelope"></i> Questions? Contact us at <a href="mailto:info@xenergies.com" style="color: #667eea; text-decoration: none;">info@xenergies.com</a></p>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = null;
+        let interviewData = null;
+
+        // Get token from URL
+        function getTokenFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('token');
+        }
+
+        // Load interview details
+        async function loadInterviewDetails() {
+            currentToken = getTokenFromURL();
+
+            if (!currentToken) {
+                showError('Invalid or missing management link. Please use the link from your confirmation email.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/interview/verify-token?token=${encodeURIComponent(currentToken)}`);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    showError(data.error || 'Unable to verify your interview. The link may have expired or is invalid.');
+                    return;
+                }
+
+                interviewData = data.interview;
+                displayInterviewDetails(interviewData);
+            } catch (error) {
+                console.error('Error loading interview:', error);
+                showError('Failed to load interview details. Please try again later.');
+            }
+        }
+
+        // Display interview details
+        function displayInterviewDetails(interview) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('interviewDetails').style.display = 'block';
+
+            document.getElementById('candidateName').textContent = interview.name || 'N/A';
+            document.getElementById('candidateEmail').textContent = interview.email || 'N/A';
+            
+            // Format the date and time
+            if (interview.interviewDateTime) {
+                const dt = new Date(interview.interviewDateTime);
+                document.getElementById('interviewDate').textContent = dt.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                document.getElementById('interviewTime').textContent = dt.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } else {
+                document.getElementById('interviewDate').textContent = 'Not scheduled yet';
+                document.getElementById('interviewTime').textContent = '-';
+            }
+
+            // Update status
+            const statusBadge = document.getElementById('interviewStatus');
+            const status = interview.status || 'scheduled';
+            statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            statusBadge.className = `status-badge status-${status.toLowerCase()}`;
+
+            // Disable actions if cancelled
+            if (status.toLowerCase() === 'cancelled') {
+                document.getElementById('actionButtons').style.display = 'none';
+                showInfo('This interview has been cancelled.');
+            }
+
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('newDate').setAttribute('min', today);
+        }
+
+        // Show reschedule form
+        function showRescheduleForm() {
+            document.getElementById('rescheduleForm').classList.add('active');
+            document.getElementById('actionButtons').style.display = 'none';
+        }
+
+        // Hide reschedule form
+        function hideRescheduleForm() {
+            document.getElementById('rescheduleForm').classList.remove('active');
+            document.getElementById('actionButtons').style.display = 'grid';
+        }
+
+        // Handle reschedule
+        async function handleReschedule(event) {
+            event.preventDefault();
+
+            const newDate = document.getElementById('newDate').value;
+            const newTime = document.getElementById('newTime').value;
+
+            if (!newDate || !newTime) {
+                alert('Please select both date and time');
+                return;
+            }
+
+            // Combine date and time
+            const newDateTime = `${newDate}T${newTime}:00`;
+
+            try {
+                const response = await fetch('/api/interview/reschedule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        token: currentToken,
+                        newDateTime: newDateTime
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    alert(data.error || 'Failed to reschedule interview. Please try again.');
+                    return;
+                }
+
+                // Show success message
+                showSuccess('Your interview has been successfully rescheduled! You will receive a confirmation email shortly.');
+                
+                // Reload the interview details
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } catch (error) {
+                console.error('Error rescheduling:', error);
+                alert('Failed to reschedule interview. Please try again later.');
+            }
+        }
+
+        // Cancel interview
+        async function cancelInterview() {
+            if (!confirm('Are you sure you want to cancel your interview? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/interview/cancel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        token: currentToken
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    alert(data.error || 'Failed to cancel interview. Please try again.');
+                    return;
+                }
+
+                // Show success message
+                showSuccess('Your interview has been cancelled. We hope to hear from you again in the future!');
+                
+                // Update the status
+                document.getElementById('interviewStatus').textContent = 'Cancelled';
+                document.getElementById('interviewStatus').className = 'status-badge status-cancelled';
+                document.getElementById('actionButtons').style.display = 'none';
+            } catch (error) {
+                console.error('Error cancelling:', error);
+                alert('Failed to cancel interview. Please try again later.');
+            }
+        }
+
+        // Helper functions
+        function showError(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('interviewDetails').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function showSuccess(message) {
+            document.getElementById('successState').style.display = 'block';
+            document.getElementById('successMessage').textContent = message;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showInfo(message) {
+            const infoBox = document.querySelector('.info-box');
+            if (infoBox) {
+                infoBox.innerHTML = `<i class="fas fa-info-circle"></i> <strong>${message}</strong>`;
+            }
+        }
+
+        // Load details on page load
+        document.addEventListener('DOMContentLoaded', loadInterviewDetails);
+    </script>
+</body>
+</html>

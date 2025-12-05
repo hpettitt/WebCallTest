@@ -353,7 +353,7 @@ async function testEmailConfig() {
  * @param {number} retryCount - Current retry attempt (internal use)
  * @returns {Promise<boolean>} - Success status
  */
-async function sendInterviewConfirmation({ email, name, interviewDate, interviewTime, interviewLink }, retryCount = 0) {
+async function sendInterviewConfirmation({ email, name, interviewDate, interviewTime, interviewLink, managementLink }, retryCount = 0) {
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 2000; // 2 seconds
   
@@ -494,7 +494,17 @@ async function sendInterviewConfirmation({ email, name, interviewDate, interview
               
               <p><strong>Important:</strong> Please save this email with your interview link. You will need it on ${formattedDate} at ${formattedTime}.</p>
               
+              ${managementLink ? `
+              <div class="info-box" style="background: #fff7ed; border-left-color: #f97316;">
+                <strong>📅 Need to Reschedule or Cancel?</strong><br>
+                You can manage your interview anytime using this link:<br><br>
+                <a href="${managementLink}" style="display: inline-block; padding: 10px 20px; background: #f97316; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 8px;">
+                  Manage My Interview
+                </a>
+              </div>
+              ` : `
               <p>If you need to reschedule for any reason, please contact us as soon as possible at <a href="mailto:${process.env.EMAIL_FROM}">${process.env.EMAIL_FROM}</a>.</p>
+              `}
               
               <p>We're looking forward to speaking with you!</p>
               
@@ -554,9 +564,148 @@ The Bloom Buddies Team
   }
 }
 
+/**
+ * Send cancellation confirmation email
+ * @param {Object} params - Email parameters
+ * @param {string} params.email - Recipient email
+ * @param {string} params.name - Candidate name
+ * @param {number} retryCount - Current retry attempt
+ * @returns {Promise<Object>} - Result object with success status
+ */
+async function sendCancellationConfirmation({ email, name }, retryCount = 0) {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000;
+  
+  try {
+    const transporter = createTransporter();
+    
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to: email,
+      subject: 'Interview Cancelled - Bloom Buddies',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              background-color: #f4f4f4;
+              margin: 0;
+              padding: 0;
+            }
+            .container {
+              max-width: 600px;
+              margin: 40px auto;
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              overflow: hidden;
+            }
+            .header {
+              background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+              color: white;
+              padding: 30px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+            }
+            .content {
+              padding: 40px 30px;
+            }
+            .content p {
+              margin: 0 0 20px 0;
+            }
+            .info-box {
+              background: #e6fffa;
+              border-left: 4px solid #319795;
+              padding: 15px;
+              margin: 20px 0;
+              border-radius: 4px;
+            }
+            .footer {
+              background: #f9f9f9;
+              padding: 20px 30px;
+              text-align: center;
+              font-size: 12px;
+              color: #666;
+              border-top: 1px solid #eee;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Interview Cancelled</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${name},</p>
+              
+              <p>We've received your request to cancel your interview with Bloom Buddies. Your interview has been successfully cancelled.</p>
+              
+              <div class="info-box">
+                <strong>Changed your mind?</strong><br>
+                If you'd like to reschedule or discuss other opportunities with us, we'd love to hear from you! Simply reply to this email or contact us at ${process.env.EMAIL_FROM}.
+              </div>
+              
+              <p>We appreciate your interest in Bloom Buddies and wish you all the best in your job search.</p>
+              
+              <p>Best regards,<br>
+              <strong>The Bloom Buddies Team</strong></p>
+            </div>
+            <div class="footer">
+              <p>This is an automated message from Bloom Buddies.</p>
+              <p>If you have any questions, please reply to this email or contact us at ${process.env.EMAIL_FROM}</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+Hi ${name},
+
+We've received your request to cancel your interview with Bloom Buddies. Your interview has been successfully cancelled.
+
+Changed your mind?
+If you'd like to reschedule or discuss other opportunities with us, we'd love to hear from you! Simply reply to this email or contact us at ${process.env.EMAIL_FROM}.
+
+We appreciate your interest in Bloom Buddies and wish you all the best in your job search.
+
+Best regards,
+The Bloom Buddies Team
+      `
+    };
+    
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Cancellation confirmation email sent successfully to ${email}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Error sending cancellation email (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error.message);
+    
+    if (retryCount < MAX_RETRIES) {
+      console.log(`⏳ Retrying email send in ${RETRY_DELAY / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return sendCancellationConfirmation({ email, name }, retryCount + 1);
+    }
+    
+    return {
+      success: false,
+      error: error.message,
+      attempts: retryCount + 1
+    };
+  }
+}
+
 module.exports = {
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
   testEmailConfig,
   sendInterviewConfirmation,
+  sendCancellationConfirmation,
 };
