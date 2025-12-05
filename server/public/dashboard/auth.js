@@ -75,8 +75,10 @@ class AuthManager {
             });
 
             const data = await response.json();
+            console.log('📦 Login response:', { success: data.success, hasToken: !!data.token, hasUser: !!data.user });
 
             if (!data.success) {
+                console.error('❌ Login failed on server side:', data.error);
                 SECURE_CONFIG.recordLoginAttempt(email, false);
                 this.showError(data.error || 'Invalid email or password');
                 // Ensure dashboard stays hidden on failed login
@@ -84,6 +86,21 @@ class AuthManager {
                 this.showLogin();
                 return;
             }
+
+            // Verify we have required data
+            if (!data.token) {
+                console.error('❌ No token in response');
+                this.showError('Authentication error: No token received');
+                return;
+            }
+
+            if (!data.user || !data.user.id) {
+                console.error('❌ Invalid user data in response:', data.user);
+                this.showError('Authentication error: Invalid user data');
+                return;
+            }
+
+            console.log('✅ Login response valid, user:', data.user.email);
 
             // Check if 2FA is required (optional for now)
             if (authCode && !this.validate2FA(authCode)) {
@@ -96,9 +113,8 @@ class AuthManager {
             SECURE_CONFIG.recordLoginAttempt(email, true);
             
             // Store JWT token
-            if (data.token) {
-                localStorage.setItem('authToken', data.token);
-            }
+            console.log('💾 Storing JWT token');
+            localStorage.setItem('authToken', data.token);
             
             // Create secure session
             const sessionUser = {
