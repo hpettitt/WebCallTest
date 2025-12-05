@@ -55,17 +55,28 @@ async function findUserByEmail(email) {
  */
 async function verifyCredentials(email, password) {
   try {
+    console.log('🔍 Looking up user:', email);
     const user = await findUserByEmail(email);
     
-    if (!user || !user.passwordHash) {
+    if (!user) {
+      console.log('❌ User not found:', email);
+      return null;
+    }
+    
+    if (!user.passwordHash) {
+      console.log('❌ No password hash for user:', email);
       return null;
     }
 
+    console.log('🔑 Comparing password for user:', email);
     const isValid = await bcrypt.compare(password, user.passwordHash);
     
     if (!isValid) {
+      console.log('❌ Password mismatch for user:', email);
       return null;
     }
+    
+    console.log('✅ Password verified for user:', email);
 
     // Update last login
     await base(USERS_TABLE).update(user.id, {

@@ -309,6 +309,8 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('🔐 Login attempt for:', email);
+
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -319,11 +321,14 @@ app.post('/api/auth/login', async (req, res) => {
     const user = await userService.verifyCredentials(email, password);
 
     if (!user) {
+      console.log('❌ Login failed for:', email);
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password',
       });
     }
+
+    console.log('✅ Login successful for:', email);
 
     // Generate JWT token
     const jwt = require('jsonwebtoken');
