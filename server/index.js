@@ -369,18 +369,27 @@ app.post('/api/auth/request-password-reset', async (req, res) => {
     }
 
     // Get base URL from request or environment
-    const baseUrl = process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
+    let baseUrl = process.env.FRONTEND_URL;
+    if (!baseUrl || baseUrl.includes('localhost')) {
+      if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+        baseUrl = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+      } else if (process.env.RAILWAY_STATIC_URL) {
+        baseUrl = process.env.RAILWAY_STATIC_URL;
+      } else {
+        baseUrl = `${req.protocol}://${req.get('host')}`;
+      }
+    }
 
-    // Send reset email
-    const emailSent = await emailService.sendPasswordResetEmail({
+    // Send reset email with retry logic
+    const emailResult = await emailService.sendPasswordResetEmail({
       email: resetData.email,
       name: resetData.name,
       resetToken: resetData.resetToken,
       resetUrl: baseUrl,
     });
 
-    if (!emailSent) {
-      console.error('Failed to send reset email to:', email);
+    if (!emailResult.success) {
+      console.error('❌ Failed to send reset email to:', email, 'Error:', emailResult.error);
     }
 
     // Always return success (security - don't reveal if user exists)

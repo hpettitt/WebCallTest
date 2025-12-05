@@ -45,9 +45,13 @@ function createTransporter() {
  * @param {string} options.name - Recipient name
  * @param {string} options.resetToken - Password reset token
  * @param {string} options.resetUrl - Base URL for reset page
- * @returns {Promise<boolean>} - Success status
+ * @param {number} retryCount - Current retry attempt (internal use)
+ * @returns {Promise<Object>} - { success: boolean, messageId?: string, error?: string, attempts?: number }
  */
-async function sendPasswordResetEmail({ email, name, resetToken, resetUrl }) {
+async function sendPasswordResetEmail({ email, name, resetToken, resetUrl }, retryCount = 0) {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000; // 2 seconds
+  
   try {
     const transporter = createTransporter();
     
@@ -187,11 +191,19 @@ Bloom Buddies Team
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent:', info.messageId);
-    return true;
+    console.log(`✅ Password reset email sent successfully to ${email}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending password reset email:', error);
-    return false;
+    console.error(`❌ Error sending password reset email (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error.message);
+    
+    if (retryCount < MAX_RETRIES) {
+      console.log(`⏳ Retrying password reset email send in ${RETRY_DELAY / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return sendPasswordResetEmail({ email, name, resetToken, resetUrl }, retryCount + 1);
+    }
+    
+    console.error(`🚫 FAILED to send password reset email after ${MAX_RETRIES + 1} attempts`);
+    return { success: false, error: error.message, attempts: retryCount + 1 };
   }
 }
 
