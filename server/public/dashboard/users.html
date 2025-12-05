@@ -355,13 +355,13 @@
 
             async init() {
                 // Check authentication
-                if (!authManager.currentUser) {
+                if (!auth.currentUser) {
                     window.location.href = 'index.html';
                     return;
                 }
 
                 // Check if user is admin
-                if (authManager.currentUser.role !== 'admin') {
+                if (auth.currentUser.role !== 'admin') {
                     this.showAlert('You do not have permission to access user management', 'error');
                     setTimeout(() => {
                         window.location.href = 'index.html';
@@ -376,7 +376,7 @@
                 try {
                     const response = await fetch('/api/users', {
                         headers: {
-                            'Authorization': `Bearer ${authManager.getToken()}`
+                            'Authorization': `Bearer ${auth.getToken()}`
                         }
                     });
 
@@ -488,7 +488,7 @@
                         method,
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authManager.getToken()}`
+                            'Authorization': `Bearer ${auth.getToken()}`
                         },
                         body: JSON.stringify(userData)
                     });
@@ -523,7 +523,7 @@
                     const response = await fetch(`/api/users/${userId}`, {
                         method: 'DELETE',
                         headers: {
-                            'Authorization': `Bearer ${authManager.getToken()}`
+                            'Authorization': `Bearer ${auth.getToken()}`
                         }
                     });
 
