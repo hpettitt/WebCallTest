@@ -331,28 +331,38 @@ app.post('/api/auth/login', async (req, res) => {
     console.log('✅ Login successful for:', email);
 
     // Generate JWT token
-    const jwt = require('jsonwebtoken');
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.TOKEN_EXPIRY || '24h' }
-    );
+    try {
+      const jwt = require('jsonwebtoken');
+      console.log('📝 Generating JWT token...');
+      const token = jwt.sign(
+        {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.TOKEN_EXPIRY || '24h' }
+      );
+      console.log('✅ JWT token generated');
 
-    res.json({
-      success: true,
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-    });
+      res.json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
+      });
+    } catch (jwtError) {
+      console.error('❌ JWT generation failed:', jwtError.message);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate authentication token',
+      });
+    }
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({
