@@ -133,6 +133,13 @@ class Dashboard {
     }
 
     async loadCandidates(showLoading = true) {
+        // Verify user is authenticated
+        if (!authManager.currentUser) {
+            console.log('⚠️ No authenticated user, redirecting to login');
+            this.showLoading(false);
+            return;
+        }
+
         if (showLoading) {
             this.showLoading(true);
         }

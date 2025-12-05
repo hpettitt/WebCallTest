@@ -9,12 +9,22 @@ class AuthManager {
     }
 
     init() {
-        // Check for existing valid session
+        // Check for existing valid session and JWT token
         const savedSession = this.getSession();
-        if (savedSession && this.isSessionValid(savedSession)) {
-            this.currentUser = savedSession.user;
-            this.hideLogin();
-            this.showDashboard();
+        const token = this.getToken();
+        
+        if (savedSession && this.isSessionValid(savedSession) && token) {
+            // Verify the token is still valid by checking if user has an ID
+            if (savedSession.user && savedSession.user.id) {
+                this.currentUser = savedSession.user;
+                this.hideLogin();
+                this.showDashboard();
+            } else {
+                // Old session format without JWT - clear it
+                console.log('⚠️ Old session detected, clearing...');
+                this.clearSession();
+                this.showLogin();
+            }
         } else {
             this.clearSession(); // Clear invalid session
             this.showLogin();
@@ -206,6 +216,9 @@ class AuthManager {
     clearSession() {
         localStorage.removeItem('authToken');
         localStorage.removeItem(this.sessionKey);
+        localStorage.removeItem(this.refreshTokenKey);
+        // Clear any other auth-related items
+        this.currentUser = null;
     }
 
     showLogin() {
