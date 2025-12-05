@@ -938,7 +938,7 @@ app.post('/api/schedule-interview', async (req, res) => {
     // Update candidate in Airtable
     const updated = await airtableService.updateCandidate(candidateId, {
       'Interview Time': interviewDateTime,
-      'Interview Status': 'Scheduled',
+      'Status': 'Scheduled',
       'Management Token': managementToken,
     });
 
@@ -1063,7 +1063,6 @@ app.post('/api/interview/reschedule', async (req, res) => {
     // Update interview date/time
     await airtableService.updateCandidateByManagementToken(token, {
       'Interview Time': newDateTime,
-      'Interview Status': 'Rescheduled',
       'Status': 'Rescheduled',
       'Last Modified': new Date().toISOString(),
     });
@@ -1132,8 +1131,7 @@ app.post('/api/interview/cancel', async (req, res) => {
 
     // Update status to cancelled
     await airtableService.updateCandidateByManagementToken(token, {
-      'Interview Status': 'Cancelled',
-      'Status': 'cancelled',
+      'Status': 'Cancelled',
       'Last Modified': new Date().toISOString(),
     });
 
