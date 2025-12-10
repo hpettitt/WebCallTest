@@ -56,7 +56,6 @@ class AuthManager {
         
         const email = document.getElementById('email').value.toLowerCase().trim();
         const password = document.getElementById('password').value;
-        const authCode = document.getElementById('authCode').value;
 
         try {
             // Check rate limiting
