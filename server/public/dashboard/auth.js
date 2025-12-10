@@ -101,13 +101,6 @@ class AuthManager {
 
             console.log('✅ Login response valid, user:', data.user.email);
 
-            // Check if 2FA is required (optional for now)
-            if (authCode && !this.validate2FA(authCode)) {
-                SECURE_CONFIG.recordLoginAttempt(email, false);
-                this.showError('Invalid 2FA code. Please try again.');
-                return;
-            }
-
             // Successful login
             SECURE_CONFIG.recordLoginAttempt(email, true);
             
