@@ -358,7 +358,14 @@ async function sendInterviewConfirmation({ email, name, interviewDate, interview
   const RETRY_DELAY = 2000; // 2 seconds
   
   try {
+    console.log(`\n📧 Attempting to send interview confirmation email (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`);
+    console.log(`   To: ${email}`);
+    console.log(`   Name: ${name}`);
+    console.log(`   Date/Time: ${interviewDate} at ${interviewTime}`);
+    
     const transporter = createTransporter();
+    console.log(`   Email Provider: ${process.env.EMAIL_SERVICE || 'gmail'}`);
+    console.log(`   From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`);
     
     // interviewDate and interviewTime are already formatted strings from the backend
     const formattedDate = interviewDate;
@@ -546,10 +553,16 @@ The Bloom Buddies Team
     };
     
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Interview confirmation email sent successfully to ${email}:`, info.messageId);
+    console.log(`✅ Interview confirmation email sent successfully to ${email}`);
+    console.log(`   Message ID: ${info.messageId}`);
+    console.log(`   Response: ${info.response}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error(`❌ Error sending interview confirmation email (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error.message);
+    console.error(`❌ Error sending interview confirmation email (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`);
+    console.error(`   To: ${email}`);
+    console.error(`   Error Code: ${error.code}`);
+    console.error(`   Error Message: ${error.message}`);
+    console.error(`   Error Details:`, error);
     
     // Retry logic
     if (retryCount < MAX_RETRIES) {

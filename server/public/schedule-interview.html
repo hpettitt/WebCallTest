@@ -446,10 +446,16 @@
                 <!-- Time Slots -->
                 <div class="time-slots-section">
                     <div class="time-slots-title">Select Interview Time</div>
-                    <select id="timeSelect" class="time-select">
-                        <option value="">Choose a time...</option>
-                        <!-- Time slots will be inserted by JavaScript -->
-                    </select>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <input type="time" id="timeInput" class="time-select" style="flex: 1;" placeholder="Select or enter time">
+                        <button type="button" id="suggestTimeBtn" class="btn" style="flex: 0 0 auto; padding: 12px 15px; background: #667eea; white-space: nowrap;">
+                            <i class="fas fa-list"></i> Suggest Times
+                        </button>
+                    </div>
+                    <div id="suggestedTimes" style="display: none; margin-bottom: 15px; padding: 15px; background: #f0f4ff; border-radius: 8px;">
+                        <div style="font-size: 12px; font-weight: 600; color: #4c51bf; margin-bottom: 10px;">Suggested times:</div>
+                        <div id="timeSlotsList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px;"></div>
+                    </div>
                     
                     <button type="submit" form="scheduleForm" class="btn" id="submitBtn">
                         Confirm My Interview Time
@@ -570,25 +576,61 @@
 
         // Render time slots
         function renderTimeSlots() {
-            const select = document.getElementById('timeSelect');
+            const list = document.getElementById('timeSlotsList');
             
             timeSlots.forEach(time => {
-                const option = document.createElement('option');
-                option.value = time;
-                option.textContent = formatTime12Hour(time);
-                select.appendChild(option);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = formatTime12Hour(time);
+                btn.style.cssText = `
+                    padding: 8px 12px;
+                    background: white;
+                    border: 1px solid #cbd5e0;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                `;
+                btn.onmouseover = () => {
+                    btn.style.background = '#667eea';
+                    btn.style.color = 'white';
+                    btn.style.borderColor = '#667eea';
+                };
+                btn.onmouseout = () => {
+                    btn.style.background = 'white';
+                    btn.style.color = 'inherit';
+                    btn.style.borderColor = '#cbd5e0';
+                };
+                btn.onclick = () => {
+                    selectTime(time);
+                    document.getElementById('suggestedTimes').style.display = 'none';
+                };
+                list.appendChild(btn);
             });
 
-            // Add change event listener
-            select.addEventListener('change', function() {
+            // Add change event listener to time input
+            document.getElementById('timeInput').addEventListener('change', function() {
                 selectTime(this.value);
             });
         }
 
         // Select time
         function selectTime(time) {
+            if (!time) return;
+            
+            // Convert 24-hour format to HH:MM for time input
             selectedTime = time;
             document.getElementById('selectedTime').value = time;
+            document.getElementById('timeInput').value = time;
+            
+            showMessage('success', `Selected: ${formatTime12Hour(time)}`);
+        }
+
+        // Toggle suggested times
+        function toggleSuggestedTimes() {
+            const container = document.getElementById('suggestedTimes');
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
         }
 
         // Format time to 12-hour
@@ -612,6 +654,9 @@
                 currentMonth.setMonth(currentMonth.getMonth() + 1);
                 renderCalendar();
             });
+
+            // Suggest times button
+            document.getElementById('suggestTimeBtn').addEventListener('click', toggleSuggestedTimes);
 
             // Form submission
             document.getElementById('scheduleForm').addEventListener('submit', async function(e) {
