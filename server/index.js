@@ -997,6 +997,102 @@ app.post('/api/schedule-interview', async (req, res) => {
   }
 });
 
+// Resend Interview Confirmation Email
+app.post('/api/resend-confirmation', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required',
+      });
+    }
+
+    // Find candidate by email
+    const Airtable = require('airtable');
+    const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(
+      process.env.AIRTABLE_BASE_ID
+    );
+    const tableName = process.env.AIRTABLE_TABLE_NAME || 'Candidates';
+
+    const records = await base(tableName)
+      .select({
+        filterByFormula: `{email} = '${email}'`,
+        maxRecords: 1,
+      })
+      .firstPage();
+
+    if (records.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No interview found for this email address',
+      });
+    }
+
+    const candidate = records[0].fields;
+    
+    // Check if interview is scheduled
+    if (!candidate['Interview Time'] || !candidate.token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Interview is not scheduled yet',
+      });
+    }
+
+    // Parse interview date/time
+    const dt = new Date(candidate['Interview Time']);
+    const formattedDate = dt.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const formattedTime = dt.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+
+    // Create interview link
+    const baseUrl = process.env.BASE_URL || 'https://bloombuddies.up.railway.app';
+    const interviewLink = `${baseUrl}/interview.html?token=${candidate.token}`;
+    const managementLink = candidate['Management Token'] 
+      ? `${baseUrl}/manage-interview.html?token=${candidate['Management Token']}`
+      : null;
+
+    // Resend confirmation email
+    const emailResult = await emailService.sendInterviewConfirmation({
+      email: candidate.email,
+      name: candidate.name,
+      interviewDate: formattedDate,
+      interviewTime: formattedTime,
+      interviewLink: interviewLink,
+      managementLink: managementLink,
+    });
+
+    if (!emailResult.success) {
+      console.error('⚠️ Failed to resend confirmation email:', emailResult.error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to send confirmation email. Please try again later.',
+        emailError: emailResult.error,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Confirmation email resent successfully',
+      emailMessageId: emailResult.messageId,
+    });
+  } catch (error) {
+    console.error('Error resending confirmation email:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error resending email',
+    });
+  }
+});
+
 // Interview Management - Verify Token
 app.get('/api/interview/verify-token', async (req, res) => {
   try {

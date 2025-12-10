@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resend Confirmation Email - Bloom Buddies</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="email"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
+        }
+
+        .message.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #f56565;
+        }
+
+        .message.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border-left: 4px solid #4299e1;
+        }
+
+        .info-box {
+            background: #f7fafc;
+            border-left: 4px solid #cbd5e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .info-box i {
+            color: #667eea;
+            margin-right: 8px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            margin-left: 5px;
+            animation: loading 1.4s infinite;
+        }
+
+        .loading:before,
+        .loading:after {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            margin-left: 5px;
+            animation: loading 1.4s infinite;
+        }
+
+        .loading:before {
+            margin-left: -10px;
+            animation-delay: -0.7s;
+        }
+
+        .loading:after {
+            animation-delay: 0.7s;
+        }
+
+        @keyframes loading {
+            0%, 80%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            40% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <h1>Resend Confirmation</h1>
+            <p>Enter your email to resend your interview confirmation</p>
+        </div>
+
+        <div class="info-box">
+            <i class="fas fa-info-circle"></i> 
+            <strong>Didn't receive your confirmation email?</strong> We'll resend it to your email address right away. Please check your spam folder if you don't see it in your inbox.
+        </div>
+
+        <form id="resendForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email"
+                    placeholder="your@email.com"
+                    required
+                >
+            </div>
+
+            <button type="submit" id="submitBtn">
+                <i class="fas fa-redo"></i> Resend Confirmation Email
+            </button>
+        </form>
+
+        <div id="messageDiv" class="message"></div>
+
+        <div class="back-link">
+            <a href="/">← Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('resendForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('messageDiv');
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Sending <span class="loading"></span>';
+
+            try {
+                const response = await fetch('/api/resend-confirmation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    messageDiv.className = 'message success';
+                    messageDiv.innerHTML = '<i class="fas fa-check-circle"></i> Success! Your confirmation email has been resent. Please check your inbox and spam folder.';
+                    messageDiv.style.display = 'block';
+                    document.getElementById('resendForm').style.display = 'none';
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = data.error || 'Failed to resend confirmation email. Please try again.';
+                    messageDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-redo"></i> Resend Confirmation Email';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'An error occurred. Please try again later.';
+                messageDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-redo"></i> Resend Confirmation Email';
+            }
+        });
+    </script>
+</body>
+</html>
