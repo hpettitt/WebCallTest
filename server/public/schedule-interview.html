@@ -541,7 +541,7 @@
                     dayEl.classList.add('selected');
                 }
 
-                // Click handler
+                // Click handler - only allow future/today dates
                 if (!dayEl.classList.contains('past')) {
                     dayEl.addEventListener('click', function() {
                         selectDate(this.dataset.date);

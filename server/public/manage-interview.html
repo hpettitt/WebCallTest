@@ -331,7 +331,7 @@
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Interview Time</span>
-                        <span class="detail-value" id="interviewTime">-</span>
+                        <span class="detail-value" id="interviewTime" style="cursor: pointer; color: #667eea; text-decoration: underline;" onclick="editInterviewTime()" title="Click to edit">-</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Status</span>
@@ -472,7 +472,7 @@
                 showInfo('This interview has been cancelled.');
             }
 
-            // Set minimum date to today
+            // Set minimum date to today - prevent scheduling in the past
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('newDate').setAttribute('min', today);
 
@@ -482,6 +482,25 @@
             } else {
                 // Hide interview link section if no link available
                 document.getElementById('interviewLinkSection').style.display = 'none';
+            }
+        }
+
+        // Edit interview time directly
+        function editInterviewTime() {
+            // Open the reschedule form to change the time
+            showRescheduleForm();
+            
+            // Pre-fill with current values
+            if (interviewData && interviewData.interviewDateTime) {
+                const dt = new Date(interviewData.interviewDateTime);
+                const dateStr = dt.toISOString().split('T')[0];
+                const timeStr = dt.toISOString().split('T')[1].substring(0, 5); // HH:MM format
+                
+                document.getElementById('newDate').value = dateStr;
+                document.getElementById('newTime').value = timeStr;
+                
+                // Scroll to form
+                document.getElementById('rescheduleForm').scrollIntoView({ behavior: 'smooth' });
             }
         }
 

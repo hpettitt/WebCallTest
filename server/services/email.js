@@ -555,7 +555,7 @@ The Bloom Buddies Team
     if (retryCount < MAX_RETRIES) {
       console.log(`⏳ Retrying email send in ${RETRY_DELAY / 1000} seconds...`);
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      return sendInterviewConfirmation({ email, name, interviewDate, interviewTime, interviewLink }, retryCount + 1);
+      return sendInterviewConfirmation({ email, name, interviewDate, interviewTime, interviewLink, managementLink }, retryCount + 1);
     }
     
     // All retries failed

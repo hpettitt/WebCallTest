@@ -964,7 +964,7 @@ app.post('/api/schedule-interview', async (req, res) => {
     const interviewLink = `${baseUrl}/interview.html?token=${token}`;
 
     // Send confirmation email
-    await emailService.sendInterviewConfirmation({
+    const emailResult = await emailService.sendInterviewConfirmation({
       email: candidate.email,
       name: candidate.name,
       interviewDate: interviewDate,
@@ -973,9 +973,20 @@ app.post('/api/schedule-interview', async (req, res) => {
       managementLink: managementLink,
     });
 
+    // Check if email was actually sent
+    if (!emailResult.success) {
+      console.error('⚠️ Email failed to send for scheduled interview:', emailResult.error);
+      return res.status(500).json({
+        success: false,
+        error: 'Interview scheduled but confirmation email failed to send. Please check your email or contact support.',
+        emailError: emailResult.error,
+      });
+    }
+
     res.json({
       success: true,
       message: 'Interview scheduled successfully',
+      emailMessageId: emailResult.messageId,
     });
   } catch (error) {
     console.error('Error scheduling interview:', error);
@@ -1108,9 +1119,29 @@ app.post('/api/interview/reschedule', async (req, res) => {
       managementLink: managementLink,
     });
 
+    const emailResult = await emailService.sendInterviewConfirmation({
+      email: candidate.email,
+      name: candidate.name,
+      interviewDate: formattedDate,
+      interviewTime: formattedTime,
+      interviewLink: interviewLink,
+      managementLink: managementLink,
+    });
+
+    // Check if email was sent
+    if (!emailResult.success) {
+      console.error('⚠️ Email failed to send for rescheduled interview:', emailResult.error);
+      return res.status(500).json({
+        success: false,
+        error: 'Interview rescheduled but confirmation email failed to send. Please check your email or contact support.',
+        emailError: emailResult.error,
+      });
+    }
+
     res.json({
       success: true,
       message: 'Interview rescheduled successfully',
+      emailMessageId: emailResult.messageId,
     });
   } catch (error) {
     console.error('Error rescheduling interview:', error);
@@ -1150,14 +1181,25 @@ app.post('/api/interview/cancel', async (req, res) => {
     });
 
     // Send cancellation confirmation email
-    await emailService.sendCancellationConfirmation({
+    const emailResult = await emailService.sendCancellationConfirmation({
       email: candidate.email,
       name: candidate.name,
     });
 
+    // Check if email was sent
+    if (!emailResult.success) {
+      console.error('⚠️ Email failed to send for cancellation:', emailResult.error);
+      return res.status(500).json({
+        success: false,
+        error: 'Interview cancelled but confirmation email failed to send. Please check your email or contact support.',
+        emailError: emailResult.error,
+      });
+    }
+
     res.json({
       success: true,
       message: 'Interview cancelled successfully',
+      emailMessageId: emailResult.messageId,
     });
   } catch (error) {
     console.error('Error cancelling interview:', error);
