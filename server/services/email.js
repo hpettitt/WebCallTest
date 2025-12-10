@@ -19,15 +19,16 @@ function createTransporter() {
   } else if (emailProvider === 'gmail') {
     return nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 587, // Try TLS port instead of SSL
-      secure: false, // Use TLS instead of SSL
+      port: 587,
+      secure: false,
+      requireTLS: true,
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD, // Use App Password for Gmail
+        pass: process.env.EMAIL_PASSWORD,
       },
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 15000,
     });
   } else {
     // Generic SMTP
@@ -723,12 +724,23 @@ The Bloom Buddies Team
  */
 async function sendTestEmail({ email, subject = 'Test Email from Bloom Buddies' }) {
   try {
-    console.log(`\n🧪 Sending test email`);
+    console.log(`\n🧪 SENDING TEST EMAIL`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`   To: ${email}`);
+    console.log(`   Subject: ${subject}`);
     console.log(`   Provider: ${process.env.EMAIL_SERVICE || 'gmail'}`);
     console.log(`   From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`);
+    console.log(`   Email User: ${process.env.EMAIL_USER}`);
+    console.log(`   Has Password: ${process.env.EMAIL_PASSWORD ? 'YES' : 'NO'}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     
+    console.log(`   Creating transporter...`);
     const transporter = createTransporter();
+    console.log(`   Transporter created successfully`);
+    
+    console.log(`   Verifying connection...`);
+    await transporter.verify();
+    console.log(`   ✅ SMTP connection verified!`);
     
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
@@ -769,14 +781,21 @@ async function sendTestEmail({ email, subject = 'Test Email from Bloom Buddies' 
     };
     
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Test email sent successfully`);
+    console.log(`✅ TEST EMAIL SENT SUCCESSFULLY!`);
     console.log(`   Message ID: ${info.messageId}`);
+    console.log(`   Response: ${info.response}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error(`❌ Error sending test email:`);
+    console.error(`\n❌ ERROR SENDING TEST EMAIL!`);
+    console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.error(`   Error Code: ${error.code}`);
     console.error(`   Error Message: ${error.message}`);
-    console.error(`   Full Error:`, error);
+    console.error(`   Command: ${error.command}`);
+    console.error(`   Errno: ${error.errno}`);
+    console.error(`   Syscall: ${error.syscall}`);
+    console.error(`   Full Error:`, JSON.stringify(error, null, 2));
+    console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
     return { success: false, error: error.message };
   }
 }
