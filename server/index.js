@@ -1113,6 +1113,53 @@ app.get('/api/test-email-config', (req, res) => {
   });
 });
 
+// Test Email Send - For debugging
+app.post('/api/test-send-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email address is required',
+      });
+    }
+
+    console.log('\n🧪 TEST EMAIL SEND');
+    console.log(`   To: ${email}`);
+    console.log(`   From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`);
+    console.log(`   Provider: ${process.env.EMAIL_SERVICE || 'gmail'}`);
+
+    const emailResult = await emailService.sendTestEmail({
+      email: email,
+      subject: 'Test Email from Bloom Buddies',
+    });
+
+    if (!emailResult.success) {
+      console.error('❌ Test email failed:', emailResult.error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to send test email',
+        details: emailResult.error,
+      });
+    }
+
+    console.log('✅ Test email sent successfully');
+    res.json({
+      success: true,
+      message: 'Test email sent successfully',
+      messageId: emailResult.messageId,
+    });
+  } catch (error) {
+    console.error('Error in test email:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error sending test email',
+      details: error.message,
+    });
+  }
+});
+
 // Interview Management - Verify Token
 app.get('/api/interview/verify-token', async (req, res) => {
   try {

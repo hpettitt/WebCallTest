@@ -715,10 +715,77 @@ The Bloom Buddies Team
   }
 }
 
+/**
+ * Send test email - for debugging email configuration
+ * @param {Object} params - Email parameters
+ * @param {string} params.email - Recipient email
+ * @param {string} params.subject - Email subject
+ */
+async function sendTestEmail({ email, subject = 'Test Email from Bloom Buddies' }) {
+  try {
+    console.log(`\n🧪 Sending test email`);
+    console.log(`   To: ${email}`);
+    console.log(`   Provider: ${process.env.EMAIL_SERVICE || 'gmail'}`);
+    console.log(`   From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`);
+    
+    const transporter = createTransporter();
+    
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to: email,
+      subject: subject,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 40px; }
+            .header { color: #667eea; font-size: 24px; font-weight: 600; margin-bottom: 20px; }
+            .content { color: #333; line-height: 1.6; }
+            .timestamp { color: #999; font-size: 12px; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">✅ Test Email Successful</div>
+            <div class="content">
+              <p>This is a test email from Bloom Buddies.</p>
+              <p>If you received this email, your email configuration is working correctly!</p>
+              <p><strong>Email Details:</strong></p>
+              <ul>
+                <li>To: ${email}</li>
+                <li>From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}</li>
+                <li>Provider: ${process.env.EMAIL_SERVICE || 'gmail'}</li>
+              </ul>
+            </div>
+            <div class="timestamp">Sent at ${new Date().toISOString()}</div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `Test Email Successful\n\nThis is a test email from Bloom Buddies.\nIf you received this email, your email configuration is working correctly!\n\nSent at ${new Date().toISOString()}`,
+    };
+    
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Test email sent successfully`);
+    console.log(`   Message ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Error sending test email:`);
+    console.error(`   Error Code: ${error.code}`);
+    console.error(`   Error Message: ${error.message}`);
+    console.error(`   Full Error:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
 module.exports = {
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
   testEmailConfig,
   sendInterviewConfirmation,
   sendCancellationConfirmation,
+  sendTestEmail,
 };
