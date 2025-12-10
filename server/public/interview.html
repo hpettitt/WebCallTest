@@ -216,9 +216,15 @@
       const webhookUrl = '/api/get-vapi-credentials';
       const button = document.getElementById('readyBtn');
       
+      // IMMEDIATELY remove the button to prevent double-clicks
+      console.log('🛑 Removing button to prevent duplicate clicks');
+      if (button) {
+        button.style.opacity = '0.5';
+        button.disabled = true;
+      }
+      
       try {
         // FIRST: Check with server if interview was already completed
-        button.disabled = true;
         button.textContent = 'Checking status...';
         
         const statusResponse = await fetch(`/api/check-interview-status?token=${encodeURIComponent(sessionToken)}`);
@@ -263,16 +269,10 @@
           sessionStorage.removeItem('callInProgress_' + sessionToken);
         }
         
-        button.disabled = true;
         button.textContent = 'Connecting...';
 
         // Debug: Log what we're sending
-        const requestPayload = { 
-          sessionToken,
-          candidateName,
-          originalToken: originalToken, // Use the actual original token
-          // Add additional context for server-side processing
-          requestType: 'interview-start',
+        const requestPayload = {
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
           // Request that n8n configure the assistant with candidate context
