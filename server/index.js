@@ -193,27 +193,41 @@ app.post('/api/mark-interview-started', async (req, res) => {
 
     const record = records[0];
     const fields = record.fields;
+    const callAttempts = (fields['Call Attempts'] || 0) + 1;
 
-    // CRITICAL: Check if interview was already marked as started
-    if (fields.InterviewCompleted === true || fields.action === 'interviewed') {
-      console.log('⚠️ Interview already marked as started - rejecting duplicate request');
+    // CRITICAL: Strict duplicate call prevention
+    // Only allow ONE call per candidate
+    if (fields.InterviewCompleted === true || fields.action === 'interviewed' || callAttempts > 1) {
+      console.log(`⚠️ Duplicate call attempt detected - Call Attempts: ${fields['Call Attempts']}, Status: ${fields.action}`);
       return res.status(409).json({ 
         success: false, 
         error: 'Interview already started',
-        alreadyStarted: true 
+        alreadyStarted: true,
+        callAttempts: callAttempts
       });
     }
 
-    // Update the record to mark interview as started
-    // Change status from 'scheduled' to 'pending' (awaiting review)
-    await base(tableName).update(record.id, {
-      'action': 'interviewed',
-      'InterviewCompleted': true,
-      'status': 'pending',
-    });
+    // ATOMIC UPDATE: Mark interview as started and increment call count
+    // This ensures only one successful call can proceed
+    try {
+      await base(tableName).update(record.id, {
+        'action': 'interviewed',
+        'InterviewCompleted': true,
+        'status': 'pending',
+        'Call Attempts': callAttempts,
+        'Call Started At': new Date().toISOString(),
+      });
 
-    console.log('✅ Successfully marked interview as started for token:', token);
-    res.json({ success: true, message: 'Interview marked as started' });
+      console.log(`✅ Interview marked as started - Call Attempt #${callAttempts} for token:`, token);
+      res.json({ 
+        success: true, 
+        message: 'Interview marked as started',
+        callAttempts: callAttempts 
+      });
+    } catch (updateError) {
+      console.error('❌ Failed to update Airtable record:', updateError);
+      res.status(500).json({ success: false, error: 'Failed to mark interview as started' });
+    }
   } catch (error) {
     console.error('Error marking interview started:', error);
     res.status(500).json({ success: false, error: 'Server error' });
