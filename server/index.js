@@ -1093,6 +1093,26 @@ app.post('/api/resend-confirmation', async (req, res) => {
   }
 });
 
+// Test Email Configuration
+app.get('/api/test-email-config', (req, res) => {
+  const config = {
+    EMAIL_PROVIDER: process.env.EMAIL_PROVIDER || 'Not set',
+    EMAIL_SERVICE: process.env.EMAIL_SERVICE || 'Not set',
+    EMAIL_USER: process.env.EMAIL_USER ? '***SET***' : 'NOT SET',
+    EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? '***SET***' : 'NOT SET',
+    EMAIL_FROM: process.env.EMAIL_FROM || 'Not set',
+    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ? '***SET***' : 'NOT SET',
+    SMTP_HOST: process.env.SMTP_HOST || 'Not set',
+    SMTP_USER: process.env.SMTP_USER || 'Not set',
+  };
+
+  res.json({
+    success: true,
+    config: config,
+    message: '✓ Set means the environment variable is configured'
+  });
+});
+
 // Interview Management - Verify Token
 app.get('/api/interview/verify-token', async (req, res) => {
   try {
