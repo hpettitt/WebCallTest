@@ -346,6 +346,9 @@
     <script src="secure-config.js"></script>
     <script src="auth.js"></script>
     <script>
+        // Initialize auth manager
+        let auth = new AuthManager();
+        
         class UserManager {
             constructor() {
                 this.users = [];
