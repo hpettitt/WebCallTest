@@ -1431,7 +1431,7 @@ app.post('/api/candidates/:id/accept', async (req, res) => {
 
     // Update status in Airtable
     const updatedCandidate = await airtableService.updateCandidate(id, {
-      status: 'accepted'
+      'status': 'accepted'
     });
 
     // Send acceptance email using actual Airtable field names
@@ -1484,7 +1484,7 @@ app.post('/api/candidates/:id/reject', async (req, res) => {
 
     // Update status in Airtable
     const updatedCandidate = await airtableService.updateCandidate(id, {
-      status: 'rejected'
+      'status': 'rejected'
     });
 
     // Send rejection email using actual Airtable field names
