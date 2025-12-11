@@ -1277,7 +1277,7 @@ app.post('/api/interview/reschedule', async (req, res) => {
     // Update interview date/time
     await airtableService.updateCandidateByManagementToken(token, {
       'Interview Time': newDateTime,
-      'Status': 'Rescheduled',
+      'status': 'rescheduled',
       'Last Modified': new Date().toISOString(),
     });
 
@@ -1298,15 +1298,6 @@ app.post('/api/interview/reschedule', async (req, res) => {
     const baseUrl = process.env.BASE_URL || 'https://bloombuddies.up.railway.app';
     const interviewLink = `${baseUrl}/interview.html?token=${candidate.token}`;
     const managementLink = `${baseUrl}/manage-interview.html?token=${token}`;
-
-    await emailService.sendInterviewConfirmation({
-      email: candidate.email,
-      name: candidate.name,
-      interviewDate: formattedDate,
-      interviewTime: formattedTime,
-      interviewLink: interviewLink,
-      managementLink: managementLink,
-    });
 
     const emailResult = await emailService.sendInterviewConfirmation({
       email: candidate.email,
