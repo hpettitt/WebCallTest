@@ -62,7 +62,7 @@ app.post('/api/validate-token', async (req, res) => {
     if (candidate.interviewCompleted || candidate.action === 'interviewed') {
       return res.status(400).json({
         valid: false,
-        error: 'Interview has already been started or completed. If there was an issue, please contact support.',
+        error: 'Interview has already been started or completed. If there was an issue, please contact support or reschedule your interview using the link in your confirmation email.',
         candidate: {
           name: candidate.name,
           email: candidate.email
