@@ -472,6 +472,7 @@
             // Disable actions if cancelled
             if (status.toLowerCase() === 'cancelled') {
                 document.getElementById('actionButtons').style.display = 'none';
+                document.getElementById('interviewLinkSection').style.display = 'none';
                 showInfo('This interview has been cancelled.');
             }
 

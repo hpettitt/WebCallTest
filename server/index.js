@@ -1280,7 +1280,6 @@ app.post('/api/interview/reschedule', async (req, res) => {
       await airtableService.updateCandidateByManagementToken(token, {
         'Interview Time': newDateTime,
         'status': 'scheduled',
-        'Last Modified': new Date().toISOString(),
       });
       console.log('✅ Successfully updated interview in Airtable');
     } catch (updateError) {
@@ -1369,7 +1368,6 @@ app.post('/api/interview/cancel', async (req, res) => {
       console.log(`Cancelling interview with management token: ${token.substring(0, 8)}...`);
       await airtableService.updateCandidateByManagementToken(token, {
         'status': 'cancelled',
-        'Last Modified': new Date().toISOString(),
       });
       console.log('✅ Successfully cancelled interview in Airtable');
     } catch (updateError) {
