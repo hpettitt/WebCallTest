@@ -879,10 +879,9 @@ app.post('/api/register-candidate', async (req, res) => {
     // Format date and time for email - convert UTC back to local timezone for display
     const dateObj = new Date(interviewDateTime);
     
-    // Get the timezone offset to convert back to local time for display
+    // Convert UTC back to local time for display
     // We stored UTC time, so we need to convert it back to the candidate's local timezone
     // timezone offset is negative for UTC+, so we subtract it to get back to local
-    const timezoneOffsetMinutes = req.body.timezoneOffset || 0;
     const localDisplayDate = new Date(dateObj.getTime() - timezoneOffsetMinutes * 60 * 1000);
     
     const formattedDate = localDisplayDate.toLocaleDateString('en-US', { 
