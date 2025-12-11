@@ -804,18 +804,26 @@ app.post('/api/register-candidate', async (req, res) => {
 
     // Convert local time to UTC before storing in Airtable
     // Airtable stores all times in UTC (Z suffix)
-    // timezoneOffset is in minutes (e.g., -60 for UTC-1 or 60 for UTC+1)
+    // timezoneOffset from JavaScript is negative for UTC+ timezones
+    // e.g., -60 for UTC+1 (CET), -300 for UTC-5 (EST)
+    // To convert local to UTC, we SUBTRACT the offset (which adds positive time for UTC+ zones)
     const timezoneOffsetMinutes = req.body.timezoneOffset || 0;
     const localDateTime = `${interviewDate}T${interviewTime}:00`;
     const localDate = new Date(localDateTime);
     
-    // Convert to UTC by subtracting the timezone offset
-    // If offset is 60 (UTC+1), subtract 60 minutes to get UTC
-    const utcDate = new Date(localDate.getTime() - timezoneOffsetMinutes * 60 * 1000);
+    // Convert to UTC: subtract the timezone offset
+    // For CET (offset -60): localTime - (-60) = localTime + 60 minutes ✓ (17:20 + 60 = 18:20 UTC? No...)
+    // Wait, we want: 17:20 CET should be 16:20 UTC (1 hour back)
+    // So: localTime - offset = 17:20 - (-60 min) = 17:20 + 60 min = 18:20 (wrong!)
+    // Actually: offset is minutes BEHIND, so CET at -60 means we're 60 min AHEAD
+    // To get UTC: subtract 60 minutes: 17:20 - 60 = 16:20 ✓
+    // Formula: UTC = local - (-offset) = local + offset
+    // So we need: localDate.getTime() + timezoneOffsetMinutes * 60 * 1000
+    const utcDate = new Date(localDate.getTime() + timezoneOffsetMinutes * 60 * 1000);
     const interviewDateTime = utcDate.toISOString();
     
     console.log(`Interview time (local): ${localDateTime}`);
-    console.log(`Timezone offset: ${timezoneOffsetMinutes} minutes`);
+    console.log(`Timezone offset: ${timezoneOffsetMinutes} minutes (from getTimezoneOffset)`);
     console.log(`Interview time (UTC): ${interviewDateTime}`);
 
     // Create candidate record in Airtable
@@ -985,8 +993,9 @@ app.post('/api/schedule-interview', async (req, res) => {
     const localDateTime = `${interviewDate}T${interviewTime}:00`;
     const localDate = new Date(localDateTime);
     
-    // Convert to UTC by subtracting the timezone offset
-    const utcDate = new Date(localDate.getTime() - timezoneOffsetMinutes * 60 * 1000);
+    // Convert to UTC: add the timezone offset (since it's negative for UTC+ zones)
+    // For CET (offset -60): UTC = local + (-60 min) = 17:20 - 60 min = 16:20 ✓
+    const utcDate = new Date(localDate.getTime() + timezoneOffsetMinutes * 60 * 1000);
     const interviewDateTime = utcDate.toISOString();
 
     // Generate unique management token (secure random string)
