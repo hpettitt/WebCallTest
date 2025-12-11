@@ -800,8 +800,19 @@ app.post('/api/register-candidate', async (req, res) => {
     const crypto = require('crypto');
     const token = crypto.randomBytes(16).toString('hex');
 
-    // Combine date and time - store as UTC to avoid timezone issues
-    const interviewDateTime = `${interviewDate}T${interviewTime}:00.000Z`;
+    // Parse the local date/time and convert to UTC ISO string
+    // The client sends local date (YYYY-MM-DD) and time (HH:MM) and timezoneOffset (minutes)
+    // We need to convert this to UTC for consistent server-side validation
+    const localDateTimeStr = `${interviewDate}T${interviewTime}:00`;
+    const localDateTime = new Date(localDateTimeStr);
+    
+    // timezoneOffset is in minutes (negative for west of UTC, positive for east)
+    // Adjust for timezone offset if provided
+    const offsetMs = req.body.timezoneOffset ? req.body.timezoneOffset * 60 * 1000 : 0;
+    const utcDateTime = new Date(localDateTime.getTime() - offsetMs);
+    const interviewDateTime = utcDateTime.toISOString();
+    
+    console.log(`Interview time: Local ${localDateTimeStr} (offset: ${req.body.timezoneOffset || 0} min) → UTC ${interviewDateTime}`);
 
     // Create candidate record in Airtable
     console.log('Creating Airtable record...');
