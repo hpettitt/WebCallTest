@@ -1356,7 +1356,7 @@ app.post('/api/interview/cancel', async (req, res) => {
 
     // Update status to cancelled
     await airtableService.updateCandidateByManagementToken(token, {
-      'Status': 'Cancelled',
+      'status': 'cancelled',
       'Last Modified': new Date().toISOString(),
     });
 
