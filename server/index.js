@@ -1379,9 +1379,13 @@ app.post('/api/interview/cancel', async (req, res) => {
     }
 
     // Send cancellation confirmation email
+    const baseUrl = process.env.BASE_URL || 'https://bloombuddies.up.railway.app';
+    const schedulingLink = `${baseUrl}/schedule-interview.html`;
+    
     const emailResult = await emailService.sendCancellationConfirmation({
       email: candidate.email,
       name: candidate.name,
+      schedulingLink: schedulingLink,
     });
 
     // Check if email was sent
@@ -1404,6 +1408,112 @@ app.post('/api/interview/cancel', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Server error cancelling interview',
+    });
+  }
+});
+
+/**
+ * Accept candidate - send acceptance email
+ */
+app.post('/api/candidates/:id/accept', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role, nextSteps } = req.body;
+
+    // Get candidate details from Airtable
+    const candidate = await airtableService.getCandidateById(id);
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        error: 'Candidate not found',
+      });
+    }
+
+    // Update status in Airtable
+    const updatedCandidate = await airtableService.updateCandidate(id, {
+      status: 'accepted'
+    });
+
+    // Send acceptance email using actual Airtable field names
+    const emailResult = await emailService.sendAcceptanceEmail({
+      email: candidate.email,
+      name: candidate.name,
+      role: role || 'the position',
+      nextSteps: nextSteps || 'You will hear from us shortly with next steps.'
+    });
+
+    if (!emailResult.success) {
+      console.error('⚠️ Email failed to send for acceptance:', emailResult.error);
+      return res.status(500).json({
+        success: false,
+        error: 'Candidate updated but acceptance email failed to send. Please check your email or contact support.',
+        emailError: emailResult.error,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Candidate accepted successfully',
+      emailMessageId: emailResult.messageId,
+    });
+  } catch (error) {
+    console.error('Error accepting candidate:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error accepting candidate',
+    });
+  }
+});
+
+/**
+ * Reject candidate - send rejection email
+ */
+app.post('/api/candidates/:id/reject', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role, feedback } = req.body;
+
+    // Get candidate details from Airtable
+    const candidate = await airtableService.getCandidateById(id);
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        error: 'Candidate not found',
+      });
+    }
+
+    // Update status in Airtable
+    const updatedCandidate = await airtableService.updateCandidate(id, {
+      status: 'rejected'
+    });
+
+    // Send rejection email using actual Airtable field names
+    const emailResult = await emailService.sendRejectionEmail({
+      email: candidate.email,
+      name: candidate.name,
+      role: role || 'the position',
+      feedback: feedback || ''
+    });
+
+    if (!emailResult.success) {
+      console.error('⚠️ Email failed to send for rejection:', emailResult.error);
+      return res.status(500).json({
+        success: false,
+        error: 'Candidate updated but rejection email failed to send. Please check your email or contact support.',
+        emailError: emailResult.error,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Candidate rejected successfully',
+      emailMessageId: emailResult.messageId,
+    });
+  } catch (error) {
+    console.error('Error rejecting candidate:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error rejecting candidate',
     });
   }
 });

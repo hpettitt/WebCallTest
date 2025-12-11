@@ -668,12 +668,13 @@ The Bloom Buddies Team
  * @param {number} retryCount - Current retry attempt
  * @returns {Promise<Object>} - Result object with success status
  */
-async function sendCancellationConfirmation({ email, name }, retryCount = 0) {
+async function sendCancellationConfirmation({ email, name, schedulingLink }, retryCount = 0) {
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 2000;
   
   try {
     const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
+    const baseUrl = schedulingLink || 'https://bloombuddies.up.railway.app/schedule-interview.html';
     
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
@@ -719,8 +720,8 @@ async function sendCancellationConfirmation({ email, name }, retryCount = 0) {
               margin: 0 0 20px 0;
             }
             .info-box {
-              background: #e6fffa;
-              border-left: 4px solid #319795;
+              background: #fff7ed;
+              border-left: 4px solid #f97316;
               padding: 15px;
               margin: 20px 0;
               border-radius: 4px;
@@ -747,7 +748,11 @@ async function sendCancellationConfirmation({ email, name }, retryCount = 0) {
               
               <div class="info-box">
                 <strong>Changed your mind?</strong><br>
-                If you'd like to reschedule or discuss other opportunities with us, we'd love to hear from you! Simply reply to this email or contact us at ${process.env.EMAIL_FROM}.
+                If you'd like to reschedule or apply for another position, we'd love to hear from you! You can schedule a new interview anytime:
+                <br><br>
+                <a href="${baseUrl}" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 8px;">
+                  Schedule New Interview
+                </a>
               </div>
               
               <p>We appreciate your interest in Bloom Buddies and wish you all the best in your job search.</p>
@@ -757,7 +762,6 @@ async function sendCancellationConfirmation({ email, name }, retryCount = 0) {
             </div>
             <div class="footer">
               <p>This is an automated message from Bloom Buddies.</p>
-              <p>If you have any questions, please reply to this email or contact us at ${process.env.EMAIL_FROM}</p>
             </div>
           </div>
         </body>
@@ -769,7 +773,8 @@ Hi ${name},
 We've received your request to cancel your interview with Bloom Buddies. Your interview has been successfully cancelled.
 
 Changed your mind?
-If you'd like to reschedule or discuss other opportunities with us, we'd love to hear from you! Simply reply to this email or contact us at ${process.env.EMAIL_FROM}.
+If you'd like to reschedule or apply for another position, we'd love to hear from you! You can schedule a new interview here:
+${baseUrl}
 
 We appreciate your interest in Bloom Buddies and wish you all the best in your job search.
 
@@ -909,6 +914,246 @@ async function sendTestEmail({ email, subject = 'Test Email from Bloom Buddies' 
   }
 }
 
+/**
+ * Send acceptance email to candidate
+ * @param {Object} params - Email parameters
+ * @param {string} params.email - Recipient email
+ * @param {string} params.name - Candidate name
+ * @param {string} params.role - Job role/position
+ * @param {string} params.nextSteps - Next steps in the hiring process
+ */
+async function sendAcceptanceEmail({ email, name, role = 'the position', nextSteps = 'You will hear from us shortly with next steps.' }, retryCount = 0) {
+  const MAX_RETRIES = 2;
+  const RETRY_DELAY = 2000; // 2 seconds
+
+  try {
+    console.log(`\n✉️ SENDING ACCEPTANCE EMAIL`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`   To: ${email}`);
+    console.log(`   Name: ${name}`);
+    console.log(`   Role: ${role}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'noreply@ai.xenergies.com',
+      to: email,
+      subject: `Great News! We're Moving Forward with Your Application`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow: hidden; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; }
+            .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+            .header .emoji { font-size: 48px; display: block; margin-bottom: 10px; }
+            .content { padding: 40px 30px; color: #333; }
+            .content h2 { color: #667eea; font-size: 22px; margin-top: 0; }
+            .content p { line-height: 1.8; font-size: 16px; margin: 15px 0; }
+            .next-steps { background: #f0f4ff; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0; border-radius: 4px; }
+            .next-steps h3 { color: #667eea; margin-top: 0; font-size: 16px; }
+            .next-steps p { margin: 10px 0; font-size: 15px; }
+            .footer { background: #f9f9f9; padding: 20px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #eee; }
+            .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; margin-top: 20px; }
+            .button:hover { opacity: 0.9; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <span class="emoji">🎉</span>
+              <h1>Congratulations!</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${name},</p>
+              
+              <p>We're excited to share some great news! We were impressed by your interview and would like to move forward with your application for <strong>${role}</strong>.</p>
+              
+              <p>Your skills, experience, and enthusiasm stood out to us, and we believe you'd be a great fit for our team.</p>
+              
+              <div class="next-steps">
+                <h3>What's Next?</h3>
+                <p>${nextSteps}</p>
+              </div>
+              
+              <p>If you have any questions in the meantime, feel free to reach out to us.</p>
+              
+              <p>We look forward to hearing from you!</p>
+              
+              <p>Best regards,<br/>
+              <strong>The Bloom Buddies Team</strong></p>
+            </div>
+            <div class="footer">
+              <p>This is an automated message. Please do not reply to this email. If you have questions, contact our HR team.</p>
+              <p>&copy; ${new Date().getFullYear()} Bloom Buddies. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `Congratulations ${name}!\n\nWe're excited to share some great news! We were impressed by your interview and would like to move forward with your application for ${role}.\n\nWhat's Next?\n${nextSteps}\n\nIf you have any questions in the meantime, feel free to reach out to us.\n\nWe look forward to hearing from you!\n\nBest regards,\nThe Bloom Buddies Team`
+    };
+
+    const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
+    
+    if (emailProvider === 'resend') {
+      console.log(`   Using Resend API...`);
+      const result = await sendViaResend(mailOptions);
+      if (result.success) {
+        console.log(`✅ Acceptance email sent successfully to ${email}:`, result.messageId);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error);
+      }
+    }
+    
+    const transporter = createTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Acceptance email sent successfully to ${email}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Error sending acceptance email (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error.message);
+    
+    if (retryCount < MAX_RETRIES) {
+      console.log(`⏳ Retrying email send in ${RETRY_DELAY / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return sendAcceptanceEmail({ email, name, role, nextSteps }, retryCount + 1);
+    }
+    
+    return {
+      success: false,
+      error: error.message,
+      attempts: retryCount + 1
+    };
+  }
+}
+
+/**
+ * Send rejection email to candidate
+ * @param {Object} params - Email parameters
+ * @param {string} params.email - Recipient email
+ * @param {string} params.name - Candidate name
+ * @param {string} params.role - Job role/position
+ * @param {string} params.feedback - Optional feedback for the candidate
+ */
+async function sendRejectionEmail({ email, name, role = 'the position', feedback = '' }, retryCount = 0) {
+  const MAX_RETRIES = 2;
+  const RETRY_DELAY = 2000; // 2 seconds
+
+  try {
+    console.log(`\n✉️ SENDING REJECTION EMAIL`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`   To: ${email}`);
+    console.log(`   Name: ${name}`);
+    console.log(`   Role: ${role}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
+    const feedbackSection = feedback ? `
+      <div class="feedback">
+        <h3>Feedback</h3>
+        <p>${feedback}</p>
+      </div>
+    ` : '';
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'noreply@ai.xenergies.com',
+      to: email,
+      subject: `Update on Your Application for ${role}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow: hidden; }
+            .header { background: #f9f9f9; color: #333; padding: 40px 20px; text-align: center; border-bottom: 2px solid #ddd; }
+            .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+            .content { padding: 40px 30px; color: #333; }
+            .content h2 { color: #667eea; font-size: 22px; margin-top: 0; }
+            .content p { line-height: 1.8; font-size: 16px; margin: 15px 0; }
+            .feedback { background: #fff3cd; border-left: 4px solid #ff9800; padding: 20px; margin: 30px 0; border-radius: 4px; }
+            .feedback h3 { color: #ff9800; margin-top: 0; font-size: 16px; }
+            .feedback p { margin: 10px 0; font-size: 15px; }
+            .encouragement { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 20px; margin: 30px 0; border-radius: 4px; }
+            .encouragement h3 { color: #4caf50; margin-top: 0; font-size: 16px; }
+            .encouragement p { margin: 10px 0; font-size: 15px; }
+            .footer { background: #f9f9f9; padding: 20px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #eee; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Application Status Update</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${name},</p>
+              
+              <p>Thank you very much for taking the time to interview with us for the ${role} position. We truly appreciated the opportunity to learn more about you and your background.</p>
+              
+              <p>After careful consideration, we have decided to move forward with other candidates whose experience more closely aligns with our current needs. This was a difficult decision, as you demonstrated real talent and potential.</p>
+              
+              ${feedbackSection}
+              
+              <div class="encouragement">
+                <h3>Keep Going!</h3>
+                <p>Please don't be discouraged by this outcome. Your qualifications and experience are valuable, and we encourage you to continue pursuing opportunities that align with your goals. We'd love to stay in touch and consider you for future opportunities that may be a better fit.</p>
+              </div>
+              
+              <p>If you have any questions or would like feedback on your interview, please don't hesitate to reach out.</p>
+              
+              <p>We wish you all the best in your career!<br/>
+              <strong>The Bloom Buddies Team</strong></p>
+            </div>
+            <div class="footer">
+              <p>This is an automated message. Please do not reply to this email. If you have questions, contact our HR team.</p>
+              <p>&copy; ${new Date().getFullYear()} Bloom Buddies. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `Application Status Update\n\nHi ${name},\n\nThank you very much for taking the time to interview with us for the ${role} position. We truly appreciated the opportunity to learn more about you and your background.\n\nAfter careful consideration, we have decided to move forward with other candidates whose experience more closely aligns with our current needs.\n\n${feedback ? `Feedback:\n${feedback}\n\n` : ''}We wish you all the best in your career!\n\nBest regards,\nThe Bloom Buddies Team`
+    };
+
+    const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
+    
+    if (emailProvider === 'resend') {
+      console.log(`   Using Resend API...`);
+      const result = await sendViaResend(mailOptions);
+      if (result.success) {
+        console.log(`✅ Rejection email sent successfully to ${email}:`, result.messageId);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error);
+      }
+    }
+    
+    const transporter = createTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Rejection email sent successfully to ${email}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Error sending rejection email (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error.message);
+    
+    if (retryCount < MAX_RETRIES) {
+      console.log(`⏳ Retrying email send in ${RETRY_DELAY / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return sendRejectionEmail({ email, name, role, feedback }, retryCount + 1);
+    }
+    
+    return {
+      success: false,
+      error: error.message,
+      attempts: retryCount + 1
+    };
+  }
+}
+
 module.exports = {
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
@@ -916,4 +1161,6 @@ module.exports = {
   sendInterviewConfirmation,
   sendCancellationConfirmation,
   sendTestEmail,
+  sendAcceptanceEmail,
+  sendRejectionEmail,
 };

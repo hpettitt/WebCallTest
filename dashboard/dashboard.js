@@ -436,11 +436,25 @@ class Dashboard {
         try {
             const newStatus = action === 'accept' ? 'accepted' : 'rejected';
             
-            // Update in Airtable
-            await window.airtable.updateCandidateStatus(candidateId, newStatus);
-            
-            // Send webhook to n8n for email automation
-            await this.triggerEmailWorkflow(candidateId, action);
+            // Use new backend endpoints for accept/reject that handle email sending
+            const endpoint = action === 'accept' ? `/api/candidates/${candidateId}/accept` : `/api/candidates/${candidateId}/reject`;
+            const response = await fetch(`${window.location.origin}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    role: 'the position',
+                    nextSteps: action === 'accept' ? 'You will hear from us shortly with next steps.' : undefined,
+                    feedback: action === 'reject' ? 'Thank you for your interest in our company.' : undefined
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
             
             // Refresh data
             await this.loadCandidates(false);
