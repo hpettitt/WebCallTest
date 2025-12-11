@@ -444,16 +444,19 @@
             
             // Format the date and time
             if (interview.interviewDateTime) {
-                // Parse as UTC to avoid timezone conversion
+                // Convert UTC time to local time for display
                 const dt = new Date(interview.interviewDateTime);
-                document.getElementById('interviewDate').textContent = dt.toLocaleDateString('en-US', { 
+                const timezoneOffset = interview.timezoneOffset || 0;
+                const localDisplayDate = new Date(dt.getTime() - timezoneOffset * 60 * 1000);
+                
+                document.getElementById('interviewDate').textContent = localDisplayDate.toLocaleDateString('en-US', { 
                     weekday: 'long', 
                     year: 'numeric', 
                     month: 'long', 
                     day: 'numeric',
                     timeZone: 'UTC'
                 });
-                document.getElementById('interviewTime').textContent = dt.toLocaleTimeString('en-US', { 
+                document.getElementById('interviewTime').textContent = localDisplayDate.toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
                     minute: '2-digit',
                     timeZone: 'UTC'
@@ -494,11 +497,14 @@
             // Open the reschedule form to change the time
             showRescheduleForm();
             
-            // Pre-fill with current values
+            // Pre-fill with current values (converted to local time)
             if (interviewData && interviewData.interviewDateTime) {
                 const dt = new Date(interviewData.interviewDateTime);
-                const dateStr = dt.toISOString().split('T')[0];
-                const timeStr = dt.toISOString().split('T')[1].substring(0, 5); // HH:MM format
+                const timezoneOffset = interviewData.timezoneOffset || 0;
+                const localDate = new Date(dt.getTime() - timezoneOffset * 60 * 1000);
+                
+                const dateStr = localDate.toISOString().split('T')[0];
+                const timeStr = localDate.toISOString().split('T')[1].substring(0, 5); // HH:MM format
                 
                 document.getElementById('newDate').value = dateStr;
                 document.getElementById('newTime').value = timeStr;
