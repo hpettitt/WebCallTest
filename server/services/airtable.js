@@ -58,13 +58,27 @@ async function findCandidateByToken(token) {
  * @param {string} appointmentTime - ISO datetime string
  * @returns {Object} - { valid: boolean, message: string, minutesUntil: number }
  */
-function validateAppointmentTime(appointmentTime) {
+function validateAppointmentTime(appointmentTime, timezoneOffsetMinutes = 0) {
   const now = new Date();
   const appointment = new Date(appointmentTime);
   
+  // If timezone offset is provided, adjust the comparison
+  // The appointmentTime is in local time, but 'now' is in UTC
+  // So we need to adjust: add the timezone offset to appointment to convert it to UTC equivalent
+  const appointmentInUtc = new Date(appointment.getTime() + timezoneOffsetMinutes * 60 * 1000);
+  
+  // Debug logging
+  console.log(`\n🕐 APPOINTMENT TIME VALIDATION`);
+  console.log(`   Current time (server UTC): ${now.toISOString()}`);
+  console.log(`   Appointment time (local): ${appointmentTime}`);
+  console.log(`   User timezone offset: ${timezoneOffsetMinutes} minutes`);
+  console.log(`   Appointment converted to UTC: ${appointmentInUtc.toISOString()}`);
+  
   // Calculate time difference in minutes
-  const diffMs = now - appointment;
+  const diffMs = now - appointmentInUtc;
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  
+  console.log(`   Difference: ${diffMs}ms = ${diffMinutes} minutes`);
   
   // Valid window: -5 minutes (before) to +30 minutes (after)
   const BEFORE_WINDOW = -5;
@@ -93,6 +107,7 @@ function validateAppointmentTime(appointmentTime) {
       timeString += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
     }
     
+    console.log(`   ❌ TOO EARLY: ${timeString}`);
     return {
       valid: false,
       message: `Interview window opens in ${timeString}`,
@@ -104,6 +119,7 @@ function validateAppointmentTime(appointmentTime) {
   if (diffMinutes > AFTER_WINDOW) {
     // Too late
     const minutesLate = diffMinutes - AFTER_WINDOW;
+    console.log(`   ❌ TOO LATE: ${minutesLate} minutes ago`);
     return {
       valid: false,
       message: `Interview window closed ${minutesLate} minutes ago`,
@@ -113,6 +129,7 @@ function validateAppointmentTime(appointmentTime) {
   }
   
   // Within valid window
+  console.log(`   ✅ VALID: Within window`);
   return {
     valid: true,
     message: 'Interview window is active',

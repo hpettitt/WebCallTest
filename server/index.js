@@ -72,7 +72,8 @@ app.post('/api/validate-token', async (req, res) => {
 
     // Validate appointment time (5 min before to 30 min after)
     const timeValidation = airtableService.validateAppointmentTime(
-      candidate.appointmentTime
+      candidate.appointmentTime,
+      candidate.timezoneOffset || 0
     );
 
     if (!timeValidation.valid) {
@@ -800,19 +801,11 @@ app.post('/api/register-candidate', async (req, res) => {
     const crypto = require('crypto');
     const token = crypto.randomBytes(16).toString('hex');
 
-    // Parse the local date/time and convert to UTC ISO string
-    // The client sends local date (YYYY-MM-DD) and time (HH:MM) and timezoneOffset (minutes)
-    // We need to convert this to UTC for consistent server-side validation
-    const localDateTimeStr = `${interviewDate}T${interviewTime}:00`;
-    const localDateTime = new Date(localDateTimeStr);
+    // Store the interview time exactly as the user entered it (no timezone conversion)
+    // Airtable handles timezone display automatically
+    const interviewDateTime = `${interviewDate}T${interviewTime}:00`;
     
-    // timezoneOffset is in minutes (negative for west of UTC, positive for east)
-    // Adjust for timezone offset if provided
-    const offsetMs = req.body.timezoneOffset ? req.body.timezoneOffset * 60 * 1000 : 0;
-    const utcDateTime = new Date(localDateTime.getTime() - offsetMs);
-    const interviewDateTime = utcDateTime.toISOString();
-    
-    console.log(`Interview time: Local ${localDateTimeStr} (offset: ${req.body.timezoneOffset || 0} min) → UTC ${interviewDateTime}`);
+    console.log(`Interview time: ${interviewDateTime} (user timezone offset: ${req.body.timezoneOffset || 0} min)`);
 
     // Create candidate record in Airtable
     console.log('Creating Airtable record...');
@@ -829,6 +822,7 @@ app.post('/api/register-candidate', async (req, res) => {
       'Interview Time': interviewDateTime,
       'token': token,
       'status': 'scheduled',
+      'timezoneOffset': req.body.timezoneOffset || 0,
     };
 
     // Add CV if provided
@@ -860,19 +854,22 @@ app.post('/api/register-candidate', async (req, res) => {
     // Send confirmation email with interview link
     console.log('Sending confirmation email to:', email);
     
-    // Format date and time for email
+    // Format date and time for email - no conversion needed, use as-is
     const dateObj = new Date(interviewDateTime);
+    
     const formattedDate = dateObj.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
-      day: 'numeric' 
+      day: 'numeric',
+      timeZone: 'UTC'  // Display in UTC since that's what we stored
     });
     const formattedTime = dateObj.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
       minute: '2-digit',
-      hour12: true 
-    }) + ' CET';
+      hour12: true,
+      timeZone: 'UTC'
+    });
     
     // Send email with retry logic
     const emailResult = await emailService.sendInterviewConfirmation({
