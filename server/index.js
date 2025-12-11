@@ -1267,6 +1267,7 @@ app.get('/api/interview/verify-token', async (req, res) => {
         name: candidate.name,
         email: candidate.email,
         interviewDateTime: candidate.interviewDateTime,
+        timezoneOffset: candidate.timezoneOffset || 0,
         status: candidate.status || 'scheduled',
         interviewLink: interviewLink,
       },
