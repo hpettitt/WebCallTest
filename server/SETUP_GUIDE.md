@@ -358,7 +358,236 @@ npm run test:env
 
 ---
 
-## Part 8: Company Branding & Customization
+## Part 8: n8n Workflow Automation (Optional but Recommended)
+
+### What is n8n?
+n8n is an open-source workflow automation platform. For Bloom Buddies, it can:
+- Process VAPI interview transcripts
+- Extract key information from calls
+- Send automated follow-up emails
+- Update Airtable with interview data
+- Trigger actions based on interview outcomes
+
+### Step 1: Deploy n8n on Railway
+
+#### Option A: Deploy n8n from Railway Template (Easiest)
+1. Go to https://railway.app
+2. Click "New Project"
+3. Search for "n8n" in templates
+4. Click "Deploy"
+5. Railway auto-configures everything
+
+#### Option B: Manual Docker Deployment
+1. In Railway project, click "Add Service"
+2. Select "Docker Image"
+3. Enter: `n8n:latest`
+4. Set environment variables:
+   ```
+   GENERIC_TIMEZONE=Europe/Berlin
+   TZ=Europe/Berlin
+   WEBHOOK_URL=https://YOUR_N8N_DOMAIN.up.railway.app
+   DB_TYPE=postgresdb
+   ```
+
+### Step 2: Configure n8n Domain
+1. In Railway project settings → Networking
+2. Add custom domain: `workflows-bloombuddies.up.railway.app`
+3. Update DNS CNAME records
+4. Wait for SSL certificate (auto-generated)
+
+### Step 3: Initial Setup
+1. Visit `https://workflows-bloombuddies.up.railway.app`
+2. Create admin account (first user is admin)
+3. Set strong password (admin@xenergies.com)
+4. Configure email: Settings → Email
+
+### Step 4: Create Workflows
+
+#### Workflow 1: Interview Completion Handler
+**Trigger:** Webhook from VAPI when interview ends
+**Actions:**
+1. Receive interview data from VAPI
+2. Extract key information:
+   - Candidate ID
+   - Call duration
+   - Transcript
+   - Call quality
+3. Update Airtable record with:
+   - `interviewCompleted` = true
+   - `action` = 'interviewed'
+   - `transcript` = interview transcript
+4. Send email to admin: "New interview completed"
+
+**Webhook URL to use:**
+```
+https://workflows-bloombuddies.up.railway.app/webhook/vapi-interview-completed
+```
+
+#### Workflow 2: Interview Transcript Processing
+**Trigger:** Manual or scheduled
+**Actions:**
+1. Get all pending interviews from Airtable
+2. For each interview:
+   - Parse transcript using OpenAI (optional)
+   - Extract key skills mentioned
+   - Identify red flags or positives
+   - Add summary to Airtable
+
+#### Workflow 3: Follow-up Email Automation
+**Trigger:** Interview status changes in Airtable
+**Actions:**
+1. Check if candidate accepted
+2. Send follow-up email with:
+   - Interview feedback (if rejection)
+   - Next steps (if acceptance)
+   - Company information
+   - Contact details
+
+### Step 5: Connect VAPI to n8n
+
+In VAPI dashboard:
+1. Go to Assistant settings
+2. Add webhook for call completion:
+   ```
+   https://workflows-bloombuddies.up.railway.app/webhook/vapi-interview-completed
+   ```
+3. Select events to webhook:
+   - Call completed
+   - Call failed
+   - Transcript ready
+
+**Webhook Payload** VAPI will send:
+```json
+{
+  "message": {
+    "type": "end-of-call-report",
+    "call": {
+      "endedReason": "hangup",
+      "duration": 600,
+      "transcript": "Full interview transcript here",
+      "recordingUrl": "https://vapi.ai/recordings/xyz",
+      "messages": [
+        {
+          "role": "assistant",
+          "message": "Hello, how are you today?"
+        },
+        {
+          "role": "user", 
+          "message": "I'm doing great, thanks for asking"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Step 6: Example n8n Workflow Configuration
+
+**Node 1: Webhook Trigger**
+- Type: Webhook
+- Method: POST
+- Path: `/vapi-interview-completed`
+
+**Node 2: Extract Data**
+- Type: Function
+- Extract from webhook:
+  ```javascript
+  return {
+    "duration": msg.call.duration,
+    "transcript": msg.call.transcript,
+    "recordingUrl": msg.call.recordingUrl
+  }
+  ```
+
+**Node 3: Update Airtable**
+- Type: Airtable
+- Action: Update Record
+- Base: Your Bloom Buddies base
+- Table: Candidates
+- Update Fields:
+  - `interviewCompleted`: true
+  - `action`: 'interviewed'
+  - `transcript`: {transcript from webhook}
+
+**Node 4: Send Email to Admin**
+- Type: Gmail/Resend
+- To: admin@xenergies.com
+- Subject: `Interview Completed - ${candidateName}`
+- Body: Summary of interview
+
+### Step 7: Set n8n Environment Variables in Railway
+
+In Railway dashboard for n8n service:
+1. Click Variables
+2. Add:
+   ```env
+   N8N_EDITOR_BASE_URL=https://workflows-bloombuddies.up.railway.app
+   WEBHOOK_URL=https://workflows-bloombuddies.up.railway.app
+   DB_TYPE=postgresdb
+   TIMEZONE=Europe/Berlin
+   ```
+
+### Step 8: Connect n8n to Your Backend
+
+Update `server/.env`:
+```env
+N8N_WEBHOOK_URL=https://workflows-bloombuddies.up.railway.app/webhook/vapi-interview-completed
+N8N_ENABLED=true
+```
+
+### Step 9: Test n8n Workflow
+
+#### Test via Postman/curl
+```bash
+curl -X POST \
+  https://workflows-bloombuddies.up.railway.app/webhook/vapi-interview-completed \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "message": {
+      "type": "end-of-call-report",
+      "call": {
+        "duration": 300,
+        "transcript": "Test transcript"
+      }
+    }
+  }'
+```
+
+#### Test via n8n UI
+1. Open workflow
+2. Click "Execute Workflow"
+3. Check execution history
+4. Verify Airtable was updated
+
+### Monitoring n8n
+
+**Dashboard:**
+- Go to n8n home page
+- Click "Executions" tab
+- See all workflow runs
+- Click execution to see logs
+
+**Common Issues:**
+- Webhook not triggering: Check VAPI webhook configuration
+- Airtable not updating: Verify API key in n8n
+- Email not sending: Check Resend/Gmail credentials
+
+### Backup & Recovery
+
+**Export Workflows:**
+1. In n8n, select workflow
+2. Click "Export" → Download as JSON
+3. Save to Git repo for version control
+
+**Restore Workflows:**
+1. Click "Import" in n8n
+2. Select JSON file
+3. Update credentials
+4. Test workflow
+
+---
+
+## Part 9: Company Branding & Customization
 
 ### Color Scheme (Update .env)
 ```env
@@ -412,7 +641,7 @@ SUPPORT_EMAIL=support@xenergies.com
 
 ---
 
-## Part 9: Testing All Components
+## Part 10: Testing All Components
 
 ### Test 1: Airtable Connection
 ```bash
@@ -455,7 +684,7 @@ curl -X POST https://api.resend.com/emails \
 
 ---
 
-## Part 10: Timezone Handling
+## Part 11: Timezone Handling
 
 ### Important: JavaScript getTimezoneOffset()
 - Returns **negative** for UTC+ zones
@@ -485,7 +714,7 @@ DEFAULT_TIMEZONE_OFFSET=-60
 
 ---
 
-## Part 11: Maintenance & Monitoring
+## Part 12: Maintenance & Monitoring
 
 ### Weekly Tasks
 - [ ] Check Railway logs for errors
@@ -506,7 +735,8 @@ DEFAULT_TIMEZONE_OFFSET=-60
 - [ ] Backup Airtable data
 
 ### Monitoring Dashboards
-- **Railway:** https://railway.app/project/YOUR_PROJECT
+- **Railway Backend:** https://railway.app/project/YOUR_PROJECT (main app)
+- **Railway n8n:** https://workflows-bloombuddies.up.railway.app (workflows)
 - **Airtable:** https://airtable.com (base stats)
 - **VAPI:** https://vapi.ai (call logs)
 - **OpenAI:** https://platform.openai.com (usage)
@@ -514,7 +744,7 @@ DEFAULT_TIMEZONE_OFFSET=-60
 
 ---
 
-## Part 12: Troubleshooting
+## Part 13: Troubleshooting
 
 ### Email not sending
 - ✓ Check RESEND_API_KEY in Railway
@@ -540,7 +770,7 @@ DEFAULT_TIMEZONE_OFFSET=-60
 
 ---
 
-## Part 13: Security Checklist
+## Part 14: Security Checklist
 
 - [ ] All sensitive keys in `.env`
 - [ ] `.env` NOT committed to git
@@ -562,10 +792,11 @@ DEFAULT_TIMEZONE_OFFSET=-60
 | Airtable | Free | Free tier sufficient |
 | VAPI | $0-100 | Based on call volume |
 | OpenAI | $20-50 | Based on call quality |
-| Railway | $5-20 | Auto-scales |
+| Railway (Backend) | $5-20 | Auto-scales |
+| Railway (n8n) | $5-20 | Auto-scales |
 | Resend | Free-$20 | 100 free emails/day |
 | Domain | $10 | Already owned |
-| **Total** | **$35-200** | Depends on volume |
+| **Total** | **$40-220** | Depends on volume |
 
 ---
 
