@@ -92,12 +92,17 @@ class SecurityManager {
     interceptAjaxRequests() {
         const originalFetch = window.fetch;
         window.fetch = async (url, options = {}) => {
-            // Add CSRF token to headers for POST, PUT, DELETE requests
+            // Add CSRF token only to same-origin requests (not external APIs like Airtable)
             if (options.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(options.method.toUpperCase())) {
-                options.headers = {
-                    ...options.headers,
-                    'X-CSRF-Token': this.csrfToken
-                };
+                // Check if URL is same-origin (relative or same domain)
+                const isExternalAPI = url.includes('api.airtable.com') || url.includes('stripe.com') || new URL(url, window.location.origin).origin !== window.location.origin;
+                
+                if (!isExternalAPI) {
+                    options.headers = {
+                        ...options.headers,
+                        'X-CSRF-Token': this.csrfToken
+                    };
+                }
             }
             
             return originalFetch(url, options);
