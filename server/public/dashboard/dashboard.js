@@ -307,14 +307,6 @@ class Dashboard {
                         <button class="btn btn-warning btn-small view-details" data-candidate-id="${candidate.id}">
                             <i class="fas fa-eye"></i> View Details
                         </button>
-                        ${hasPermission && candidate.status === 'pending' && (candidate.action === 'interviewed' || candidate.interviewCompleted === true) ? `
-                            <button class="btn btn-success btn-small quick-accept" data-candidate-id="${candidate.id}">
-                                <i class="fas fa-check"></i> Accept
-                            </button>
-                            <button class="btn btn-danger btn-small quick-reject" data-candidate-id="${candidate.id}">
-                                <i class="fas fa-times"></i> Reject
-                            </button>
-                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -328,23 +320,6 @@ class Dashboard {
                 e.stopPropagation();
                 const candidateId = btn.dataset.candidateId;
                 this.showCandidateDetails(candidateId);
-            });
-        });
-
-        // Quick action buttons
-        document.querySelectorAll('.quick-accept').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const candidateId = btn.dataset.candidateId;
-                this.quickAction(candidateId, 'accept');
-            });
-        });
-
-        document.querySelectorAll('.quick-reject').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const candidateId = btn.dataset.candidateId;
-                this.quickAction(candidateId, 'reject');
             });
         });
 
@@ -462,21 +437,6 @@ class Dashboard {
                 </div>
             </div>
         `;
-    }
-
-    async quickAction(candidateId, action) {
-        const candidate = this.candidates.find(c => c.id === candidateId);
-        if (!candidate) return;
-
-        const actionText = action === 'accept' ? 'Accept' : 'Reject';
-        const confirmed = await this.showConfirmDialog(
-            `${actionText} Candidate`,
-            `Are you sure you want to ${action} ${candidate.candidateName}?`
-        );
-
-        if (confirmed) {
-            await this.processCandidateAction(candidateId, action);
-        }
     }
 
     async handleCandidateAction(action) {
