@@ -1277,7 +1277,7 @@ app.post('/api/interview/reschedule', async (req, res) => {
     // Update interview date/time
     await airtableService.updateCandidateByManagementToken(token, {
       'Interview Time': newDateTime,
-      'status': 'rescheduled',
+      'status': 'scheduled',
       'Last Modified': new Date().toISOString(),
     });
 
