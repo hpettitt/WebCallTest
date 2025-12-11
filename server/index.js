@@ -876,17 +876,23 @@ app.post('/api/register-candidate', async (req, res) => {
     // Send confirmation email with interview link
     console.log('Sending confirmation email to:', email);
     
-    // Format date and time for email - no conversion needed, use as-is
+    // Format date and time for email - convert UTC back to local timezone for display
     const dateObj = new Date(interviewDateTime);
     
-    const formattedDate = dateObj.toLocaleDateString('en-US', { 
+    // Get the timezone offset to convert back to local time for display
+    // We stored UTC time, so we need to convert it back to the candidate's local timezone
+    // timezone offset is negative for UTC+, so we subtract it to get back to local
+    const timezoneOffsetMinutes = req.body.timezoneOffset || 0;
+    const localDisplayDate = new Date(dateObj.getTime() - timezoneOffsetMinutes * 60 * 1000);
+    
+    const formattedDate = localDisplayDate.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric',
-      timeZone: 'UTC'  // Display in UTC since that's what we stored
+      timeZone: 'UTC'  // Use UTC since we already converted to local
     });
-    const formattedTime = dateObj.toLocaleTimeString('en-US', { 
+    const formattedTime = localDisplayDate.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
       minute: '2-digit',
       hour12: true,
@@ -1092,17 +1098,22 @@ app.post('/api/resend-confirmation', async (req, res) => {
       });
     }
 
-    // Parse interview date/time
+    // Parse interview date/time and convert from UTC to local for display
     const dt = new Date(candidate['Interview Time']);
-    const formattedDate = dt.toLocaleDateString('en-US', { 
+    const timezoneOffset = candidate.timezoneOffset || 0;
+    const localDisplayDate = new Date(dt.getTime() - timezoneOffset * 60 * 1000);
+    
+    const formattedDate = localDisplayDate.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
-      day: 'numeric' 
+      day: 'numeric',
+      timeZone: 'UTC'
     });
-    const formattedTime = dt.toLocaleTimeString('en-US', { 
+    const formattedTime = localDisplayDate.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
-      minute: '2-digit' 
+      minute: '2-digit',
+      timeZone: 'UTC'
     });
 
     // Create interview link
@@ -1318,15 +1329,20 @@ app.post('/api/interview/reschedule', async (req, res) => {
 
     // Send confirmation email
     const dt = new Date(newDateTime);
-    const formattedDate = dt.toLocaleDateString('en-US', { 
+    const timezoneOffset = candidate.timezoneOffset || 0;
+    const localDisplayDate = new Date(dt.getTime() - timezoneOffset * 60 * 1000);
+    
+    const formattedDate = localDisplayDate.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
-      day: 'numeric' 
+      day: 'numeric',
+      timeZone: 'UTC'
     });
-    const formattedTime = dt.toLocaleTimeString('en-US', { 
+    const formattedTime = localDisplayDate.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
-      minute: '2-digit' 
+      minute: '2-digit',
+      timeZone: 'UTC'
     });
 
     // Get the interview link and management link for this candidate
