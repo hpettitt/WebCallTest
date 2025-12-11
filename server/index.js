@@ -800,6 +800,7 @@ app.post('/api/register-candidate', async (req, res) => {
     // Generate a unique token for this candidate
     const crypto = require('crypto');
     const token = crypto.randomBytes(16).toString('hex');
+    const managementToken = crypto.randomBytes(16).toString('hex');
 
     // Store the interview time exactly as the user entered it (no timezone conversion)
     // Airtable handles timezone display automatically
@@ -821,6 +822,7 @@ app.post('/api/register-candidate', async (req, res) => {
       'Phone': phone,
       'Interview Time': interviewDateTime,
       'token': token,
+      'Management Token': managementToken,
       'status': 'scheduled',
       'timezoneOffset': req.body.timezoneOffset || 0,
     };
@@ -849,7 +851,7 @@ app.post('/api/register-candidate', async (req, res) => {
       }
     }
     const interviewLink = `${baseUrl}/interview-validation.html?token=${token}`;
-    const managementLink = `${baseUrl}/manage-interview.html?token=${token}`;
+    const managementLink = `${baseUrl}/manage-interview.html?token=${managementToken}`;
     console.log('Interview link:', interviewLink);
     console.log('Management link:', managementLink);
 
