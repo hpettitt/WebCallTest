@@ -413,6 +413,23 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label for="cv">
+                            <i class="fas fa-file-pdf" style="color: #667eea; margin-right: 8px;"></i>
+                            Your Background or CV
+                            <span style="color: #999; font-weight: normal;">(Optional)</span>
+                        </label>
+                        <textarea 
+                            id="cv" 
+                            name="cv" 
+                            placeholder="Paste your CV, resume, or tell us about your background and experience. This helps us personalize your interview questions."
+                            style="min-height: 120px; font-family: 'Courier New', monospace; font-size: 13px;"
+                        ></textarea>
+                        <small style="color: #718096; display: block; margin-top: 8px;">
+                            💡 Tip: Copy and paste your CV or background information to help us ask more relevant questions.
+                        </small>
+                    </div>
+
                     <input type="hidden" id="selectedDate" name="selectedDate">
                     <input type="hidden" id="selectedTime" name="selectedTime">
                 </form>
@@ -665,6 +682,7 @@
                 const name = document.getElementById('name').value;
                 const email = document.getElementById('email').value;
                 const phone = document.getElementById('phone').value;
+                const cv = document.getElementById('cv').value;
 
                 if (!selectedDate) {
                     showMessage('error', 'Please select an interview date');
@@ -692,6 +710,7 @@
                             phone: phone,
                             interviewDate: selectedDate,
                             interviewTime: selectedTime,
+                            cv: cv || null,
                         }),
                     });
 

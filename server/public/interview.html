@@ -231,6 +231,13 @@
         if (statusResponse.ok) {
           const statusData = await statusResponse.json();
           
+          // Store CV content from API if available
+          if (statusData.cvContent) {
+            console.log('📄 CV content received from API');
+            candidateFullData = candidateFullData || {};
+            candidateFullData.cvText = statusData.cvContent;
+          }
+          
           if (statusData.completed === true || statusData.interviewCompleted === true) {
             console.log('🚫 Interview already completed in Airtable');
             button.textContent = 'Interview Already Completed';

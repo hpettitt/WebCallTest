@@ -157,7 +157,10 @@ app.get('/api/check-interview-status', async (req, res) => {
       completed: completed,
       interviewCompleted: fields.InterviewCompleted,
       status: fields.status,
-      action: fields.action
+      action: fields.action,
+      candidateName: fields['Candidate Name'],
+      cvContent: fields['CV Content'] || null,
+      email: fields['Email']
     });
   } catch (error) {
     console.error('Error checking interview status:', error);
@@ -781,7 +784,7 @@ app.post('/api/register-candidate', async (req, res) => {
   console.log('Request body:', req.body);
   
   try {
-    const { name, email, phone, interviewDate, interviewTime } = req.body;
+    const { name, email, phone, interviewDate, interviewTime, cv } = req.body;
 
     if (!name || !email || !phone || !interviewDate || !interviewTime) {
       console.log('Missing required fields');
@@ -808,14 +811,22 @@ app.post('/api/register-candidate', async (req, res) => {
     );
     const tableName = process.env.AIRTABLE_TABLE_NAME || 'Candidates';
 
-    const record = await base(tableName).create({
+    const recordData = {
       'Candidate Name': name,
       'Email': email,
       'Phone': phone,
       'Interview Time': interviewDateTime,
       'token': token,
       'status': 'scheduled',
-    });
+    };
+
+    // Add CV if provided
+    if (cv && cv.trim()) {
+      recordData['CV Content'] = cv;
+      console.log('CV content included:', cv.substring(0, 100) + '...');
+    }
+
+    const record = await base(tableName).create(recordData);
 
     console.log('Airtable record created:', record.id);
 
