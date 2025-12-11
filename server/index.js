@@ -1275,11 +1275,21 @@ app.post('/api/interview/reschedule', async (req, res) => {
     }
 
     // Update interview date/time
-    await airtableService.updateCandidateByManagementToken(token, {
-      'Interview Time': newDateTime,
-      'status': 'scheduled',
-      'Last Modified': new Date().toISOString(),
-    });
+    try {
+      console.log(`Updating candidate with management token: ${token.substring(0, 8)}...`);
+      await airtableService.updateCandidateByManagementToken(token, {
+        'Interview Time': newDateTime,
+        'status': 'scheduled',
+        'Last Modified': new Date().toISOString(),
+      });
+      console.log('✅ Successfully updated interview in Airtable');
+    } catch (updateError) {
+      console.error('❌ Failed to update Airtable record:', updateError);
+      return res.status(500).json({
+        success: false,
+        error: `Failed to update interview: ${updateError.message}`,
+      });
+    }
 
     // Send confirmation email
     const dt = new Date(newDateTime);
@@ -1355,10 +1365,20 @@ app.post('/api/interview/cancel', async (req, res) => {
     }
 
     // Update status to cancelled
-    await airtableService.updateCandidateByManagementToken(token, {
-      'status': 'cancelled',
-      'Last Modified': new Date().toISOString(),
-    });
+    try {
+      console.log(`Cancelling interview with management token: ${token.substring(0, 8)}...`);
+      await airtableService.updateCandidateByManagementToken(token, {
+        'status': 'cancelled',
+        'Last Modified': new Date().toISOString(),
+      });
+      console.log('✅ Successfully cancelled interview in Airtable');
+    } catch (updateError) {
+      console.error('❌ Failed to update Airtable record:', updateError);
+      return res.status(500).json({
+        success: false,
+        error: `Failed to cancel interview: ${updateError.message}`,
+      });
+    }
 
     // Send cancellation confirmation email
     const emailResult = await emailService.sendCancellationConfirmation({

@@ -444,16 +444,19 @@
             
             // Format the date and time
             if (interview.interviewDateTime) {
+                // Parse as UTC to avoid timezone conversion
                 const dt = new Date(interview.interviewDateTime);
                 document.getElementById('interviewDate').textContent = dt.toLocaleDateString('en-US', { 
                     weekday: 'long', 
                     year: 'numeric', 
                     month: 'long', 
-                    day: 'numeric' 
+                    day: 'numeric',
+                    timeZone: 'UTC'
                 });
                 document.getElementById('interviewTime').textContent = dt.toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
-                    minute: '2-digit' 
+                    minute: '2-digit',
+                    timeZone: 'UTC'
                 });
             } else {
                 document.getElementById('interviewDate').textContent = 'Not scheduled yet';
