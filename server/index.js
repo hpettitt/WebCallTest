@@ -1420,21 +1420,33 @@ app.post('/api/candidates/:id/accept', async (req, res) => {
     const { id } = req.params;
     const { role, nextSteps } = req.body;
 
+    console.log(`\n🎯 ACCEPT CANDIDATE REQUEST`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`   Candidate ID: ${id}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
     // Get candidate details from Airtable
+    console.log(`   Fetching candidate...`);
     const candidate = await airtableService.getCandidateById(id);
     if (!candidate) {
+      console.error(`   ❌ Candidate not found: ${id}`);
       return res.status(404).json({
         success: false,
         error: 'Candidate not found',
       });
     }
 
+    console.log(`   ✅ Candidate found: ${candidate.name} (${candidate.email})`);
+    
     // Update status in Airtable
+    console.log(`   Updating status to 'accept'...`);
     const updatedCandidate = await airtableService.updateCandidate(id, {
-      'status': 'accepted'
+      'status': 'accept'
     });
+    console.log(`   ✅ Status updated`);
 
     // Send acceptance email using actual Airtable field names
+    console.log(`   Sending acceptance email...`);
     const emailResult = await emailService.sendAcceptanceEmail({
       email: candidate.email,
       name: candidate.name,
@@ -1451,16 +1463,21 @@ app.post('/api/candidates/:id/accept', async (req, res) => {
       });
     }
 
+    console.log(`   ✅ Email sent successfully`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+
     res.json({
       success: true,
       message: 'Candidate accepted successfully',
       emailMessageId: emailResult.messageId,
     });
   } catch (error) {
-    console.error('Error accepting candidate:', error);
+    console.error('❌ Error accepting candidate:', error);
+    console.error('Stack:', error.stack);
     res.status(500).json({
       success: false,
       error: 'Server error accepting candidate',
+      details: error.message
     });
   }
 });
@@ -1473,21 +1490,33 @@ app.post('/api/candidates/:id/reject', async (req, res) => {
     const { id } = req.params;
     const { role, feedback } = req.body;
 
+    console.log(`\n🎯 REJECT CANDIDATE REQUEST`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.log(`   Candidate ID: ${id}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
     // Get candidate details from Airtable
+    console.log(`   Fetching candidate...`);
     const candidate = await airtableService.getCandidateById(id);
     if (!candidate) {
+      console.error(`   ❌ Candidate not found: ${id}`);
       return res.status(404).json({
         success: false,
         error: 'Candidate not found',
       });
     }
 
+    console.log(`   ✅ Candidate found: ${candidate.name} (${candidate.email})`);
+
     // Update status in Airtable
+    console.log(`   Updating status to 'reject'...`);
     const updatedCandidate = await airtableService.updateCandidate(id, {
-      'status': 'rejected'
+      'status': 'reject'
     });
+    console.log(`   ✅ Status updated`);
 
     // Send rejection email using actual Airtable field names
+    console.log(`   Sending rejection email...`);
     const emailResult = await emailService.sendRejectionEmail({
       email: candidate.email,
       name: candidate.name,
@@ -1504,16 +1533,21 @@ app.post('/api/candidates/:id/reject', async (req, res) => {
       });
     }
 
+    console.log(`   ✅ Email sent successfully`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+
     res.json({
       success: true,
       message: 'Candidate rejected successfully',
       emailMessageId: emailResult.messageId,
     });
   } catch (error) {
-    console.error('Error rejecting candidate:', error);
+    console.error('❌ Error rejecting candidate:', error);
+    console.error('Stack:', error.stack);
     res.status(500).json({
       success: false,
       error: 'Server error rejecting candidate',
+      details: error.message
     });
   }
 });
