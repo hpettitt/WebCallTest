@@ -1346,8 +1346,8 @@ app.post('/api/interview/reschedule', async (req, res) => {
     });
 
     // Get the interview link and management link for this candidate
-    const baseUrl = process.env.BASE_URL || 'https://bloombuddies.up.railway.app';
-    const interviewLink = `${baseUrl}/interview.html?token=${candidate.token}`;
+    const baseUrl = 'https://candidates-bloombuddies.up.railway.app';
+    const interviewLink = `${baseUrl}/interview-validation.html?token=${candidate.token}`;
     const managementLink = `${baseUrl}/manage-interview.html?token=${token}`;
 
     const emailResult = await emailService.sendInterviewConfirmation({
