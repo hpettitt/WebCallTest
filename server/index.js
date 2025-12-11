@@ -1311,11 +1311,18 @@ app.post('/api/interview/reschedule', async (req, res) => {
       });
     }
 
+    // Convert local time to UTC before storing in Airtable
+    // newDateTime comes from the form as local time (e.g., "2025-12-11T17:55:00")
+    const localDate = new Date(newDateTime);
+    const timezoneOffset = candidate.timezoneOffset || 0;
+    // Convert: UTC = local + offset (offset is negative for UTC+)
+    const utcDateTime = new Date(localDate.getTime() + timezoneOffset * 60 * 1000).toISOString();
+
     // Update interview date/time
     try {
       console.log(`Updating candidate with management token: ${token.substring(0, 8)}...`);
       await airtableService.updateCandidateByManagementToken(token, {
-        'Interview Time': newDateTime,
+        'Interview Time': utcDateTime,
         'status': 'scheduled',
       });
       console.log('✅ Successfully updated interview in Airtable');
@@ -1328,8 +1335,7 @@ app.post('/api/interview/reschedule', async (req, res) => {
     }
 
     // Send confirmation email
-    const dt = new Date(newDateTime);
-    const timezoneOffset = candidate.timezoneOffset || 0;
+    const dt = new Date(utcDateTime);
     const localDisplayDate = new Date(dt.getTime() - timezoneOffset * 60 * 1000);
     
     const formattedDate = localDisplayDate.toLocaleDateString('en-US', { 
