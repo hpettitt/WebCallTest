@@ -1,12 +1,26 @@
 // Email Service - Handles sending emails for password resets and notifications
 const nodemailer = require('nodemailer');
 
+// Initialize Resend client if API key is available
+let resendClient = null;
+try {
+  if (process.env.RESEND_API_KEY) {
+    const { Resend } = require('resend');
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+} catch (error) {
+  console.log('⚠️ Resend package not installed or API key not set');
+}
+
 // Create email transporter
 function createTransporter() {
   // Support multiple email providers
   const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
   
-  if (emailProvider === 'sendgrid') {
+  if (emailProvider === 'resend') {
+    // Resend uses API, not SMTP - return null to handle separately
+    return null;
+  } else if (emailProvider === 'sendgrid') {
     return nodemailer.createTransport({
       host: 'smtp.sendgrid.net',
       port: 587,
@@ -31,7 +45,7 @@ function createTransporter() {
     });
   } else {
     // Generic SMTP
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT || 587,
       secure: process.env.SMTP_SECURE === 'true',
@@ -40,6 +54,37 @@ function createTransporter() {
         pass: process.env.SMTP_PASSWORD,
       },
     });
+  }
+}
+
+// Send email via Resend API
+async function sendViaResend(mailOptions) {
+  if (!resendClient) {
+    throw new Error('Resend client not initialized. Check RESEND_API_KEY environment variable.');
+  }
+
+  try {
+    const response = await resendClient.emails.send({
+      from: mailOptions.from || process.env.EMAIL_FROM || 'noreply@resend.dev',
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      html: mailOptions.html,
+    });
+
+    if (response.error) {
+      throw new Error(response.error.message || 'Resend API error');
+    }
+
+    return {
+      success: true,
+      messageId: response.data.id,
+    };
+  } catch (error) {
+    console.error('❌ Resend API error:', error.message);
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 }
 
@@ -195,6 +240,18 @@ Bloom Buddies Team
       `.trim(),
     };
 
+    // Check if using Resend
+    const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
+    if (emailProvider === 'resend') {
+      const result = await sendViaResend(mailOptions);
+      if (result.success) {
+        console.log(`✅ Password reset email sent successfully to ${email} via Resend:`, result.messageId);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error);
+      }
+    }
+
     const info = await transporter.sendMail(mailOptions);
     console.log(`✅ Password reset email sent successfully to ${email}:`, info.messageId);
     return { success: true, messageId: info.messageId };
@@ -221,7 +278,7 @@ Bloom Buddies Team
  */
 async function sendPasswordChangedEmail({ email, name }) {
   try {
-    const transporter = createTransporter();
+    const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
     
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
@@ -313,6 +370,19 @@ Bloom Buddies Team
       `.trim(),
     };
 
+    // Use Resend if configured
+    if (emailProvider === 'resend') {
+      const result = await sendViaResend(mailOptions);
+      if (result.success) {
+        console.log('Password changed confirmation email sent via Resend:', result.messageId);
+        return true;
+      } else {
+        throw new Error(result.error);
+      }
+    }
+
+    // Use SMTP transporter for other providers
+    const transporter = createTransporter();
     const info = await transporter.sendMail(mailOptions);
     console.log('Password changed confirmation email sent:', info.messageId);
     return true;
@@ -363,11 +433,10 @@ async function sendInterviewConfirmation({ email, name, interviewDate, interview
     console.log(`   Name: ${name}`);
     console.log(`   Date/Time: ${interviewDate} at ${interviewTime}`);
     
-    const transporter = createTransporter();
     console.log(`   Email Provider: ${process.env.EMAIL_SERVICE || 'gmail'}`);
     console.log(`   From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`);
     
-    // interviewDate and interviewTime are already formatted strings from the backend
+    const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
     const formattedDate = interviewDate;
     const formattedTime = interviewTime;
     
@@ -552,6 +621,20 @@ The Bloom Buddies Team
       `
     };
     
+    // Use Resend if configured
+    if (emailProvider === 'resend') {
+      const result = await sendViaResend(mailOptions);
+      if (result.success) {
+        console.log(`✅ Interview confirmation email sent successfully to ${email} via Resend`);
+        console.log(`   Message ID: ${result.messageId}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error);
+      }
+    }
+    
+    // Use SMTP transporter for other providers
+    const transporter = createTransporter();
     const info = await transporter.sendMail(mailOptions);
     console.log(`✅ Interview confirmation email sent successfully to ${email}`);
     console.log(`   Message ID: ${info.messageId}`);
@@ -590,7 +673,7 @@ async function sendCancellationConfirmation({ email, name }, retryCount = 0) {
   const RETRY_DELAY = 2000;
   
   try {
-    const transporter = createTransporter();
+    const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
     
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
@@ -695,6 +778,19 @@ The Bloom Buddies Team
       `
     };
     
+    // Use Resend if configured
+    if (emailProvider === 'resend') {
+      const result = await sendViaResend(mailOptions);
+      if (result.success) {
+        console.log(`✅ Cancellation confirmation email sent successfully to ${email} via Resend:`, result.messageId);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error);
+      }
+    }
+    
+    // Use SMTP transporter for other providers
+    const transporter = createTransporter();
     const info = await transporter.sendMail(mailOptions);
     console.log(`✅ Cancellation confirmation email sent successfully to ${email}:`, info.messageId);
     return { success: true, messageId: info.messageId };
@@ -727,19 +823,10 @@ async function sendTestEmail({ email, subject = 'Test Email from Bloom Buddies' 
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`   To: ${email}`);
     console.log(`   Subject: ${subject}`);
-    console.log(`   Provider: ${process.env.EMAIL_SERVICE || 'gmail'}`);
+    const emailProvider = process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || 'gmail';
+    console.log(`   Provider: ${emailProvider}`);
     console.log(`   From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`);
-    console.log(`   Email User: ${process.env.EMAIL_USER}`);
-    console.log(`   Has Password: ${process.env.EMAIL_PASSWORD ? 'YES' : 'NO'}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    
-    console.log(`   Creating transporter...`);
-    const transporter = createTransporter();
-    console.log(`   Transporter created successfully`);
-    
-    console.log(`   Verifying connection...`);
-    await transporter.verify();
-    console.log(`   ✅ SMTP connection verified!`);
     
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
@@ -768,7 +855,7 @@ async function sendTestEmail({ email, subject = 'Test Email from Bloom Buddies' 
               <ul>
                 <li>To: ${email}</li>
                 <li>From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}</li>
-                <li>Provider: ${process.env.EMAIL_SERVICE || 'gmail'}</li>
+                <li>Provider: ${emailProvider}</li>
               </ul>
             </div>
             <div class="timestamp">Sent at ${new Date().toISOString()}</div>
@@ -778,6 +865,29 @@ async function sendTestEmail({ email, subject = 'Test Email from Bloom Buddies' 
       `,
       text: `Test Email Successful\n\nThis is a test email from Bloom Buddies.\nIf you received this email, your email configuration is working correctly!\n\nSent at ${new Date().toISOString()}`,
     };
+    
+    // Use Resend if configured
+    if (emailProvider === 'resend') {
+      console.log(`   Using Resend API...`);
+      const result = await sendViaResend(mailOptions);
+      if (result.success) {
+        console.log(`✅ TEST EMAIL SENT SUCCESSFULLY VIA RESEND!`);
+        console.log(`   Message ID: ${result.messageId}`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error);
+      }
+    }
+    
+    // Use SMTP transporter for other providers
+    console.log(`   Creating transporter...`);
+    const transporter = createTransporter();
+    console.log(`   Transporter created successfully`);
+    
+    console.log(`   Verifying connection...`);
+    await transporter.verify();
+    console.log(`   ✅ SMTP connection verified!`);
     
     const info = await transporter.sendMail(mailOptions);
     console.log(`✅ TEST EMAIL SENT SUCCESSFULLY!`);
