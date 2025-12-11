@@ -849,7 +849,9 @@ app.post('/api/register-candidate', async (req, res) => {
       }
     }
     const interviewLink = `${baseUrl}/interview-validation.html?token=${token}`;
+    const managementLink = `${baseUrl}/manage-interview.html?token=${token}`;
     console.log('Interview link:', interviewLink);
+    console.log('Management link:', managementLink);
 
     // Send confirmation email with interview link
     console.log('Sending confirmation email to:', email);
@@ -878,6 +880,7 @@ app.post('/api/register-candidate', async (req, res) => {
       interviewDate: formattedDate,
       interviewTime: formattedTime,
       interviewLink: interviewLink,
+      managementLink: managementLink,
     });
     
     // Update Airtable with email status
