@@ -1222,8 +1222,8 @@ app.get('/api/interview/verify-token', async (req, res) => {
     }
 
     // Create interview link
-    const baseUrl = process.env.BASE_URL || 'https://bloombuddies.up.railway.app';
-    const interviewLink = candidate.token ? `${baseUrl}/interview.html?token=${candidate.token}` : null;
+    const baseUrl = process.env.BASE_URL || 'https://candidates-bloombuddies.up.railway.app';
+    const interviewLink = candidate.token ? `${baseUrl}/interview-validation.html?token=${candidate.token}` : null;
 
     res.json({
       success: true,
