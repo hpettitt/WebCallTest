@@ -908,7 +908,9 @@ app.post('/api/register-candidate', async (req, res) => {
     
     console.log('=== REGISTRATION COMPLETE ===');
   } catch (error) {
-    console.error('❌ Error registering candidate:', error);
+    console.error('❌ ERROR in register-candidate endpoint:', error);
+    console.error('   Message:', error.message);
+    console.error('   Stack:', error.stack);
     
     // Check if this is an email-only error after successful Airtable creation
     if (error.message && error.message.includes('email')) {
