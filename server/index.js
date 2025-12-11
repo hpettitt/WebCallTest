@@ -802,11 +802,21 @@ app.post('/api/register-candidate', async (req, res) => {
     const token = crypto.randomBytes(16).toString('hex');
     const managementToken = crypto.randomBytes(16).toString('hex');
 
-    // Store the interview time exactly as the user entered it (no timezone conversion)
-    // Airtable handles timezone display automatically
-    const interviewDateTime = `${interviewDate}T${interviewTime}:00`;
+    // Convert local time to UTC before storing in Airtable
+    // Airtable stores all times in UTC (Z suffix)
+    // timezoneOffset is in minutes (e.g., -60 for UTC-1 or 60 for UTC+1)
+    const timezoneOffsetMinutes = req.body.timezoneOffset || 0;
+    const localDateTime = `${interviewDate}T${interviewTime}:00`;
+    const localDate = new Date(localDateTime);
     
-    console.log(`Interview time: ${interviewDateTime} (user timezone offset: ${req.body.timezoneOffset || 0} min)`);
+    // Convert to UTC by subtracting the timezone offset
+    // If offset is 60 (UTC+1), subtract 60 minutes to get UTC
+    const utcDate = new Date(localDate.getTime() - timezoneOffsetMinutes * 60 * 1000);
+    const interviewDateTime = utcDate.toISOString();
+    
+    console.log(`Interview time (local): ${localDateTime}`);
+    console.log(`Timezone offset: ${timezoneOffsetMinutes} minutes`);
+    console.log(`Interview time (UTC): ${interviewDateTime}`);
 
     // Create candidate record in Airtable
     console.log('Creating Airtable record...');
@@ -824,7 +834,7 @@ app.post('/api/register-candidate', async (req, res) => {
       'token': token,
       'Management Token': managementToken,
       'status': 'scheduled',
-      'timezoneOffset': req.body.timezoneOffset || 0,
+      'timezoneOffset': timezoneOffsetMinutes,
     };
 
     // Add CV if provided
@@ -969,8 +979,15 @@ app.post('/api/schedule-interview', async (req, res) => {
       });
     }
 
-    // Combine date and time
-    const interviewDateTime = `${interviewDate}T${interviewTime}:00`;
+    // Combine date and time and convert to UTC
+    // Get timezone offset from candidate record if available
+    const timezoneOffsetMinutes = candidate.timezoneOffset || 0;
+    const localDateTime = `${interviewDate}T${interviewTime}:00`;
+    const localDate = new Date(localDateTime);
+    
+    // Convert to UTC by subtracting the timezone offset
+    const utcDate = new Date(localDate.getTime() - timezoneOffsetMinutes * 60 * 1000);
+    const interviewDateTime = utcDate.toISOString();
 
     // Generate unique management token (secure random string)
     const managementToken = crypto.randomBytes(32).toString('hex');
