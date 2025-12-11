@@ -62,20 +62,20 @@ function validateAppointmentTime(appointmentTime, timezoneOffsetMinutes = 0) {
   const now = new Date();
   const appointment = new Date(appointmentTime);
   
-  // If timezone offset is provided, adjust the comparison
-  // The appointmentTime is in local time, but 'now' is in UTC
-  // So we need to adjust: add the timezone offset to appointment to convert it to UTC equivalent
-  const appointmentInUtc = new Date(appointment.getTime() + timezoneOffsetMinutes * 60 * 1000);
+  // Airtable stores times in UTC (with Z suffix)
+  // The appointmentTime is already in UTC, so we use it directly
+  // The timezoneOffsetMinutes is the user's local offset from UTC (e.g., -60 for UTC-1)
+  // We don't need to adjust the appointment time since it's already in UTC
   
   // Debug logging
   console.log(`\n🕐 APPOINTMENT TIME VALIDATION`);
   console.log(`   Current time (server UTC): ${now.toISOString()}`);
-  console.log(`   Appointment time (local): ${appointmentTime}`);
+  console.log(`   Appointment time (UTC): ${appointmentTime}`);
+  console.log(`   Appointment parsed: ${appointment.toISOString()}`);
   console.log(`   User timezone offset: ${timezoneOffsetMinutes} minutes`);
-  console.log(`   Appointment converted to UTC: ${appointmentInUtc.toISOString()}`);
   
   // Calculate time difference in minutes
-  const diffMs = now - appointmentInUtc;
+  const diffMs = now - appointment;
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   
   console.log(`   Difference: ${diffMs}ms = ${diffMinutes} minutes`);
