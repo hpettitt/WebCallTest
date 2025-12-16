@@ -379,7 +379,7 @@
                 try {
                     const response = await fetch('/api/users', {
                         headers: {
-                            'Authorization': `Bearer ${auth.getToken()}`
+                            'Authorization': `Bearer ${auth.currentUser.secureToken}`
                         }
                     });
 
@@ -491,7 +491,7 @@
                         method,
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${auth.getToken()}`
+                            'Authorization': `Bearer ${auth.currentUser.secureToken}`
                         },
                         body: JSON.stringify(userData)
                     });
@@ -526,10 +526,9 @@
                     const response = await fetch(`/api/users/${userId}`, {
                         method: 'DELETE',
                         headers: {
-                            'Authorization': `Bearer ${auth.getToken()}`
+                            'Authorization': `Bearer ${auth.currentUser.secureToken}`
                         }
                     });
-
                     const data = await response.json();
 
                     if (!response.ok) {
