@@ -1600,6 +1600,52 @@ app.post('/api/candidates/:id/reject', async (req, res) => {
   }
 });
 
+/**
+ * Delete a candidate interview record (admin only)
+ */
+app.delete('/api/candidates/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`\n🗑️  DELETE /api/candidates/${id}`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
+    // Get candidate details before deletion
+    const candidate = await airtableService.getCandidateById(id);
+    if (!candidate) {
+      console.log(`❌ Candidate not found: ${id}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Candidate not found',
+      });
+    }
+
+    console.log(`   Found candidate: ${candidate.name} (${candidate.email})`);
+    console.log(`   Deleting record from Airtable...`);
+
+    // Delete from Airtable
+    await airtableService.deleteCandidate(id);
+    console.log(`   ✅ Record deleted successfully`);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+
+    res.json({
+      success: true,
+      message: 'Candidate deleted successfully',
+      candidate: {
+        name: candidate.name,
+        email: candidate.email
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error deleting candidate:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      error: 'Server error deleting candidate',
+      details: error.message
+    });
+  }
+});
+
 // Start server
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

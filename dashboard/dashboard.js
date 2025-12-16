@@ -257,6 +257,11 @@ class Dashboard {
                                 <i class="fas fa-times"></i> Reject
                             </button>
                         ` : ''}
+                        ${hasPermission ? `
+                            <button class="btn btn-danger btn-small delete-candidate" data-candidate-id="${candidate.id}" title="Delete interview record">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -287,6 +292,15 @@ class Dashboard {
                 e.stopPropagation();
                 const candidateId = btn.dataset.candidateId;
                 this.quickAction(candidateId, 'reject');
+            });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.delete-candidate').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const candidateId = btn.dataset.candidateId;
+                this.deleteCandidate(candidateId);
             });
         });
 
@@ -463,6 +477,42 @@ class Dashboard {
         } catch (error) {
             console.error(`Error ${action}ing candidate:`, error);
             this.showError(`Failed to ${action} candidate. Please try again.`);
+        }
+    }
+
+    async deleteCandidate(candidateId) {
+        const candidate = this.candidates.find(c => c.id === candidateId);
+        if (!candidate) return;
+
+        const confirmed = await this.showConfirmDialog(
+            'Delete Interview Record',
+            `Are you sure you want to permanently delete the interview record for ${candidate.candidateName}? This action cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch(`${window.location.origin}/api/candidates/${candidateId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${auth.getToken()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            // Refresh data
+            await this.loadCandidates(false);
+            
+            this.showSuccess(`Interview record for ${candidate.candidateName} deleted successfully.`);
+        } catch (error) {
+            console.error('Error deleting candidate:', error);
+            this.showError('Failed to delete interview record. Please try again.');
         }
     }
 

@@ -280,6 +280,22 @@ async function updateCandidateByManagementToken(managementToken, updates) {
   }
 }
 
+/**
+ * Delete a candidate record from Airtable
+ * @param {string} recordId - Airtable record ID
+ * @returns {Promise<boolean>} - True if successful
+ */
+async function deleteCandidate(recordId) {
+  try {
+    await base(CANDIDATES_TABLE_NAME).destroy(recordId);
+    console.log(`Deleted candidate record: ${recordId}`);
+    return true;
+  } catch (error) {
+    console.error('Error deleting candidate from Airtable:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   findCandidateByToken,
   validateAppointmentTime,
@@ -287,5 +303,6 @@ module.exports = {
   getAllCandidates,
   getCandidateById,
   getCandidateByManagementToken,
-  updateCandidateByManagementToken
+  updateCandidateByManagementToken,
+  deleteCandidate
 };

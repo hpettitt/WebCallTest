@@ -18,14 +18,6 @@ class Dashboard {
             return; // Wait for authentication
         }
 
-        // Show user management button for admins
-        if (auth.currentUser && auth.currentUser.role === 'admin') {
-            const userManagementBtn = document.getElementById('userManagementBtn');
-            if (userManagementBtn) {
-                userManagementBtn.style.display = 'inline-block';
-            }
-        }
-
         this.setupEventListeners();
         this.loadCandidates();
         this.startAutoRefresh();
@@ -47,7 +39,6 @@ class Dashboard {
             statusFilter.addEventListener('change', (e) => {
                 this.currentFilters.status = e.target.value;
                 this.applyFilters();
-                this.updateStatCardActive(e.target.value);
             });
         }
 
@@ -69,34 +60,8 @@ class Dashboard {
             });
         }
 
-        // Stat card click listeners
-        this.setupStatCardListeners();
-
         // Modal event listeners
         this.setupModalEventListeners();
-    }
-
-    setupStatCardListeners() {
-        const statCards = document.querySelectorAll('.stat-card');
-        statCards.forEach(card => {
-            card.addEventListener('click', (e) => {
-                const filter = card.dataset.filter;
-                
-                // Update active state
-                statCards.forEach(c => c.classList.remove('active'));
-                card.classList.add('active');
-                
-                // Update status filter dropdown
-                const statusFilter = document.getElementById('statusFilter');
-                if (statusFilter) {
-                    statusFilter.value = filter;
-                }
-                
-                // Apply filter
-                this.currentFilters.status = filter;
-                this.applyFilters();
-            });
-        });
     }
 
     setupModalEventListeners() {
@@ -133,13 +98,6 @@ class Dashboard {
     }
 
     async loadCandidates(showLoading = true) {
-        // Verify user is authenticated
-        if (!auth.currentUser) {
-            console.log('⚠️ No authenticated user, redirecting to login');
-            this.showLoading(false);
-            return;
-        }
-
         if (showLoading) {
             this.showLoading(true);
         }
@@ -163,9 +121,6 @@ class Dashboard {
             
             this.updateStatistics();
             this.renderCandidates();
-            
-            // Set "all" stat card as active by default
-            this.updateStatCardActive('all');
             
             if (showLoading) {
                 this.showLoading(false);
@@ -207,22 +162,10 @@ class Dashboard {
         this.renderCandidates();
     }
 
-    updateStatCardActive(filter) {
-        const statCards = document.querySelectorAll('.stat-card');
-        statCards.forEach(card => {
-            if (card.dataset.filter === filter) {
-                card.classList.add('active');
-            } else {
-                card.classList.remove('active');
-            }
-        });
-    }
-
     updateStatistics() {
         const stats = window.airtable.getStatistics(this.candidates);
         
         this.updateStatElement('totalCandidates', stats.total);
-        this.updateStatElement('scheduled', stats.scheduled);
         this.updateStatElement('pendingReviews', stats.pending);
         this.updateStatElement('accepted', stats.accepted);
         this.updateStatElement('rejected', stats.rejected);
@@ -270,7 +213,6 @@ class Dashboard {
                 <div class="candidate-header">
                     <div class="candidate-name">${this.escapeHtml(candidate.candidateName)}</div>
                     <div class="candidate-email">${this.escapeHtml(candidate.email)}</div>
-                    ${candidate.phone ? `<div class="candidate-phone">${this.escapeHtml(candidate.phone)}</div>` : ''}
                     <div class="status-badge ${candidate.statusClass}">
                         ${this.formatStatus(candidate.status)}
                     </div>
@@ -307,6 +249,19 @@ class Dashboard {
                         <button class="btn btn-warning btn-small view-details" data-candidate-id="${candidate.id}">
                             <i class="fas fa-eye"></i> View Details
                         </button>
+                        ${hasPermission && candidate.status === 'pending' ? `
+                            <button class="btn btn-success btn-small quick-accept" data-candidate-id="${candidate.id}">
+                                <i class="fas fa-check"></i> Accept
+                            </button>
+                            <button class="btn btn-danger btn-small quick-reject" data-candidate-id="${candidate.id}">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        ` : ''}
+                        ${hasPermission ? `
+                            <button class="btn btn-danger btn-small delete-candidate" data-candidate-id="${candidate.id}" title="Delete interview record">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -320,6 +275,32 @@ class Dashboard {
                 e.stopPropagation();
                 const candidateId = btn.dataset.candidateId;
                 this.showCandidateDetails(candidateId);
+            });
+        });
+
+        // Quick action buttons
+        document.querySelectorAll('.quick-accept').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const candidateId = btn.dataset.candidateId;
+                this.quickAction(candidateId, 'accept');
+            });
+        });
+
+        document.querySelectorAll('.quick-reject').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const candidateId = btn.dataset.candidateId;
+                this.quickAction(candidateId, 'reject');
+            });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.delete-candidate').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const candidateId = btn.dataset.candidateId;
+                this.deleteCandidate(candidateId);
             });
         });
 
@@ -344,17 +325,13 @@ class Dashboard {
         const modalBody = document.querySelector('#interviewModal .modal-body');
         modalBody.innerHTML = this.createCandidateDetailsHTML(candidate);
         
-        // Show/hide action buttons based on status, permissions, and interview completion
+        // Show/hide action buttons based on status and permissions
         const acceptBtn = document.getElementById('acceptBtn');
         const rejectBtn = document.getElementById('rejectBtn');
         const hasPermission = auth.hasPermission('write');
         
-        // Check if interview has been completed or started
-        const interviewStarted = candidate.action === 'interviewed' || candidate.interviewCompleted === true;
-        
         if (acceptBtn && rejectBtn) {
-            // Only show buttons if: has permission, status is pending, AND interview has been completed
-            if (hasPermission && candidate.status === 'pending' && interviewStarted) {
+            if (hasPermission && candidate.status === 'pending') {
                 acceptBtn.style.display = 'inline-flex';
                 rejectBtn.style.display = 'inline-flex';
             } else {
@@ -439,6 +416,21 @@ class Dashboard {
         `;
     }
 
+    async quickAction(candidateId, action) {
+        const candidate = this.candidates.find(c => c.id === candidateId);
+        if (!candidate) return;
+
+        const actionText = action === 'accept' ? 'Accept' : 'Reject';
+        const confirmed = await this.showConfirmDialog(
+            `${actionText} Candidate`,
+            `Are you sure you want to ${action} ${candidate.candidateName}?`
+        );
+
+        if (confirmed) {
+            await this.processCandidateAction(candidateId, action);
+        }
+    }
+
     async handleCandidateAction(action) {
         if (!this.selectedCandidate) return;
         
@@ -460,7 +452,7 @@ class Dashboard {
             
             // Use new backend endpoints for accept/reject that handle email sending
             const endpoint = action === 'accept' ? `/api/candidates/${candidateId}/accept` : `/api/candidates/${candidateId}/reject`;
-            const response = await fetch(endpoint, {
+            const response = await fetch(`${window.location.origin}${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -485,6 +477,42 @@ class Dashboard {
         } catch (error) {
             console.error(`Error ${action}ing candidate:`, error);
             this.showError(`Failed to ${action} candidate. Please try again.`);
+        }
+    }
+
+    async deleteCandidate(candidateId) {
+        const candidate = this.candidates.find(c => c.id === candidateId);
+        if (!candidate) return;
+
+        const confirmed = await this.showConfirmDialog(
+            'Delete Interview Record',
+            `Are you sure you want to permanently delete the interview record for ${candidate.candidateName}? This action cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch(`${window.location.origin}/api/candidates/${candidateId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${auth.getToken()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            // Refresh data
+            await this.loadCandidates(false);
+            
+            this.showSuccess(`Interview record for ${candidate.candidateName} deleted successfully.`);
+        } catch (error) {
+            console.error('Error deleting candidate:', error);
+            this.showError('Failed to delete interview record. Please try again.');
         }
     }
 
