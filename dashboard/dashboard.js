@@ -258,8 +258,8 @@ class Dashboard {
                             </button>
                         ` : ''}
                         ${hasPermission ? `
-                            <button class="btn btn-danger btn-small delete-candidate" data-candidate-id="${candidate.id}" title="Delete interview record">
-                                <i class="fas fa-trash"></i> Delete
+                            <button class="btn btn-danger btn-small delete-candidate" data-candidate-id="${candidate.id}" title="Delete interview record" style="padding: 8px 12px;">
+                                <i class="fas fa-trash"></i>
                             </button>
                         ` : ''}
                     </div>
