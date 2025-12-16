@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Bloom Buddies Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .user-management {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            margin: 0;
+            color: #333;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .users-table {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-admin {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-user {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .badge-demo {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: #e9ecef;
+        }
+
+        .btn-edit {
+            color: #667eea;
+        }
+
+        .btn-delete {
+            color: #dc3545;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-management">
+        <a href="index.html" class="back-link">← Back to Dashboard</a>
+
+        <div class="page-header">
+            <h1>👥 User Management</h1>
+            <button class="btn-primary" onclick="userManager.openCreateModal()">
+                + Add New User
+            </button>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="users-table">
+            <div id="loadingState" class="loading">
+                Loading users...
+            </div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <h3>No users found</h3>
+                <p>Click "Add New User" to create your first user</p>
+            </div>
+            <table id="usersTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Last Login</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create/Edit User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New User</h2>
+                <button class="btn-close" onclick="userManager.closeModal()">&times;</button>
+            </div>
+            <form id="userForm" onsubmit="userManager.handleSubmit(event)">
+                <input type="hidden" id="userId">
+                
+                <div class="form-group">
+                    <label for="userName">Name *</label>
+                    <input type="text" id="userName" required placeholder="John Doe">
+                </div>
+
+                <div class="form-group">
+                    <label for="userEmail">Email *</label>
+                    <input type="email" id="userEmail" required placeholder="john@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="userRole">Role *</label>
+                    <select id="userRole" required>
+                        <option value="admin">Admin - Full access to all features</option>
+                        <option value="user">User - Standard dashboard access</option>
+                        <option value="demo">Demo - Limited read-only access</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="passwordGroup">
+                    <label for="userPassword">Password *</label>
+                    <input type="password" id="userPassword" minlength="8" placeholder="Min 8 characters">
+                    <small style="color: #6c757d; display: block; margin-top: 4px;">
+                        Leave blank when editing to keep current password
+                    </small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="userManager.closeModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        Save User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="secure-config.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Initialize auth manager
+        let auth = new AuthManager();
+        
+        class UserManager {
+            constructor() {
+                this.users = [];
+                this.editingUserId = null;
+                this.init();
+            }
+
+            async init() {
+                // Check authentication
+                if (!auth.currentUser) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Check if user is admin
+                if (auth.currentUser.role !== 'admin') {
+                    this.showAlert('You do not have permission to access user management', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                    return;
+                }
+
+                await this.loadUsers();
+            }
+
+            async loadUsers() {
+                try {
+                    const response = await fetch('/api/users', {
+                        headers: {
+                            'Authorization': `Bearer ${auth.getToken()}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to load users');
+                    }
+
+                    const data = await response.json();
+                    this.users = data.users || [];
+                    this.renderUsers();
+                } catch (error) {
+                    console.error('Error loading users:', error);
+                    this.showAlert('Failed to load users', 'error');
+                    document.getElementById('loadingState').style.display = 'none';
+                }
+            }
+
+            renderUsers() {
+                const loading = document.getElementById('loadingState');
+                const empty = document.getElementById('emptyState');
+                const table = document.getElementById('usersTable');
+                const tbody = document.getElementById('usersTableBody');
+
+                loading.style.display = 'none';
+
+                if (this.users.length === 0) {
+                    empty.style.display = 'block';
+                    table.style.display = 'none';
+                    return;
+                }
+
+                empty.style.display = 'none';
+                table.style.display = 'table';
+
+                tbody.innerHTML = this.users.map(user => `
+                    <tr>
+                        <td>${this.escapeHtml(user.name)}</td>
+                        <td>${this.escapeHtml(user.email)}</td>
+                        <td>
+                            <span class="badge badge-${user.role}">
+                                ${user.role.toUpperCase()}
+                            </span>
+                        </td>
+                        <td>${user.lastLogin ? this.formatDate(user.lastLogin) : 'Never'}</td>
+                        <td>${this.formatDate(user.createdAt)}</td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn-icon btn-edit" onclick="userManager.openEditModal('${user.id}')" title="Edit user">
+                                    ✏️
+                                </button>
+                                <button class="btn-icon btn-delete" onclick="userManager.deleteUser('${user.id}')" title="Delete user">
+                                    🗑️
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            openCreateModal() {
+                this.editingUserId = null;
+                document.getElementById('modalTitle').textContent = 'Add New User';
+                document.getElementById('userForm').reset();
+                document.getElementById('userId').value = '';
+                document.getElementById('userPassword').required = true;
+                document.getElementById('userModal').classList.add('active');
+            }
+
+            openEditModal(userId) {
+                const user = this.users.find(u => u.id === userId);
+                if (!user) return;
+
+                this.editingUserId = userId;
+                document.getElementById('modalTitle').textContent = 'Edit User';
+                document.getElementById('userId').value = user.id;
+                document.getElementById('userName').value = user.name;
+                document.getElementById('userEmail').value = user.email;
+                document.getElementById('userRole').value = user.role;
+                document.getElementById('userPassword').value = '';
+                document.getElementById('userPassword').required = false;
+                document.getElementById('userModal').classList.add('active');
+            }
+
+            closeModal() {
+                document.getElementById('userModal').classList.remove('active');
+                document.getElementById('userForm').reset();
+                this.editingUserId = null;
+            }
+
+            async handleSubmit(event) {
+                event.preventDefault();
+
+                const userId = document.getElementById('userId').value;
+                const name = document.getElementById('userName').value;
+                const email = document.getElementById('userEmail').value;
+                const role = document.getElementById('userRole').value;
+                const password = document.getElementById('userPassword').value;
+
+                const userData = { name, email, role };
+                if (password) {
+                    userData.password = password;
+                }
+
+                try {
+                    const url = userId ? `/api/users/${userId}` : '/api/users';
+                    const method = userId ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${auth.getToken()}`
+                        },
+                        body: JSON.stringify(userData)
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to save user');
+                    }
+
+                    this.showAlert(
+                        userId ? 'User updated successfully' : 'User created successfully',
+                        'success'
+                    );
+                    this.closeModal();
+                    await this.loadUsers();
+                } catch (error) {
+                    console.error('Error saving user:', error);
+                    this.showAlert(error.message, 'error');
+                }
+            }
+
+            async deleteUser(userId) {
+                const user = this.users.find(u => u.id === userId);
+                if (!user) return;
+
+                if (!confirm(`Are you sure you want to delete ${user.name} (${user.email})?`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/users/${userId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${auth.getToken()}`
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to delete user');
+                    }
+
+                    this.showAlert('User deleted successfully', 'success');
+                    await this.loadUsers();
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    this.showAlert(error.message, 'error');
+                }
+            }
+
+            showAlert(message, type) {
+                const container = document.getElementById('alertContainer');
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type}`;
+                alert.textContent = message;
+                container.appendChild(alert);
+
+                setTimeout(() => {
+                    alert.remove();
+                }, 5000);
+            }
+
+            formatDate(dateString) {
+                if (!dateString) return 'N/A';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        const userManager = new UserManager();
+    </script>
+</body>
+</html>
