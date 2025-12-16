@@ -198,6 +198,20 @@ class AuthManager {
         const navbar = document.querySelector('.navbar');
         if (dashboard) dashboard.style.display = 'block';
         if (navbar) navbar.style.display = 'block';
+        
+        // Show current user name
+        const currentUserDisplay = document.getElementById('currentUserDisplay');
+        const currentUserName = document.getElementById('currentUserName');
+        if (currentUserDisplay && currentUserName && this.currentUser) {
+            currentUserName.textContent = this.currentUser.name || this.currentUser.email;
+            currentUserDisplay.style.display = 'inline';
+        }
+        
+        // Show user management button for admins
+        const userManagementBtn = document.getElementById('userManagementBtn');
+        if (userManagementBtn && this.currentUser && this.currentUser.role === 'admin') {
+            userManagementBtn.style.display = 'inline-block';
+        }
     }
 
     hideDashboard() {

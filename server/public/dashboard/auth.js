@@ -9,25 +9,14 @@ class AuthManager {
     }
 
     init() {
-        // Check for existing valid session and JWT token
+        // Check for existing valid session
         const savedSession = this.getSession();
-        const token = this.getToken();
-        
-        if (savedSession && this.isSessionValid(savedSession) && token) {
-            // Verify the token is still valid by checking if user has an ID
-            if (savedSession.user && savedSession.user.id) {
-                this.currentUser = savedSession.user;
-                this.hideLogin();
-                this.showDashboard();
-            } else {
-                // Old session format without JWT - clear it
-                console.log('⚠️ Old session detected, clearing...');
-                this.clearSession();
-                this.showLogin();
-            }
+        if (savedSession && this.isSessionValid(savedSession)) {
+            this.currentUser = savedSession.user;
+            this.hideLogin();
+            this.showDashboard();
         } else {
             this.clearSession(); // Clear invalid session
-            this.hideDashboard(); // Ensure dashboard is hidden
             this.showLogin();
         }
 
@@ -56,6 +45,7 @@ class AuthManager {
         
         const email = document.getElementById('email').value.toLowerCase().trim();
         const password = document.getElementById('password').value;
+        const authCode = document.getElementById('authCode').value;
 
         try {
             // Check rate limiting
@@ -64,59 +54,34 @@ class AuthManager {
                 return;
             }
 
-            // Authenticate against server
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-            console.log('📦 Login response:', { success: data.success, hasToken: !!data.token, hasUser: !!data.user });
-
-            if (!data.success) {
-                console.error('❌ Login failed on server side:', data.error);
+            // Validate credentials securely
+            const user = SECURE_CONFIG.getUserByEmail(email);
+            if (!user || !SECURE_CONFIG.verifyPassword(password, user.passwordHash)) {
                 SECURE_CONFIG.recordLoginAttempt(email, false);
-                this.showError(data.error || 'Invalid email or password');
-                // Ensure dashboard stays hidden on failed login
-                this.hideDashboard();
-                this.showLogin();
+                this.showError('Invalid email or password');
                 return;
             }
 
-            // Verify we have required data
-            if (!data.token) {
-                console.error('❌ No token in response');
-                this.showError('Authentication error: No token received');
-                return;
+            // Validate 2FA if enabled
+            if (user.mfaEnabled && authCode) {
+                if (!this.validate2FA(authCode)) {
+                    SECURE_CONFIG.recordLoginAttempt(email, false);
+                    this.showError('Invalid 2FA code');
+                    return;
+                }
             }
-
-            if (!data.user || !data.user.id) {
-                console.error('❌ Invalid user data in response:', data.user);
-                this.showError('Authentication error: Invalid user data');
-                return;
-            }
-
-            console.log('✅ Login response valid, user:', data.user.email);
 
             // Successful login
             SECURE_CONFIG.recordLoginAttempt(email, true);
             
-            // Store JWT token
-            console.log('💾 Storing JWT token');
-            localStorage.setItem('authToken', data.token);
-            
             // Create secure session
             const sessionUser = {
-                id: data.user.id,
-                email: data.user.email,
-                name: data.user.name,
-                role: data.user.role,
-                permissions: this.getPermissionsForRole(data.user.role),
+                email: email,
+                name: email.split('@')[0],
+                role: user.role,
+                permissions: user.permissions,
                 loginTime: new Date().toISOString(),
-                secureToken: SECURE_CONFIG.generateSecureToken({ email: data.user.email, role: data.user.role })
+                secureToken: SECURE_CONFIG.generateSecureToken({ email, role: user.role })
             };
 
             this.currentUser = sessionUser;
@@ -187,17 +152,6 @@ class AuthManager {
         }
     }
 
-    getPermissionsForRole(role) {
-        // Map role to permissions
-        const rolePermissions = {
-            'admin': ['read', 'write', 'delete', 'accept', 'reject', 'manage_users'],
-            'hr_manager': ['read', 'write', 'accept', 'reject'],
-            'interviewer': ['read', 'write'],
-            'user': ['read']
-        };
-        return rolePermissions[role] || ['read'];
-    }
-
     saveSession(user) {
         const session = {
             user: user,
@@ -221,16 +175,8 @@ class AuthManager {
         return session && session.expires > Date.now();
     }
 
-    getToken() {
-        return localStorage.getItem('authToken');
-    }
-
     clearSession() {
-        localStorage.removeItem('authToken');
         localStorage.removeItem(this.sessionKey);
-        localStorage.removeItem(this.refreshTokenKey);
-        // Clear any other auth-related items
-        this.currentUser = null;
     }
 
     showLogin() {
@@ -252,6 +198,20 @@ class AuthManager {
         const navbar = document.querySelector('.navbar');
         if (dashboard) dashboard.style.display = 'block';
         if (navbar) navbar.style.display = 'block';
+        
+        // Show current user name
+        const currentUserDisplay = document.getElementById('currentUserDisplay');
+        const currentUserName = document.getElementById('currentUserName');
+        if (currentUserDisplay && currentUserName && this.currentUser) {
+            currentUserName.textContent = this.currentUser.name || this.currentUser.email;
+            currentUserDisplay.style.display = 'inline';
+        }
+        
+        // Show user management button for admins
+        const userManagementBtn = document.getElementById('userManagementBtn');
+        if (userManagementBtn && this.currentUser && this.currentUser.role === 'admin') {
+            userManagementBtn.style.display = 'inline-block';
+        }
     }
 
     hideDashboard() {
