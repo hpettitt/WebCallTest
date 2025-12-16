@@ -419,8 +419,8 @@
                         <td>${this.escapeHtml(user.name)}</td>
                         <td>${this.escapeHtml(user.email)}</td>
                         <td>
-                            <span class="badge badge-${user.role}">
-                                ${user.role.toUpperCase()}
+                            <span class="badge badge-${user.role || 'user'}">
+                                ${(user.role || 'user').toUpperCase()}
                             </span>
                         </td>
                         <td>${user.lastLogin ? this.formatDate(user.lastLogin) : 'Never'}</td>
