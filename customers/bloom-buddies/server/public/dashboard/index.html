@@ -245,9 +245,16 @@
                     await loadConfigFromServer();
                 }
                 
-                // Initialize auth first
-                auth = new AuthManager();
-                console.log('Auth manager initialized');
+                // Ensure form elements exist before initializing AuthManager
+                setTimeout(() => {
+                    if (document.getElementById('email') && document.getElementById('password') && document.getElementById('authCode')) {
+                        // Initialize auth first
+                        auth = new AuthManager();
+                        console.log('Auth manager initialized');
+                    } else {
+                        console.error('Form elements not found in DOM');
+                    }
+                }, 100);
                 
                 // Only initialize airtable if we have authentication or a token
                 const hasToken = CONFIG.airtable.personalAccessToken && 
