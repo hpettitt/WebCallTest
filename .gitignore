@@ -13,6 +13,10 @@ config.private.json
 **/auth-local.js
 **/auth.local.js
 
+# VAPI assistant configurations (may contain sensitive data)
+vapi/*.json
+!vapi/example.json
+
 # Node modules
 node_modules/
 

@@ -10,13 +10,13 @@
           "rawBody": false
         }
       },
-      "id": "45755688-916a-467d-9328-e961e3b41560",
+      "id": "ac9c0282-6fcc-49aa-9fea-c6b9506e9507",
       "name": "VAPI Call Completed Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        -1856,
-        -48
+        0,
+        192
       ],
       "webhookId": "vapi-call-completed"
     },
@@ -30,15 +30,15 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        -384,
-        -48
+        0,
+        -144
       ],
-      "id": "0edf4543-582a-48a1-ad9d-74008eb2dbf8",
+      "id": "c3e129d8-9fc1-47db-a175-1cdaaba54a44",
       "name": "Send a message",
       "webhookId": "fd28c649-9dea-48cd-8e55-3ecf89c9f32d",
       "credentials": {
         "gmailOAuth2": {
-          "id": "hKEjElXrByhruk66",
+          "id": "Q3Tj154BeHB9r8A6",
           "name": "Gmail account"
         }
       }
@@ -71,12 +71,15 @@
             "id": "={{ $('Search records1').item.json.id }}",
             "Interview Summary": "={{ $json.executiveSummary }}",
             "Interview Analysis": "={{ $json.detailedFeedback }}",
-            "status": "interviewed",
             "availability": "={{ $json.availabilityResponse }}",
             "Recommandation": "={{ $json.rawAIResponse.airtableUpdate.recommendation }}",
             "Next Action Recommendation": "={{ $json.rawAIResponse.airtableUpdate.nextSteps }}",
             "Interview Transcript": "={{ $('Extract Call Data').item.json.transcript.full }}",
-            "Sessions ID": "={{ $json.originalToken }}"
+            "Sessions ID": "={{ $json.originalToken }}",
+            "action": "interviewed",
+            "timezoneOffset": 0,
+            "reminders sent": 0,
+            "status": "pending"
           },
           "matchingColumns": [
             "id"
@@ -181,15 +184,15 @@
               "removed": false
             },
             {
-              "id": "Days from Interview",
-              "displayName": "Days from Interview",
+              "id": "hours from Interview",
+              "displayName": "hours from Interview",
               "required": false,
               "defaultMatch": false,
               "canBeUsedToMatch": true,
               "display": true,
               "type": "string",
               "readOnly": true,
-              "removed": true
+              "removed": false
             },
             {
               "id": "Interview Weekday",
@@ -267,8 +270,37 @@
               "type": "options",
               "options": [
                 {
-                  "name": "waiting",
-                  "value": "waiting"
+                  "name": "accept",
+                  "value": "accept"
+                },
+                {
+                  "name": "reject",
+                  "value": "reject"
+                },
+                {
+                  "name": "pending",
+                  "value": "pending"
+                },
+                {
+                  "name": "scheduled",
+                  "value": "scheduled"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "waiting for inteview",
+                  "value": "waiting for inteview"
                 },
                 {
                   "name": "interviewed",
@@ -277,22 +309,6 @@
                 {
                   "name": "missed",
                   "value": "missed"
-                },
-                {
-                  "name": "rescheduled",
-                  "value": "rescheduled"
-                },
-                {
-                  "name": "hire",
-                  "value": "hire"
-                },
-                {
-                  "name": "reject",
-                  "value": "reject"
-                },
-                {
-                  "name": "interview personally",
-                  "value": "interview personally"
                 }
               ],
               "readOnly": false,
@@ -363,6 +379,94 @@
               "type": "string",
               "readOnly": false,
               "removed": false
+            },
+            {
+              "id": "reminders sent",
+              "displayName": "reminders sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Management Token",
+              "displayName": "Management Token",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Formatted Date",
+              "displayName": "Formatted Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Formatted Time",
+              "displayName": "Formatted Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "CV Content",
+              "displayName": "CV Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "emailSent",
+              "displayName": "emailSent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "emailSentAt",
+              "displayName": "emailSentAt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "timezoneOffset",
+              "displayName": "timezoneOffset",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -373,14 +477,14 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
       "position": [
-        -608,
-        -48
+        1248,
+        192
       ],
-      "id": "8eedfe3f-ee92-4d14-ad86-75c11330890c",
+      "id": "d2b84298-a832-49f4-82da-1e2dfabdc202",
       "name": "Update record",
       "credentials": {
         "airtableTokenApi": {
-          "id": "GlLleKlNhJoLBHNg",
+          "id": "JSCyKFdSIi5uTvkZ",
           "name": "Airtable Personal Access Token account"
         }
       }
@@ -392,10 +496,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1632,
-        -48
+        224,
+        192
       ],
-      "id": "4f1caa47-e235-4c05-be90-d95293b0f003",
+      "id": "5f594a94-597d-4fb6-9067-b3b9cf17217f",
       "name": "Extract Call Data"
     },
     {
@@ -409,35 +513,11 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        -1184,
-        -48
+        672,
+        192
       ],
-      "id": "1861cfd8-f3ef-4a8a-b595-def0b96c83e2",
+      "id": "5b07107b-87ba-4eb3-b94d-201f40036d25",
       "name": "AI Agent"
-    },
-    {
-      "parameters": {
-        "model": {
-          "__rl": true,
-          "mode": "list",
-          "value": "gpt-4.1-mini"
-        },
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.2,
-      "position": [
-        -1184,
-        176
-      ],
-      "id": "e60c1da7-d916-4722-a459-543ecc2beb28",
-      "name": "OpenAI Chat Model",
-      "credentials": {
-        "openAiApi": {
-          "id": "qnMEMtm5bGl19QeX",
-          "name": "OpenAi account"
-        }
-      }
     },
     {
       "parameters": {
@@ -447,10 +527,10 @@
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        -1056,
-        176
+        816,
+        416
       ],
-      "id": "42a64387-5aca-4a26-a3b8-314e79d98ba8",
+      "id": "023b363a-fc90-46db-a916-3b5b789f4d2c",
       "name": "Simple Memory"
     },
     {
@@ -476,14 +556,14 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
       "position": [
-        -1408,
-        -48
+        448,
+        192
       ],
-      "id": "d674b533-28cd-4b86-9fc6-4e5118b6fa88",
+      "id": "0ecc8525-9892-48e3-9992-aaa387cb30c3",
       "name": "Search records1",
       "credentials": {
         "airtableTokenApi": {
-          "id": "GlLleKlNhJoLBHNg",
+          "id": "JSCyKFdSIi5uTvkZ",
           "name": "Airtable Personal Access Token account"
         }
       }
@@ -495,11 +575,80 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -832,
-        -48
+        1024,
+        192
       ],
-      "id": "1a416fa7-8143-4017-89a8-1930de686b7b",
+      "id": "51d51786-e46f-4086-8258-fd731e1d34c6",
       "name": "Format Output Script"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-5-nano"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        416
+      ],
+      "id": "b77c51d5-f3b6-429c-b220-1d7732812379",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "yDU4fkmuMM4oxRSS",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "noreply@ai.xenergies.com"
+            },
+            {
+              "name": "=to",
+              "value": "hugh@xenergies.com"
+            },
+            {
+              "name": "subject",
+              "value": "=Interview Report -  {{ $json.fields['Candidate Name'] }}"
+            },
+            {
+              "name": "html",
+              "value": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Interview Report - {{ $node[\"Update record\"].json.fields[\"Candidate Name\"] }}</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { \n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; \n            line-height: 1.6; \n            color: #333; \n            background-color: #f8fafc;\n            padding: 20px;\n        }\n        .container { \n            max-width: 800px; \n            margin: 0 auto; \n            background: white; \n            border-radius: 12px; \n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n            overflow: hidden;\n        }\n        .header { \n            background: linear-gradient(135deg, #5dc399, #7be1b6); \n            color: white; \n            padding: 30px; \n            text-align: center;\n        }\n        .header h1 { \n            font-size: 2.2em; \n            margin-bottom: 10px; \n            text-shadow: 0 2px 4px rgba(0,0,0,0.2);\n        }\n        .header-info { \n            margin-top: 20px; \n        }\n        .score-row { \n            margin-top: 15px; \n        }\n        .header-table {\n            width: 100%;\n            border-collapse: collapse;\n            margin: 15px 0;\n        }\n        .header-table td {\n            background: rgba(255,255,255,0.2);\n            padding: 12px;\n            border-radius: 8px;\n            text-align: center;\n            vertical-align: top;\n        }\n        .header-table.info-row td {\n            width: 20%;\n        }\n        .header-table.score-row td {\n            width: 25%;\n        }\n        .header-table tr td:not(:last-child) {\n            padding-right: 8px;\n        }\n        .header-table tr td:not(:first-child) {\n            padding-left: 8px;\n        }\n        .header-item { \n            background: rgba(255,255,255,0.2); \n            padding: 12px; \n            border-radius: 8px; \n            text-align: center;\n        }\n        .content { padding: 30px; }\n        .score-section { \n            margin-bottom: 30px;\n            text-align: center;\n        }\n        .main-score { \n            font-size: 4em; \n            font-weight: bold; \n            color: #2563eb;\n            margin-bottom: 10px;\n            text-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        }\n        .score-grid { \n            display: grid; \n            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); \n            gap: 15px; \n            margin: 25px 0; \n        }\n        .score-card { \n            background: #f8fafc; \n            padding: 20px; \n            border-radius: 12px; \n            text-align: center;\n            border: 2px solid #e2e8f0;\n            transition: all 0.3s ease;\n        }\n        .score-card:hover { \n            transform: translateY(-3px); \n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n        }\n        .score-value { \n            font-size: 2.5em; \n            font-weight: bold; \n            margin-bottom: 5px;\n        }\n        .score-label { \n            font-size: 0.9em; \n            color: #64748b; \n            font-weight: 500; \n        }\n        .recommendation { \n            padding: 25px; \n            border-radius: 12px; \n            margin: 25px 0;\n            background: linear-gradient(135deg, #fef3c7, #fde68a);\n            border-left: 6px solid #f59e0b;\n        }\n        .recommendation.hire { \n            background: linear-gradient(135deg, #d1fae5, #a7f3d0);\n            border-left-color: #10b981;\n        }\n        .recommendation.pass { \n            background: linear-gradient(135deg, #fef2f2, #fecaca);\n            border-left-color: #ef4444;\n        }\n        .section { \n            margin-bottom: 25px; \n            padding: 20px;\n            background: #f8fafc;\n            border-radius: 8px;\n            border-left: 4px solid #5dc399;\n        }\n        .section h3 { \n            color: #065f46; \n            margin-bottom: 15px; \n            font-size: 1.3em;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n        .two-column { \n            display: grid; \n            grid-template-columns: 1fr 1fr; \n            gap: 25px; \n        }\n        .info-grid {\n            display: grid;\n            grid-template-columns: auto 1fr;\n            gap: 10px 20px;\n            margin: 15px 0;\n        }\n        .info-label {\n            font-weight: 600;\n            color: #4b5563;\n        }\n        .info-value {\n            color: #1f2937;\n        }\n        .transcript-box { \n            background: #f9fafb; \n            padding: 20px; \n            border-radius: 8px; \n            border: 1px solid #e5e7eb;\n            white-space: pre-wrap; \n            font-family: 'Courier New', monospace;\n            font-size: 0.9em;\n            line-height: 1.4;\n            max-height: 400px;\n            overflow-y: auto;\n        }\n        .availability-text {\n            background: #fff3cd;\n            padding: 12px;\n            border-radius: 6px;\n            border-left: 4px solid #ffc107;\n            margin: 10px 0;\n            font-style: italic;\n        }\n        .footer { \n            background: #f1f5f9;\n            text-align: center; \n            color: #64748b; \n            padding: 20px;\n            border-top: 1px solid #e2e8f0;\n        }\n        @media (max-width: 768px) {\n            .two-column { grid-template-columns: 1fr; }\n            .score-grid { grid-template-columns: repeat(2, 1fr); }\n            .header h1 { font-size: 1.8em; }\n            .main-score { font-size: 3em; }\n            body { padding: 10px; }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <!-- Header -->\n        <div class=\"header\">\n            <h1>🌸 Bloom Buddies Interview Report</h1>\n            \n            <!-- Info Row -->\n            <table class=\"header-table info-row\">\n                <tr>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Candidate</strong><br>\n                        {{ $node[\"Update record\"].json.fields[\"Candidate Name\"] }}\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Interview Date</strong><br>\n                        {{ new Date($node[\"Update record\"].json.fields[\"Interview Time\"]).toLocaleDateString('en-US', { \n                            year: 'numeric', month: 'long', day: 'numeric' \n                        }) }}\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Duration</strong><br>\n                        {{ $node[\"Update record\"].json.fields[\"Interview Length\"] }} minutes\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Email</strong><br>\n                        {{ $node[\"Update record\"].json.fields.Email }}\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Status</strong><br>\n                        {{ $node[\"Update record\"].json.fields.status }}\n                    </td>\n                </tr>\n            </table>\n            \n            <!-- Score Row -->\n            <table class=\"header-table score-row\">\n                <tr>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Communication</strong><br>\n                        <span style=\"font-size: 1.5em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.Communication >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.Communication >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.Communication }}/10</span>\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Enthusiasm</strong><br>\n                        <span style=\"font-size: 1.5em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.enthusiasm >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.enthusiasm >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.enthusiasm }}/10</span>\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Professionalism</strong><br>\n                        <span style=\"font-size: 1.5em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.professionalism >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.professionalism >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.professionalism }}/10</span>\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Overall Score</strong><br>\n                        <span style=\"font-size: 1.8em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.score >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.score >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.score }}/10</span>\n                    </td>\n                </tr>\n            </table>\n        </div>\n\n        <div class=\"content\">\n            <!-- Availability Information -->\n            <div class=\"section\">\n                <h3>📅 Candidate Availability</h3>\n                <div class=\"availability-text\">\n                    {{ $node[\"Update record\"].json.fields.availability }}\n                </div>\n            </div>\n\n            <!-- Recommendation -->\n            <div class=\"recommendation {{ $node['Update record'].json.fields.Recommandation.toLowerCase().replace(' ', '') }}\">\n                <h3 style=\"margin-bottom: 15px; font-size: 1.5em;\">\n                    🎯 Recommendation: {{ $node[\"Update record\"].json.fields.Recommandation }}\n                </h3>\n                <div style=\"font-size: 1.1em; margin-bottom: 15px;\">\n                    <strong>Executive Summary:</strong><br>\n                    {{ $node[\"Update record\"].json.fields[\"Interview Summary\"] }}\n                </div>\n                <div style=\"background: rgba(255,255,255,0.7); padding: 15px; border-radius: 8px;\">\n                    <strong>Detailed Analysis:</strong><br>\n                    {{ $node[\"Update record\"].json.fields[\"Interview Analysis\"] }}\n                </div>\n            </div>\n\n            <!-- Next Action -->\n            <div class=\"section\">\n                <h3>🎯 Next Action</h3>\n                <p style=\"background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #3b82f6;\">\n                    {{ $node[\"Update record\"].json.fields[\"Next Action Recommendation\"] }}\n                </p>\n            </div>\n\n            <!-- Interview Transcript -->\n            <div class=\"section\">\n                <h3>📞 Interview Transcript</h3>\n                <div class=\"transcript-box\">{{ $node[\"Update record\"].json.fields[\"Interview Transcript\"] }}</div>\n            </div>\n        </div>\n\n        <!-- Footer -->\n        <div class=\"footer\">\n            <p><strong>Bloom Buddies Interview Analysis System</strong></p>\n            <p>Report generated on {{ new Date().toLocaleString() }}</p>\n            <p><em>Record ID: {{ $node[\"Update record\"].json.id }}</em></p>\n        </div>\n    </div>\n</body>\n</html>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1472,
+        192
+      ],
+      "id": "e671d676-343a-4c8a-95be-34d428c74ef0",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "myt5O2s8tOpc0AXt",
+          "name": "Bearer Auth account"
+        }
+      }
     }
   ],
   "pinData": {
@@ -507,6 +656,169 @@
       {
         "json": {
           "output": "{\n  \"candidateAnalysis\": {\n    \"candidateName\": \"Jane\",\n    \"sessionId\": \"185ef1f6e87bbd42\",\n    \"originalToken\": \"185ef1f6e87bbd42\",\n    \"interviewDate\": \"2025-10-29T23:50:11.740Z\",\n    \"callDuration\": 1.97,\n    \"overallScore\": 6,\n    \"communicationSkillsScore\": 5,\n    \"enthusiasmScore\": 5,\n    \"professionalismScore\": 6,\n    \"experienceScore\": 7,\n    \"availabilityScore\": 4,\n    \"safetyAwarenessScore\": 6,\n    \"culturalFitScore\": 5,\n    \"recommendation\": \"Interview Further\",\n    \"confidenceLevel\": \"Medium\"\n  },\n  \"detailedAnalysis\": {\n    \"executiveSummary\": \"Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.\",\n    \"keyStrengths\": [\n      \"Solid 3 years of experience with toddlers in daycare\",\n      \"Basic but important safety practices such as carrying a phone and securing premises\",\n      \"Professional and polite demeanor throughout the interview\"\n    ],\n    \"areasForImprovement\": [\n      \"Improve clarity and precision in communication\",\n      \"Expand availability to better match scheduling needs\"\n    ],\n    \"redFlags\": [],\n    \"standoutMoments\": [],\n    \"detailedFeedback\": \"Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.\",\n    \"experienceAssessment\": \"Jane's 3-year daycare experience caring for children under 3 provides a strong foundation suited for infant and toddler care needs Bloom Buddies meets.\",\n    \"availabilityAssessment\": \"Her limited availability to only weekday mornings, with no Friday availability, may restrict assignment options and impact scheduling flexibility.\",\n    \"safetyPracticesAssessment\": \"She showed awareness of safety basics by carrying a phone and ensuring secure premises, though more detailed discussion of safety procedures would be beneficial.\"\n  },\n  \"airtableUpdate\": {\n    \"status\": \"Interviewed\",\n    \"interviewScore\": 6,\n    \"interviewNotes\": \"Experienced toddler caregiver with basic safety awareness. Limited to weekday mornings availability. Communication clarity needs improvement.\",\n    \"recommendation\": \"Interview Further\",\n    \"nextSteps\": \"Arrange follow-up interview focusing on communication skills and availability details\",\n    \"interviewer\": \"AI Assistant - Vanessa\",\n    \"interviewDate\": \"2025-10-29T23:50:11.740Z\",\n    \"callDuration\": \"1.97 minutes\",\n    \"interviewMethod\": \"Phone\",\n    \"availabilityNotes\": \"Available only on weekday mornings; completely unavailable Fridays\",\n    \"experienceNotes\": \"3 years in daycare center in Paris with children under 3\"\n  },\n  \"emailNotification\": {\n    \"subject\": \"Interview Complete: Jane - Interview Further\",\n    \"recipientType\": \"internal\",\n    \"priority\": \"normal\",\n    \"emailBody\": \"Dear Team,\\n\\nThe interview with candidate Jane is complete. She has solid childcare experience with toddlers and basic understanding of safety, but limited availability to weekday mornings only and no Fridays. Communication required clarification during the interview. We recommend a follow-up interview to further assess communication skills and scheduling fit.\\n\\nPlease review the attached transcript and summary.\\n\\nBest regards,\\nVanessa, AI Assistant\\nBloom Buddies\",\n    \"includeTranscript\": true,\n    \"includeSummary\": true,\n    \"actionRequired\": \"yes\",\n    \"followUpRequired\": \"yes\"\n  },\n  \"transcriptSummary\": {\n    \"conversationFlow\": \"The interview proceeded with introductory greetings, initial confusion about availability that was clarified after several exchanges, followed by questions about experience and safety practices. The interview concluded with the candidate declining to ask questions.\",\n    \"candidateResponses\": {\n      \"availability\": \"Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.\",\n      \"experience\": \"3 years working at a daycare center in Paris caring for children under 3 years.\",\n      \"safetyPractices\": \"Carries phone at all times and ensures premises are secure.\",\n      \"questionsAsked\": \"None.\",\n      \"overallTone\": \"Professional and polite, somewhat reserved.\"\n    },\n    \"interviewQuality\": \"Relatively brief but captured key information despite some communication challenges.\",\n    \"technicalIssues\": \"No call or technical issues noted; call ended by candidate.\"\n  }\n}"
+        }
+      }
+    ],
+    "Update record": [
+      {
+        "json": {
+          "id": "recIJK2r5baDbT5Fd",
+          "createdTime": "2025-12-11T16:38:15.000Z",
+          "fields": {
+            "Candidate Name": "Speed Racer",
+            "Interview Time": "2025-12-11T16:40:00.000Z",
+            "Interview Summary": "Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.",
+            "Interview Analysis": "Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.",
+            "Recommandation": "Interview Further",
+            "hours from Interview": 0,
+            "Interview Weekday": "Thursday",
+            "Interview Transcript": "AI: Hi. This is Vanessa from Bloom Buddies. For taking the time to interview with us. Is this Speed Racer?\nUser: Yes. It is.\nAI: Go to meet you, speed racer. I'm excited to chat with you today. Our interview will be structured in 3 parts. First, I'll share some information about Bloom Buddies, Then I'll ask you some questions to get to know you better. And finally, you'll have a chance to ask me any questions you might have. Let's start with a little introduction about Bloom Buddies. We are a certified childcare company dedicated to providing a nurturing environment for children while enriching their English language skills. Our mission It seems like your message got cut off. Would you like to continue? You have any questions or thoughts about Bloom Buddies, feel free to share. Otherwise, I can move on to asking you some questions. Are you ready to get started?\nUser: Yeah. Ask me questions.\nAI: Great. Let's start with the first question. Could you tell me a little bit about yourself?\nUser: Yes. I'm hungry.\nAI: I understand we all get hungry sometimes. But let's focus on the interview for now. Could you tell me about your experience working with children? Have you worked with children under 3 before? If so, for how long and in what setting?\nUser: 2 years. In a day care center in Lyon. For children under 3. I'm available all week long mornings.\nAI: That's wonderful to hear. 2 years of experience in a day care center with children under 3 is valuable. Next, could you share why you are interested in working with Bloom Buddies specifically? Also, do you have any relevant certifications such as CPR or first aid?\nUser: Another certifications, and I want to work cause I need a job.\nAI: Thank you for sharing that. Understanding your reasons for working is important. Let's move on to your skills and abilities. Are you comfortable with lighthouse keep? Task? Task? Such as tidying toys or preparing simple snacks? What's your approach when a child is upset or having a tantrum?\nUser: Um, I'm patient and calm.\nAI: Patience and calmness are essential qualities when handling upset children. Thank you for sharing. That. Now let's discuss your availability a little more. You mentioned you're available all week long in the mornings. Are there any specific days you're completely unavailable, and do you have a preference for any hours?\nUser: No.\nAI: That's good to know. It sounds like you have flexible availability. Now could you please provide me with information for professional references who can speak to your childcare experience?\nUser: No. I can't. I don't have any references.\nAI: I understand. References can sometimes be a challenge to provide. Just to let you know, we typically encourage at least 1 reference for verification. Before we wrap up, can you tell me about your safety practices when it comes to caring for children? Is there anything you'd like us to know about your experience or approach that we haven't covered?\nUser: No.\nAI: Thank you, speed racer, for sharing your experiences and thoughts with me today. To summarize, you have 2 years of experience working in a daycare with children under 3. You have a patient and calm approach to handling ups and downs. Unfortunately, we typically require at least 1 reference. And it's important for us to verify past experience as part of our hiring process. If you have any other questions for me or would like to clarify anything else, please feel free to ask. If not, I'd like to thank you for your time. We'll be in touch if there's a match.\nUser: Okay. Bye.\nAI: Thank you for your time, Speed Racer. Our team will review your responses and reach out within 48 hours if there's a potential match. Have a wonderful day. Goodbye.\n",
+            "Next Action Recommendation": "Arrange follow-up interview focusing on communication skills and availability details",
+            "Email": "hugh@xenergies.com",
+            "token": "4d0d7eee090489deff97614efbf4f5df",
+            "Sessions ID": "185ef1f6e87bbd42",
+            "status": "pending",
+            "score": 6,
+            "Communication": 5,
+            "enthusiasm": 5,
+            "professionalism": 6,
+            "Phone": "0682827892",
+            "Interview Length": 1.97,
+            "availability": "Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.",
+            "action": "interviewed",
+            "reminders sent": 0,
+            "Management Token": "72215341c778ed49137e6c2512eb948b",
+            "Formatted Date": "11 December",
+            "Formatted Time": "04:40 pm",
+            "emailSent": true,
+            "emailSentAt": "2025-12-11T16:38:16.540Z",
+            "timezoneOffset": 0,
+            "emailMessageId": "b5047675-800b-4113-b122-3b722e603869"
+          }
+        }
+      }
+    ],
+    "Format Output Script": [
+      {
+        "json": {
+          "candidateName": "Jane",
+          "sessionId": "185ef1f6e87bbd42",
+          "originalToken": "185ef1f6e87bbd42",
+          "overallScore": 6,
+          "communicationScore": 5,
+          "enthusiasmScore": 5,
+          "professionalismScore": 6,
+          "experienceScore": 7,
+          "availabilityScore": 4,
+          "safetyScore": 6,
+          "culturalFitScore": 5,
+          "recommendation": "Interview Further",
+          "confidenceLevel": "Medium",
+          "interviewDate": "2025-10-29T23:50:11.740Z",
+          "callDuration": 1.97,
+          "executiveSummary": "Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.",
+          "keyStrengths": "Solid 3 years of experience with toddlers in daycare; Basic but important safety practices such as carrying a phone and securing premises; Professional and polite demeanor throughout the interview",
+          "areasForImprovement": "Improve clarity and precision in communication; Expand availability to better match scheduling needs",
+          "redFlags": "",
+          "standoutMoments": "",
+          "detailedFeedback": "Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.",
+          "experienceAssessment": "Jane's 3-year daycare experience caring for children under 3 provides a strong foundation suited for infant and toddler care needs Bloom Buddies meets.",
+          "availabilityAssessment": "Her limited availability to only weekday mornings, with no Friday availability, may restrict assignment options and impact scheduling flexibility.",
+          "safetyPracticesAssessment": "She showed awareness of safety basics by carrying a phone and ensuring secure premises, though more detailed discussion of safety procedures would be beneficial.",
+          "airtableStatus": "Interviewed",
+          "airtableScore": 6,
+          "airtableNotes": "Experienced toddler caregiver with basic safety awareness. Limited to weekday mornings availability. Communication clarity needs improvement.",
+          "nextSteps": "Arrange follow-up interview focusing on communication skills and availability details",
+          "interviewer": "AI Assistant - Vanessa",
+          "interviewMethod": "Phone",
+          "availabilityNotes": "Available only on weekday mornings; completely unavailable Fridays",
+          "experienceNotes": "3 years in daycare center in Paris with children under 3",
+          "emailSubject": "Interview Complete: Jane - Interview Further",
+          "emailPriority": "normal",
+          "emailBody": "Dear Team,\n\nThe interview with candidate Jane is complete. She has solid childcare experience with toddlers and basic understanding of safety, but limited availability to weekday mornings only and no Fridays. Communication required clarification during the interview. We recommend a follow-up interview to further assess communication skills and scheduling fit.\n\nPlease review the attached transcript and summary.\n\nBest regards,\nVanessa, AI Assistant\nBloom Buddies",
+          "actionRequired": "yes",
+          "followUpRequired": "yes",
+          "conversationFlow": "The interview proceeded with introductory greetings, initial confusion about availability that was clarified after several exchanges, followed by questions about experience and safety practices. The interview concluded with the candidate declining to ask questions.",
+          "overallTone": "Professional and polite, somewhat reserved.",
+          "interviewQuality": "Relatively brief but captured key information despite some communication challenges.",
+          "technicalIssues": "No call or technical issues noted; call ended by candidate.",
+          "availabilityResponse": "Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.",
+          "experienceResponse": "3 years working at a daycare center in Paris caring for children under 3 years.",
+          "safetyResponse": "Carries phone at all times and ensures premises are secure.",
+          "questionsAsked": "None.",
+          "rawAIResponse": {
+            "candidateAnalysis": {
+              "candidateName": "Jane",
+              "sessionId": "185ef1f6e87bbd42",
+              "originalToken": "185ef1f6e87bbd42",
+              "interviewDate": "2025-10-29T23:50:11.740Z",
+              "callDuration": 1.97,
+              "overallScore": 6,
+              "communicationSkillsScore": 5,
+              "enthusiasmScore": 5,
+              "professionalismScore": 6,
+              "experienceScore": 7,
+              "availabilityScore": 4,
+              "safetyAwarenessScore": 6,
+              "culturalFitScore": 5,
+              "recommendation": "Interview Further",
+              "confidenceLevel": "Medium"
+            },
+            "detailedAnalysis": {
+              "executiveSummary": "Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.",
+              "keyStrengths": [
+                "Solid 3 years of experience with toddlers in daycare",
+                "Basic but important safety practices such as carrying a phone and securing premises",
+                "Professional and polite demeanor throughout the interview"
+              ],
+              "areasForImprovement": [
+                "Improve clarity and precision in communication",
+                "Expand availability to better match scheduling needs"
+              ],
+              "redFlags": [],
+              "standoutMoments": [],
+              "detailedFeedback": "Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.",
+              "experienceAssessment": "Jane's 3-year daycare experience caring for children under 3 provides a strong foundation suited for infant and toddler care needs Bloom Buddies meets.",
+              "availabilityAssessment": "Her limited availability to only weekday mornings, with no Friday availability, may restrict assignment options and impact scheduling flexibility.",
+              "safetyPracticesAssessment": "She showed awareness of safety basics by carrying a phone and ensuring secure premises, though more detailed discussion of safety procedures would be beneficial."
+            },
+            "airtableUpdate": {
+              "status": "Interviewed",
+              "interviewScore": 6,
+              "interviewNotes": "Experienced toddler caregiver with basic safety awareness. Limited to weekday mornings availability. Communication clarity needs improvement.",
+              "recommendation": "Interview Further",
+              "nextSteps": "Arrange follow-up interview focusing on communication skills and availability details",
+              "interviewer": "AI Assistant - Vanessa",
+              "interviewDate": "2025-10-29T23:50:11.740Z",
+              "callDuration": "1.97 minutes",
+              "interviewMethod": "Phone",
+              "availabilityNotes": "Available only on weekday mornings; completely unavailable Fridays",
+              "experienceNotes": "3 years in daycare center in Paris with children under 3"
+            },
+            "emailNotification": {
+              "subject": "Interview Complete: Jane - Interview Further",
+              "recipientType": "internal",
+              "priority": "normal",
+              "emailBody": "Dear Team,\n\nThe interview with candidate Jane is complete. She has solid childcare experience with toddlers and basic understanding of safety, but limited availability to weekday mornings only and no Fridays. Communication required clarification during the interview. We recommend a follow-up interview to further assess communication skills and scheduling fit.\n\nPlease review the attached transcript and summary.\n\nBest regards,\nVanessa, AI Assistant\nBloom Buddies",
+              "includeTranscript": true,
+              "includeSummary": true,
+              "actionRequired": "yes",
+              "followUpRequired": "yes"
+            },
+            "transcriptSummary": {
+              "conversationFlow": "The interview proceeded with introductory greetings, initial confusion about availability that was clarified after several exchanges, followed by questions about experience and safety practices. The interview concluded with the candidate declining to ask questions.",
+              "candidateResponses": {
+                "availability": "Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.",
+                "experience": "3 years working at a daycare center in Paris caring for children under 3 years.",
+                "safetyPractices": "Carries phone at all times and ensures premises are secure.",
+                "questionsAsked": "None.",
+                "overallTone": "Professional and polite, somewhat reserved."
+              },
+              "interviewQuality": "Relatively brief but captured key information despite some communication challenges.",
+              "technicalIssues": "No call or technical issues noted; call ended by candidate."
+            }
+          },
+          "originalOutput": "{\n  \"candidateAnalysis\": {\n    \"candidateName\": \"Jane\",\n    \"sessionId\": \"185ef1f6e87bbd42\",\n    \"originalToken\": \"185ef1f6e87bbd42\",\n    \"interviewDate\": \"2025-10-29T23:50:11.740Z\",\n    \"callDuration\": 1.97,\n    \"overallScore\": 6,\n    \"communicationSkillsScore\": 5,\n    \"enthusiasmScore\": 5,\n    \"professionalismScore\": 6,\n    \"experienceScore\": 7,\n    \"availabilityScore\": 4,\n    \"safetyAwarenessScore\": 6,\n    \"culturalFitScore\": 5,\n    \"recommendation\": \"Interview Further\",\n    \"confidenceLevel\": \"Medium\"\n  },\n  \"detailedAnalysis\": {\n    \"executiveSummary\": \"Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.\",\n    \"keyStrengths\": [\n      \"Solid 3 years of experience with toddlers in daycare\",\n      \"Basic but important safety practices such as carrying a phone and securing premises\",\n      \"Professional and polite demeanor throughout the interview\"\n    ],\n    \"areasForImprovement\": [\n      \"Improve clarity and precision in communication\",\n      \"Expand availability to better match scheduling needs\"\n    ],\n    \"redFlags\": [],\n    \"standoutMoments\": [],\n    \"detailedFeedback\": \"Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.\",\n    \"experienceAssessment\": \"Jane's 3-year daycare experience caring for children under 3 provides a strong foundation suited for infant and toddler care needs Bloom Buddies meets.\",\n    \"availabilityAssessment\": \"Her limited availability to only weekday mornings, with no Friday availability, may restrict assignment options and impact scheduling flexibility.\",\n    \"safetyPracticesAssessment\": \"She showed awareness of safety basics by carrying a phone and ensuring secure premises, though more detailed discussion of safety procedures would be beneficial.\"\n  },\n  \"airtableUpdate\": {\n    \"status\": \"Interviewed\",\n    \"interviewScore\": 6,\n    \"interviewNotes\": \"Experienced toddler caregiver with basic safety awareness. Limited to weekday mornings availability. Communication clarity needs improvement.\",\n    \"recommendation\": \"Interview Further\",\n    \"nextSteps\": \"Arrange follow-up interview focusing on communication skills and availability details\",\n    \"interviewer\": \"AI Assistant - Vanessa\",\n    \"interviewDate\": \"2025-10-29T23:50:11.740Z\",\n    \"callDuration\": \"1.97 minutes\",\n    \"interviewMethod\": \"Phone\",\n    \"availabilityNotes\": \"Available only on weekday mornings; completely unavailable Fridays\",\n    \"experienceNotes\": \"3 years in daycare center in Paris with children under 3\"\n  },\n  \"emailNotification\": {\n    \"subject\": \"Interview Complete: Jane - Interview Further\",\n    \"recipientType\": \"internal\",\n    \"priority\": \"normal\",\n    \"emailBody\": \"Dear Team,\\n\\nThe interview with candidate Jane is complete. She has solid childcare experience with toddlers and basic understanding of safety, but limited availability to weekday mornings only and no Fridays. Communication required clarification during the interview. We recommend a follow-up interview to further assess communication skills and scheduling fit.\\n\\nPlease review the attached transcript and summary.\\n\\nBest regards,\\nVanessa, AI Assistant\\nBloom Buddies\",\n    \"includeTranscript\": true,\n    \"includeSummary\": true,\n    \"actionRequired\": \"yes\",\n    \"followUpRequired\": \"yes\"\n  },\n  \"transcriptSummary\": {\n    \"conversationFlow\": \"The interview proceeded with introductory greetings, initial confusion about availability that was clarified after several exchanges, followed by questions about experience and safety practices. The interview concluded with the candidate declining to ask questions.\",\n    \"candidateResponses\": {\n      \"availability\": \"Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.\",\n      \"experience\": \"3 years working at a daycare center in Paris caring for children under 3 years.\",\n      \"safetyPractices\": \"Carries phone at all times and ensures premises are secure.\",\n      \"questionsAsked\": \"None.\",\n      \"overallTone\": \"Professional and polite, somewhat reserved.\"\n    },\n    \"interviewQuality\": \"Relatively brief but captured key information despite some communication challenges.\",\n    \"technicalIssues\": \"No call or technical issues noted; call ended by candidate.\"\n  }\n}"
         }
       }
     ]
@@ -523,16 +835,11 @@
         ]
       ]
     },
-    "Send a message": {
-      "main": [
-        []
-      ]
-    },
     "Update record": {
       "main": [
         [
           {
-            "node": "Send a message",
+            "node": "HTTP Request",
             "type": "main",
             "index": 0
           }
@@ -545,17 +852,6 @@
           {
             "node": "Search records1",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenAI Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -604,17 +900,28 @@
           }
         ]
       ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "dbe05b4d-8615-4fff-9c29-3032f8545373",
+  "versionId": "1641c253-345b-4026-b65a-deb4bca339c3",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "284a84a1d400f6d1ada06109f828bbf4c037189cced3fee307ec4124b37731a0"
+    "instanceId": "22a6fa010072b584f9926df98282cf0854324752d00ba86d87e22e2f24e22c9c"
   },
-  "id": "9oH8eGJZJczpFbAW",
+  "id": "qP1Z2Qo924AEYjGp",
   "tags": []
 }
