@@ -842,6 +842,7 @@ app.post('/api/register-candidate', async (req, res) => {
       'token': token,
       'Management Token': managementToken,
       'status': 'scheduled',
+      'action': 'waiting for interview',
       'timezoneOffset': timezoneOffsetMinutes,
     };
 
