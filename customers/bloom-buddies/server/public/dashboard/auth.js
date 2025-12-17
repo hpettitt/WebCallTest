@@ -43,20 +43,9 @@ class AuthManager {
     async handleLogin(e) {
         e.preventDefault();
         
-        const emailEl = document.getElementById('email');
-        const passwordEl = document.getElementById('password');
-        const authCodeEl = document.getElementById('authCode');
-
-        // Check if form elements exist
-        if (!emailEl || !passwordEl || !authCodeEl) {
-            console.error('Form elements not found in DOM');
-            this.showError('Login form elements not ready. Please refresh the page.');
-            return;
-        }
-        
-        const email = emailEl.value.toLowerCase().trim();
-        const password = passwordEl.value;
-        const authCode = authCodeEl.value;
+        const email = document.getElementById('email').value.toLowerCase().trim();
+        const password = document.getElementById('password').value;
+        const authCode = document.getElementById('authCode').value;
 
         try {
             // Check rate limiting
