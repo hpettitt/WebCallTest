@@ -582,47 +582,64 @@ function requireAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('❌ No auth header or missing Bearer prefix');
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
   const token = authHeader.substring(7);
+  console.log('🔐 Verifying admin token...');
   
   try {
     // Try JWT first (for API clients with proper JWT)
     const jwt = require('jsonwebtoken');
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('✅ JWT token verified, role:', decoded.role);
       
       if (decoded.role !== 'admin') {
+        console.log('❌ User is not admin, role:', decoded.role);
         return res.status(403).json({ error: 'Forbidden - Admin access required' });
       }
       
       req.user = decoded;
       return next();
     } catch (jwtError) {
+      console.log('⚠️  JWT verification failed, trying secureToken format...');
+      
       // If JWT fails, try secureToken format (for dashboard client-side tokens)
       // Format: base64(JSON).random
       if (token.includes('.')) {
-        const [userInfoB64] = token.split('.');
-        const decoded = JSON.parse(Buffer.from(userInfoB64, 'base64').toString());
-        
-        if (!decoded || !decoded.role || decoded.role !== 'admin') {
-          return res.status(403).json({ error: 'Forbidden - Admin access required' });
+        try {
+          const [userInfoB64] = token.split('.');
+          console.log('📝 Token format detected as secureToken');
+          const decoded = JSON.parse(Buffer.from(userInfoB64, 'base64').toString());
+          
+          console.log('📋 Decoded token:', { role: decoded.role, expires: new Date(decoded.expires) });
+          
+          if (!decoded || !decoded.role || decoded.role !== 'admin') {
+            console.log('❌ User is not admin or role missing, role:', decoded?.role);
+            return res.status(403).json({ error: 'Forbidden - Admin access required' });
+          }
+          
+          if (decoded.expires < Date.now()) {
+            console.log('❌ Token expired at:', new Date(decoded.expires));
+            return res.status(401).json({ error: 'Token expired' });
+          }
+          
+          console.log('✅ SecureToken verified, admin access granted');
+          req.user = decoded;
+          return next();
+        } catch (parseError) {
+          console.log('❌ Failed to parse secureToken:', parseError.message);
+          throw parseError;
         }
-        
-        if (decoded.expires < Date.now()) {
-          return res.status(401).json({ error: 'Token expired' });
-        }
-        
-        req.user = decoded;
-        return next();
       }
       
       // If both fail, return original JWT error
       throw jwtError;
     }
   } catch (error) {
-    console.error('Auth error:', error.message);
+    console.error('❌ Auth error:', error.message);
     return res.status(401).json({ error: 'Invalid token' });
   }
 }
