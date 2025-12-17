@@ -560,16 +560,41 @@ function requireAdmin(req, res, next) {
   const token = authHeader.substring(7);
   
   try {
+    // Try JWT first (for API clients with proper JWT)
     const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    if (decoded.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      if (decoded.role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden - Admin access required' });
+      }
+      
+      req.user = decoded;
+      return next();
+    } catch (jwtError) {
+      // If JWT fails, try secureToken format (for dashboard client-side tokens)
+      // Format: base64(JSON).random
+      if (token.includes('.')) {
+        const [userInfoB64] = token.split('.');
+        const decoded = JSON.parse(Buffer.from(userInfoB64, 'base64').toString());
+        
+        if (!decoded || !decoded.role || decoded.role !== 'admin') {
+          return res.status(403).json({ error: 'Forbidden - Admin access required' });
+        }
+        
+        if (decoded.expires < Date.now()) {
+          return res.status(401).json({ error: 'Token expired' });
+        }
+        
+        req.user = decoded;
+        return next();
+      }
+      
+      // If both fail, return original JWT error
+      throw jwtError;
     }
-    
-    req.user = decoded;
-    next();
   } catch (error) {
+    console.error('Auth error:', error.message);
     return res.status(401).json({ error: 'Invalid token' });
   }
 }
