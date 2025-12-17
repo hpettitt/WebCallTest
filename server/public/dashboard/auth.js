@@ -54,16 +54,30 @@ class AuthManager {
                 return;
             }
 
-            // Validate credentials securely
-            const user = SECURE_CONFIG.getUserByEmail(email);
-            if (!user || !SECURE_CONFIG.verifyPassword(password, user.password)) {
+            console.log('🔐 Attempting server-side authentication for:', email);
+
+            // Call server-side login endpoint for proper credential verification with bcrypt
+            const loginResponse = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (!loginResponse.ok) {
                 SECURE_CONFIG.recordLoginAttempt(email, false);
-                this.showError('Invalid email or password');
+                const errorData = await loginResponse.json();
+                console.error('❌ Server login failed:', errorData.error);
+                this.showError(errorData.error || 'Invalid email or password');
                 return;
             }
 
-            // Validate 2FA if enabled
-            if (user.mfaEnabled && authCode) {
+            const loginData = await loginResponse.json();
+            console.log('✅ Server authentication successful');
+
+            // Validate 2FA if needed (optional for demo)
+            if (authCode) {
                 if (!this.validate2FA(authCode)) {
                     SECURE_CONFIG.recordLoginAttempt(email, false);
                     this.showError('Invalid 2FA code');
@@ -74,14 +88,15 @@ class AuthManager {
             // Successful login
             SECURE_CONFIG.recordLoginAttempt(email, true);
             
-            // Create secure session
+            // Create secure session using server response
             const sessionUser = {
-                email: email,
-                name: email.split('@')[0],
-                role: user.role,
-                permissions: user.permissions,
+                email: loginData.user.email,
+                name: loginData.user.name,
+                role: loginData.user.role,
+                permissions: loginData.user.permissions || ['read', 'write', 'delete', 'accept', 'reject', 'manage_users'],
                 loginTime: new Date().toISOString(),
-                secureToken: SECURE_CONFIG.generateSecureToken({ email, role: user.role })
+                secureToken: SECURE_CONFIG.generateSecureToken({ email: loginData.user.email, role: loginData.user.role }),
+                jwtToken: loginData.token // Store JWT for API calls
             };
 
             this.currentUser = sessionUser;
