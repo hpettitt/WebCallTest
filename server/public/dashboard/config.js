@@ -82,6 +82,27 @@ async function loadConfigFromServer() {
                     userCount: Object.keys(CONFIG.auth.validCredentials).length,
                     users: Object.keys(CONFIG.auth.validCredentials)
                 });
+                
+                // CRITICAL: Sync server credentials into SECURE_CONFIG
+                if (typeof SECURE_CONFIG !== 'undefined') {
+                    console.log('🔄 Syncing server credentials into SECURE_CONFIG...');
+                    const secureUsers = {};
+                    
+                    Object.entries(serverConfig.auth.validCredentials).forEach(([email, password]) => {
+                        secureUsers[email] = {
+                            password: password, // Use plaintext password from server
+                            role: 'admin', // Default role - can be overridden
+                            permissions: ['read', 'write', 'delete', 'accept', 'reject', 'manage_users'],
+                            mfaEnabled: email === 'admin@bloombuddies.com' // Only admin has 2FA
+                        };
+                    });
+                    
+                    SECURE_CONFIG.validUsers = secureUsers;
+                    console.log('✅ SECURE_CONFIG updated with server credentials:', {
+                        userCount: Object.keys(SECURE_CONFIG.validUsers).length,
+                        users: Object.keys(SECURE_CONFIG.validUsers)
+                    });
+                }
             }
         } else {
             console.warn('⚠️ Could not load server config, using local config');

@@ -80,15 +80,25 @@ class SecureConfig {
         // Direct plaintext comparison (credentials from server)
         const isMatch = inputPassword === storedPassword;
         console.log('🔐 Password Verification:', {
+            inputProvided: inputPassword?.length > 0,
+            storedExists: !!storedPassword,
             inputLength: inputPassword?.length || 0,
             storedLength: storedPassword?.length || 0,
-            match: isMatch
+            match: isMatch,
+            debug: isMatch ? '✅ MATCH' : '❌ MISMATCH'
         });
         return isMatch;
     }
 
     getUserByEmail(email) {
-        return this.validUsers[email] || null;
+        const user = this.validUsers[email] || null;
+        console.log('👤 getUserByEmail:', {
+            email,
+            found: !!user,
+            availableUsers: Object.keys(this.validUsers),
+            userDetails: user ? { role: user.role, mfaEnabled: user.mfaEnabled } : null
+        });
+        return user;
     }
 
     generateSecureToken(user) {
