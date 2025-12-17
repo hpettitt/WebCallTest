@@ -252,11 +252,10 @@
             }
         }
         
-        // Update time every second
-        setInterval(updateDateTime, 1000);
-        updateDateTime();
-        
         document.addEventListener('DOMContentLoaded', async function() {
+            // Start updating time display
+            setInterval(updateDateTime, 1000);
+            updateDateTime();
             console.log('🚀 DOM loaded, initializing secure app...');
             console.log('📍 Current URL:', window.location.href);
             console.log('🔐 SECURE_CONFIG available:', typeof SECURE_CONFIG !== 'undefined');
