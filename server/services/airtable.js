@@ -287,7 +287,7 @@ async function updateCandidateByManagementToken(managementToken, updates) {
  */
 async function deleteCandidate(recordId) {
   try {
-    await base(CANDIDATES_TABLE_NAME).destroy(recordId);
+    await base(tableName).destroy(recordId);
     console.log(`Deleted candidate record: ${recordId}`);
     return true;
   } catch (error) {
