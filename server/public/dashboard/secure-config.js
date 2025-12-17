@@ -48,27 +48,27 @@ class SecureConfig {
     }
 
     getSecureUserConfig() {
-        // Secure user configuration with hashed passwords
-        // In production, these would be stored securely server-side
+        // Default user configuration with plaintext passwords
+        // These come from server via /api/dashboard-config in production
         // 
         // 2FA CODES (for demo purposes):
         // - Valid codes: 123456, 000000
         // - In production, integrate with Google Authenticator, Authy, or SMS service
         return {
             'admin@bloombuddies.com': {
-                passwordHash: this.hashPassword('secure123'), // Updated to match your current password
+                password: 'secure123',
                 role: 'admin',
                 permissions: ['read', 'write', 'delete', 'accept', 'reject', 'manage_users'],
                 mfaEnabled: true // 2FA REQUIRED - Use code: 123456 or 000000
             },
             'hr@bloombuddies.com': {
-                passwordHash: this.hashPassword('hr2024secure!'),
+                password: 'hr2024secure!',
                 role: 'hr_manager', 
                 permissions: ['read', 'write', 'accept', 'reject'],
                 mfaEnabled: false // 2FA Optional
             },
             'interviewer@bloombuddies.com': {
-                passwordHash: this.hashPassword('interviewer2024!'),
+                password: 'interviewer2024!',
                 role: 'interviewer',
                 permissions: ['read', 'write'],
                 mfaEnabled: false // 2FA Optional
@@ -76,31 +76,15 @@ class SecureConfig {
         };
     }
 
-    // Simple client-side hashing (in production, use proper server-side bcrypt)
-    hashPassword(password) {
-        // This is a simple hash for demo - use proper bcrypt in production
-        let hash = 0;
-        const salt = 'bloom_buddies_salt_2024';
-        const combined = password + salt;
-        
-        for (let i = 0; i < combined.length; i++) {
-            const char = combined.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32-bit integer
-        }
-        
-        return Math.abs(hash).toString(36);
-    }
-
-    verifyPassword(inputPassword, storedHash) {
-        const inputHash = this.hashPassword(inputPassword);
-        console.log('🔐 Password Debug:', {
-            inputPassword: inputPassword,
-            inputHash: inputHash,
-            storedHash: storedHash,
-            match: inputHash === storedHash
+    verifyPassword(inputPassword, storedPassword) {
+        // Direct plaintext comparison (credentials from server)
+        const isMatch = inputPassword === storedPassword;
+        console.log('🔐 Password Verification:', {
+            inputLength: inputPassword?.length || 0,
+            storedLength: storedPassword?.length || 0,
+            match: isMatch
         });
-        return inputHash === storedHash;
+        return isMatch;
     }
 
     getUserByEmail(email) {

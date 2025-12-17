@@ -56,7 +56,7 @@ class AuthManager {
 
             // Validate credentials securely
             const user = SECURE_CONFIG.getUserByEmail(email);
-            if (!user || !SECURE_CONFIG.verifyPassword(password, user.passwordHash)) {
+            if (!user || !SECURE_CONFIG.verifyPassword(password, user.password)) {
                 SECURE_CONFIG.recordLoginAttempt(email, false);
                 this.showError('Invalid email or password');
                 return;

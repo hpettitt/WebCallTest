@@ -282,9 +282,9 @@ app.get('/api/dashboard-config', (req, res) => {
   try {
     const airtableToken = process.env.AIRTABLE_API_KEY;
     const baseId = process.env.AIRTABLE_BASE_ID;
-    const tableName = process.env.AIRTABLE_TABLE_NAME;
+    const tableName = process.env.AIRTABLE_TABLE_NAME || 'Candidates';
 
-    if (!airtableToken || !baseId || !tableName) {
+    if (!airtableToken || !baseId) {
       return res.status(500).json({
         error: 'Dashboard configuration not available'
       });
@@ -293,7 +293,7 @@ app.get('/api/dashboard-config', (req, res) => {
     // Parse dashboard credentials from environment variable
     // Format: email1:password1,email2:password2
     const dashboardAuth = {};
-    const authString = process.env.DASHBOARD_AUTH || 'admin@bloombuddies.com:secure123,hr@bloombuddies.com:hr2023!';
+    const authString = process.env.DASHBOARD_AUTH || 'admin@bloombuddies.com:secure123,hr@bloombuddies.com:hr2024secure!,interviewer@bloombuddies.com:interviewer2024!';
     
     authString.split(',').forEach(pair => {
       const [email, password] = pair.trim().split(':');
