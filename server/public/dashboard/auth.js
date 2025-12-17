@@ -45,7 +45,6 @@ class AuthManager {
         
         const email = document.getElementById('email').value.toLowerCase().trim();
         const password = document.getElementById('password').value;
-        const authCode = document.getElementById('authCode').value;
 
         try {
             // Check rate limiting
@@ -75,15 +74,6 @@ class AuthManager {
 
             const loginData = await loginResponse.json();
             console.log('✅ Server authentication successful');
-
-            // Validate 2FA if needed (optional for demo)
-            if (authCode) {
-                if (!this.validate2FA(authCode)) {
-                    SECURE_CONFIG.recordLoginAttempt(email, false);
-                    this.showError('Invalid 2FA code');
-                    return;
-                }
-            }
 
             // Successful login
             SECURE_CONFIG.recordLoginAttempt(email, true);
