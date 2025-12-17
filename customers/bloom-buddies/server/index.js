@@ -278,57 +278,29 @@ app.post('/api/get-vapi-credentials', (req, res) => {
  * Dashboard Configuration Endpoint
  * Returns Airtable credentials and auth settings from environment variables
  */
-app.get('/api/dashboard-config', async (req, res) => {
+app.get('/api/dashboard-config', (req, res) => {
   try {
     const airtableToken = process.env.AIRTABLE_API_KEY;
     const baseId = process.env.AIRTABLE_BASE_ID;
-    const tableName = process.env.AIRTABLE_TABLE_NAME || 'Candidates';
+    const tableName = process.env.AIRTABLE_TABLE_NAME;
 
-    if (!airtableToken || !baseId) {
+    if (!airtableToken || !baseId || !tableName) {
       return res.status(500).json({
         error: 'Dashboard configuration not available'
       });
     }
 
-    let dashboardAuth = {};
+    // Parse dashboard credentials from environment variable
+    // Format: email1:password1,email2:password2
+    const dashboardAuth = {};
+    const authString = process.env.DASHBOARD_AUTH || 'admin@bloombuddies.com:secure123,hr@bloombuddies.com:hr2023!';
     
-    // Try to load credentials from Airtable "Dashboard Users" table first
-    try {
-      const Airtable = require('airtable');
-      const base = new Airtable({ apiKey: airtableToken }).base(baseId);
-      const USERS_TABLE = process.env.USERS_TABLE || 'Dashboard Users';
-      
-      const records = await base(USERS_TABLE).select({
-        fields: ['Email', 'Password']
-      }).all();
-      
-      // Build credentials from Airtable users
-      records.forEach(record => {
-        const email = record.get('Email');
-        const password = record.get('Password');
-        if (email && password) {
-          dashboardAuth[email.toLowerCase().trim()] = password;
-        }
-      });
-      
-      if (Object.keys(dashboardAuth).length > 0) {
-        console.log('📊 Loaded dashboard credentials from Airtable:', Object.keys(dashboardAuth));
-      } else {
-        console.warn('⚠️ No credentials found in Airtable Dashboard Users table, falling back to environment');
-        throw new Error('No users in Airtable');
+    authString.split(',').forEach(pair => {
+      const [email, password] = pair.trim().split(':');
+      if (email && password) {
+        dashboardAuth[email.trim()] = password.trim();
       }
-    } catch (airtableError) {
-      console.warn('⚠️ Could not load from Airtable, using environment variable:', airtableError.message);
-      
-      // Fallback to environment variable
-      const authString = process.env.DASHBOARD_AUTH || 'admin@bloombuddies.com:secure123,hr@bloombuddies.com:hr2024secure!,interviewer@bloombuddies.com:interviewer2024!';
-      authString.split(',').forEach(pair => {
-        const [email, password] = pair.trim().split(':');
-        if (email && password) {
-          dashboardAuth[email.toLowerCase().trim()] = password.trim();
-        }
-      });
-    }
+    });
 
     res.json({
       airtable: {
@@ -582,85 +554,23 @@ function requireAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.log('❌ No auth header or missing Bearer prefix');
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
   const token = authHeader.substring(7);
-  console.log('🔐 Verifying admin token...');
   
   try {
-    // Try JWT first (for API clients with proper JWT)
     const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log('✅ JWT token verified, role:', decoded.role);
-      
-      if (decoded.role !== 'admin') {
-        console.log('❌ User is not admin, role:', decoded.role);
-        return res.status(403).json({ error: 'Forbidden - Admin access required' });
-      }
-      
-      req.user = decoded;
-      return next();
-    } catch (jwtError) {
-      // JWT verification failed, this is expected for secureToken format
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden - Admin access required' });
     }
     
-    // If JWT fails, try secureToken format (for dashboard client-side tokens)
-    // Format: base64(JSON).random
-    if (token.includes('.')) {
-      try {
-        const [userInfoB64, random] = token.split('.');
-        if (!userInfoB64 || !random) {
-          console.log('❌ Invalid secureToken format - missing parts');
-          return res.status(401).json({ error: 'Invalid token format' });
-        }
-        
-        console.log('📝 Token format detected as secureToken');
-        const decodedString = Buffer.from(userInfoB64, 'base64').toString();
-        const decoded = JSON.parse(decodedString);
-        
-        console.log('📋 Decoded token:', { 
-          email: decoded.email, 
-          role: decoded.role, 
-          expires: new Date(decoded.expires).toISOString() 
-        });
-        
-        if (!decoded || !decoded.role) {
-          console.log('❌ Token missing role field');
-          return res.status(401).json({ error: 'Invalid token - missing role' });
-        }
-        
-        if (decoded.role !== 'admin') {
-          console.log('❌ User is not admin, role:', decoded.role);
-          return res.status(403).json({ error: 'Forbidden - Admin access required' });
-        }
-        
-        if (decoded.expires < Date.now()) {
-          console.log('❌ Token expired at:', new Date(decoded.expires).toISOString());
-          return res.status(401).json({ error: 'Token expired' });
-        }
-        
-        console.log('✅ SecureToken verified, admin access granted');
-        req.user = decoded;
-        return next();
-      } catch (parseError) {
-        console.log('❌ Failed to parse secureToken:', parseError.message);
-        console.log('Base64 token (first 50 chars):', userInfoB64?.substring(0, 50));
-        return res.status(401).json({ error: 'Invalid token' });
-      }
-    }
-    
-    // Neither JWT nor secureToken format matched
-    console.log('❌ Token format not recognized (no dot separator)');
-    return res.status(401).json({ error: 'Invalid token format' });
-    
+    req.user = decoded;
+    next();
   } catch (error) {
-    console.error('❌ Unexpected auth error:', error.message);
-    console.error('Stack:', error.stack);
-    return res.status(500).json({ error: 'Server error during authentication' });
+    return res.status(401).json({ error: 'Invalid token' });
   }
 }
 
