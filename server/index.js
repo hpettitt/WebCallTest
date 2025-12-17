@@ -278,7 +278,7 @@ app.post('/api/get-vapi-credentials', (req, res) => {
  * Dashboard Configuration Endpoint
  * Returns Airtable credentials and auth settings from environment variables
  */
-app.get('/api/dashboard-config', (req, res) => {
+app.get('/api/dashboard-config', async (req, res) => {
   try {
     const airtableToken = process.env.AIRTABLE_API_KEY;
     const baseId = process.env.AIRTABLE_BASE_ID;
@@ -290,17 +290,45 @@ app.get('/api/dashboard-config', (req, res) => {
       });
     }
 
-    // Parse dashboard credentials from environment variable
-    // Format: email1:password1,email2:password2
-    const dashboardAuth = {};
-    const authString = process.env.DASHBOARD_AUTH || 'admin@bloombuddies.com:secure123,hr@bloombuddies.com:hr2024secure!,interviewer@bloombuddies.com:interviewer2024!';
+    let dashboardAuth = {};
     
-    authString.split(',').forEach(pair => {
-      const [email, password] = pair.trim().split(':');
-      if (email && password) {
-        dashboardAuth[email.trim()] = password.trim();
+    // Try to load credentials from Airtable "Dashboard Users" table first
+    try {
+      const Airtable = require('airtable');
+      const base = new Airtable({ apiKey: airtableToken }).base(baseId);
+      const USERS_TABLE = process.env.USERS_TABLE || 'Dashboard Users';
+      
+      const records = await base(USERS_TABLE).select({
+        fields: ['Email', 'Password']
+      }).all();
+      
+      // Build credentials from Airtable users
+      records.forEach(record => {
+        const email = record.get('Email');
+        const password = record.get('Password');
+        if (email && password) {
+          dashboardAuth[email.toLowerCase().trim()] = password;
+        }
+      });
+      
+      if (Object.keys(dashboardAuth).length > 0) {
+        console.log('📊 Loaded dashboard credentials from Airtable:', Object.keys(dashboardAuth));
+      } else {
+        console.warn('⚠️ No credentials found in Airtable Dashboard Users table, falling back to environment');
+        throw new Error('No users in Airtable');
       }
-    });
+    } catch (airtableError) {
+      console.warn('⚠️ Could not load from Airtable, using environment variable:', airtableError.message);
+      
+      // Fallback to environment variable
+      const authString = process.env.DASHBOARD_AUTH || 'admin@bloombuddies.com:secure123,hr@bloombuddies.com:hr2024secure!,interviewer@bloombuddies.com:interviewer2024!';
+      authString.split(',').forEach(pair => {
+        const [email, password] = pair.trim().split(':');
+        if (email && password) {
+          dashboardAuth[email.toLowerCase().trim()] = password.trim();
+        }
+      });
+    }
 
     res.json({
       airtable: {
