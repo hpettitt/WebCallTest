@@ -492,10 +492,15 @@ class Dashboard {
         if (!confirmed) return;
 
         try {
+            const token = auth.currentUser?.secureToken || auth.currentUser?.jwtToken;
+            if (!token) {
+                throw new Error('Authentication token not found');
+            }
+
             const response = await fetch(`${window.location.origin}/api/candidates/${candidateId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${auth.getToken()}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
