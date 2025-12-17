@@ -1,0 +1,42 @@
+# Environment files - never commit these
+.env
+.env.local
+.env.production
+.env.staging
+
+# API Keys and secrets
+*.key
+secrets.json
+config.private.json
+**/config-local.js
+**/config.local.js
+**/auth-local.js
+**/auth.local.js
+
+# VAPI assistant configurations (may contain sensitive data)
+vapi/*.json
+!vapi/example.json
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+.vscode/settings.json
+.idea/
+
+# Temporary files
+*.tmp
+*.temp

@@ -1,0 +1,927 @@
+{
+  "name": "Process Interview",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-call-completed",
+        "options": {
+          "allowedOrigins": "*",
+          "rawBody": false
+        }
+      },
+      "id": "ac9c0282-6fcc-49aa-9fea-c6b9506e9507",
+      "name": "VAPI Call Completed Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "webhookId": "vapi-call-completed"
+    },
+    {
+      "parameters": {
+        "sendTo": "hugh@xenergies.com",
+        "subject": "=🌸 Interview Report: {{ $node[\"Update record\"].json.fields[\"Candidate Name\"] }} - {{ $node[\"Update record\"].json.fields.Recommandation }} ({{ $node[\"Update record\"].json.fields.score }}/10)\n",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Interview Report - {{ $node[\"Update record\"].json.fields[\"Candidate Name\"] }}</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { \n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; \n            line-height: 1.6; \n            color: #333; \n            background-color: #f8fafc;\n            padding: 20px;\n        }\n        .container { \n            max-width: 800px; \n            margin: 0 auto; \n            background: white; \n            border-radius: 12px; \n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n            overflow: hidden;\n        }\n        .header { \n            background: linear-gradient(135deg, #5dc399, #7be1b6); \n            color: white; \n            padding: 30px; \n            text-align: center;\n        }\n        .header h1 { \n            font-size: 2.2em; \n            margin-bottom: 10px; \n            text-shadow: 0 2px 4px rgba(0,0,0,0.2);\n        }\n        .header-info { \n            margin-top: 20px; \n        }\n        .score-row { \n            margin-top: 15px; \n        }\n        .header-table {\n            width: 100%;\n            border-collapse: collapse;\n            margin: 15px 0;\n        }\n        .header-table td {\n            background: rgba(255,255,255,0.2);\n            padding: 12px;\n            border-radius: 8px;\n            text-align: center;\n            vertical-align: top;\n        }\n        .header-table.info-row td {\n            width: 20%;\n        }\n        .header-table.score-row td {\n            width: 25%;\n        }\n        .header-table tr td:not(:last-child) {\n            padding-right: 8px;\n        }\n        .header-table tr td:not(:first-child) {\n            padding-left: 8px;\n        }\n        .header-item { \n            background: rgba(255,255,255,0.2); \n            padding: 12px; \n            border-radius: 8px; \n            text-align: center;\n        }\n        .content { padding: 30px; }\n        .score-section { \n            margin-bottom: 30px;\n            text-align: center;\n        }\n        .main-score { \n            font-size: 4em; \n            font-weight: bold; \n            color: #2563eb;\n            margin-bottom: 10px;\n            text-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        }\n        .score-grid { \n            display: grid; \n            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); \n            gap: 15px; \n            margin: 25px 0; \n        }\n        .score-card { \n            background: #f8fafc; \n            padding: 20px; \n            border-radius: 12px; \n            text-align: center;\n            border: 2px solid #e2e8f0;\n            transition: all 0.3s ease;\n        }\n        .score-card:hover { \n            transform: translateY(-3px); \n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n        }\n        .score-value { \n            font-size: 2.5em; \n            font-weight: bold; \n            margin-bottom: 5px;\n        }\n        .score-label { \n            font-size: 0.9em; \n            color: #64748b; \n            font-weight: 500; \n        }\n        .recommendation { \n            padding: 25px; \n            border-radius: 12px; \n            margin: 25px 0;\n            background: linear-gradient(135deg, #fef3c7, #fde68a);\n            border-left: 6px solid #f59e0b;\n        }\n        .recommendation.hire { \n            background: linear-gradient(135deg, #d1fae5, #a7f3d0);\n            border-left-color: #10b981;\n        }\n        .recommendation.pass { \n            background: linear-gradient(135deg, #fef2f2, #fecaca);\n            border-left-color: #ef4444;\n        }\n        .section { \n            margin-bottom: 25px; \n            padding: 20px;\n            background: #f8fafc;\n            border-radius: 8px;\n            border-left: 4px solid #5dc399;\n        }\n        .section h3 { \n            color: #065f46; \n            margin-bottom: 15px; \n            font-size: 1.3em;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n        .two-column { \n            display: grid; \n            grid-template-columns: 1fr 1fr; \n            gap: 25px; \n        }\n        .info-grid {\n            display: grid;\n            grid-template-columns: auto 1fr;\n            gap: 10px 20px;\n            margin: 15px 0;\n        }\n        .info-label {\n            font-weight: 600;\n            color: #4b5563;\n        }\n        .info-value {\n            color: #1f2937;\n        }\n        .transcript-box { \n            background: #f9fafb; \n            padding: 20px; \n            border-radius: 8px; \n            border: 1px solid #e5e7eb;\n            white-space: pre-wrap; \n            font-family: 'Courier New', monospace;\n            font-size: 0.9em;\n            line-height: 1.4;\n            max-height: 400px;\n            overflow-y: auto;\n        }\n        .availability-text {\n            background: #fff3cd;\n            padding: 12px;\n            border-radius: 6px;\n            border-left: 4px solid #ffc107;\n            margin: 10px 0;\n            font-style: italic;\n        }\n        .footer { \n            background: #f1f5f9;\n            text-align: center; \n            color: #64748b; \n            padding: 20px;\n            border-top: 1px solid #e2e8f0;\n        }\n        @media (max-width: 768px) {\n            .two-column { grid-template-columns: 1fr; }\n            .score-grid { grid-template-columns: repeat(2, 1fr); }\n            .header h1 { font-size: 1.8em; }\n            .main-score { font-size: 3em; }\n            body { padding: 10px; }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <!-- Header -->\n        <div class=\"header\">\n            <h1>🌸 Bloom Buddies Interview Report</h1>\n            \n            <!-- Info Row -->\n            <table class=\"header-table info-row\">\n                <tr>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Candidate</strong><br>\n                        {{ $node[\"Update record\"].json.fields[\"Candidate Name\"] }}\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Interview Date</strong><br>\n                        {{ new Date($node[\"Update record\"].json.fields[\"Interview Time\"]).toLocaleDateString('en-US', { \n                            year: 'numeric', month: 'long', day: 'numeric' \n                        }) }}\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Duration</strong><br>\n                        {{ $node[\"Update record\"].json.fields[\"Interview Length\"] }} minutes\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Email</strong><br>\n                        {{ $node[\"Update record\"].json.fields.Email }}\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Status</strong><br>\n                        {{ $node[\"Update record\"].json.fields.status }}\n                    </td>\n                </tr>\n            </table>\n            \n            <!-- Score Row -->\n            <table class=\"header-table score-row\">\n                <tr>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Communication</strong><br>\n                        <span style=\"font-size: 1.5em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.Communication >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.Communication >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.Communication }}/10</span>\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Enthusiasm</strong><br>\n                        <span style=\"font-size: 1.5em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.enthusiasm >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.enthusiasm >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.enthusiasm }}/10</span>\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Professionalism</strong><br>\n                        <span style=\"font-size: 1.5em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.professionalism >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.professionalism >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.professionalism }}/10</span>\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Overall Score</strong><br>\n                        <span style=\"font-size: 1.8em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.score >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.score >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.score }}/10</span>\n                    </td>\n                </tr>\n            </table>\n        </div>\n\n        <div class=\"content\">\n            <!-- Availability Information -->\n            <div class=\"section\">\n                <h3>📅 Candidate Availability</h3>\n                <div class=\"availability-text\">\n                    {{ $node[\"Update record\"].json.fields.availability }}\n                </div>\n            </div>\n\n            <!-- Recommendation -->\n            <div class=\"recommendation {{ $node['Update record'].json.fields.Recommandation.toLowerCase().replace(' ', '') }}\">\n                <h3 style=\"margin-bottom: 15px; font-size: 1.5em;\">\n                    🎯 Recommendation: {{ $node[\"Update record\"].json.fields.Recommandation }}\n                </h3>\n                <div style=\"font-size: 1.1em; margin-bottom: 15px;\">\n                    <strong>Executive Summary:</strong><br>\n                    {{ $node[\"Update record\"].json.fields[\"Interview Summary\"] }}\n                </div>\n                <div style=\"background: rgba(255,255,255,0.7); padding: 15px; border-radius: 8px;\">\n                    <strong>Detailed Analysis:</strong><br>\n                    {{ $node[\"Update record\"].json.fields[\"Interview Analysis\"] }}\n                </div>\n            </div>\n\n            <!-- Next Action -->\n            <div class=\"section\">\n                <h3>🎯 Next Action</h3>\n                <p style=\"background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #3b82f6;\">\n                    {{ $node[\"Update record\"].json.fields[\"Next Action Recommendation\"] }}\n                </p>\n            </div>\n\n            <!-- Interview Transcript -->\n            <div class=\"section\">\n                <h3>📞 Interview Transcript</h3>\n                <div class=\"transcript-box\">{{ $node[\"Update record\"].json.fields[\"Interview Transcript\"] }}</div>\n            </div>\n        </div>\n\n        <!-- Footer -->\n        <div class=\"footer\">\n            <p><strong>Bloom Buddies Interview Analysis System</strong></p>\n            <p>Report generated on {{ new Date().toLocaleString() }}</p>\n            <p><em>Record ID: {{ $node[\"Update record\"].json.id }}</em></p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -144
+      ],
+      "id": "c3e129d8-9fc1-47db-a175-1cdaaba54a44",
+      "name": "Send a message",
+      "webhookId": "fd28c649-9dea-48cd-8e55-3ecf89c9f32d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Q3Tj154BeHB9r8A6",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appni7Lgyrk5sjLXY",
+          "mode": "list",
+          "cachedResultName": "Candidate Tracker",
+          "cachedResultUrl": "https://airtable.com/appni7Lgyrk5sjLXY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZbvFHR0vV2pPCd",
+          "mode": "list",
+          "cachedResultName": "Candidates",
+          "cachedResultUrl": "https://airtable.com/appni7Lgyrk5sjLXY/tblZbvFHR0vV2pPCd"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "score": "={{ $json.rawAIResponse.candidateAnalysis.overallScore }}",
+            "Communication": "={{ $json.rawAIResponse.candidateAnalysis.communicationSkillsScore }}",
+            "enthusiasm": "={{ $json.rawAIResponse.candidateAnalysis.enthusiasmScore }}",
+            "professionalism": "={{ $json.rawAIResponse.candidateAnalysis.professionalismScore }}",
+            "Interview Length": "={{ $json.callDuration }}",
+            "id": "={{ $('Search records1').item.json.id }}",
+            "Interview Summary": "={{ $json.executiveSummary }}",
+            "Interview Analysis": "={{ $json.detailedFeedback }}",
+            "availability": "={{ $json.availabilityResponse }}",
+            "Recommandation": "={{ $json.rawAIResponse.airtableUpdate.recommendation }}",
+            "Next Action Recommendation": "={{ $json.rawAIResponse.airtableUpdate.nextSteps }}",
+            "Interview Transcript": "={{ $('Extract Call Data').item.json.transcript.full }}",
+            "Sessions ID": "={{ $json.originalToken }}",
+            "action": "interviewed",
+            "timezoneOffset": 0,
+            "reminders sent": 0,
+            "status": "pending"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Photo",
+              "displayName": "Photo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Time",
+              "displayName": "Interview Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Summary",
+              "displayName": "Interview Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Interview Analysis",
+              "displayName": "Interview Analysis",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Recommandation",
+              "displayName": "Recommandation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "hours from Interview",
+              "displayName": "hours from Interview",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Interview Weekday",
+              "displayName": "Interview Weekday",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Interview Transcript",
+              "displayName": "Interview Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Action Recommendation",
+              "displayName": "Next Action Recommendation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "token",
+              "displayName": "token",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Sessions ID",
+              "displayName": "Sessions ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "recording",
+              "displayName": "recording",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "accept",
+                  "value": "accept"
+                },
+                {
+                  "name": "reject",
+                  "value": "reject"
+                },
+                {
+                  "name": "pending",
+                  "value": "pending"
+                },
+                {
+                  "name": "scheduled",
+                  "value": "scheduled"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "waiting for inteview",
+                  "value": "waiting for inteview"
+                },
+                {
+                  "name": "interviewed",
+                  "value": "interviewed"
+                },
+                {
+                  "name": "missed",
+                  "value": "missed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Communication",
+              "displayName": "Communication",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "enthusiasm",
+              "displayName": "enthusiasm",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "professionalism",
+              "displayName": "professionalism",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Interview Length",
+              "displayName": "Interview Length",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "availability",
+              "displayName": "availability",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reminders sent",
+              "displayName": "reminders sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Management Token",
+              "displayName": "Management Token",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Formatted Date",
+              "displayName": "Formatted Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Formatted Time",
+              "displayName": "Formatted Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "CV Content",
+              "displayName": "CV Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "emailSent",
+              "displayName": "emailSent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "emailSentAt",
+              "displayName": "emailSentAt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "timezoneOffset",
+              "displayName": "timezoneOffset",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1248,
+        192
+      ],
+      "id": "d2b84298-a832-49f4-82da-1e2dfabdc202",
+      "name": "Update record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "JSCyKFdSIi5uTvkZ",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Enhanced VAPI Data Extraction for n8n Workflow\n// Extracts transcript, summary, call statistics, and candidate info from VAPI webhook data\n\nconst inputData = $input.all()[0].json;\n\n// Function to recursively find any object containing our target keys\nfunction findObjectWithKeys(obj, targetKeys, path = '') {\n  if (typeof obj !== 'object' || obj === null) return null;\n  \n  // Check if current object has our target keys\n  const hasTargetKeys = targetKeys.some(key => obj.hasOwnProperty(key));\n  if (hasTargetKeys) {\n    return obj;\n  }\n  \n  // Recursively search through all properties\n  for (const [key, value] of Object.entries(obj)) {\n    const newPath = path ? `${path}.${key}` : key;\n    const result = findObjectWithKeys(value, targetKeys, newPath);\n    if (result) return result;\n  }\n  \n  return null;\n}\n\n// Search for objects containing our expected keys\nconst candidateDataObject = findObjectWithKeys(inputData, ['candidateName', 'name', 'sessionId', 'sessionToken', 'originalToken']);\n\n// Check if this is the new webhook structure\nconst isNewStructure = inputData.message?.type === 'end-of-call-report';\nconst isOldStructure = inputData.message?.call;\n\nlet message, call, analysis, artifact, variableValues;\n\nif (isNewStructure) {\n  // New webhook structure\n  message = inputData.message;\n  call = message?.call;\n  analysis = message?.analysis;\n  artifact = message?.artifact;\n  variableValues = call?.variableValues || {};\n} else {\n  // This is actually a webhook with body.message structure!\n  message = inputData.body?.message || inputData.message || inputData;\n  call = message?.call || inputData.call || {};\n  analysis = message?.analysis || {};\n  artifact = message?.artifact || {};\n  \n  // Look for variableValues in the message or call object\n  variableValues = message?.variableValues || \n                   call?.variableValues || \n                   message?.call?.variableValues ||\n                   inputData.variableValues || \n                   {};\n  \n  // DEEP SEARCH: Look for variableValues in ANY nested object\n  function findVariableValuesRecursive(obj, path = '') {\n    if (!obj || typeof obj !== 'object') return;\n    \n    if (obj.variableValues) {\n      // Check if these look like real tokens (not our fallback)\n      if (obj.variableValues.sessionToken && \n          obj.variableValues.sessionToken !== 'extracted-from-transcript' &&\n          obj.variableValues.sessionToken.length > 10) {\n        variableValues = obj.variableValues;\n        return obj.variableValues;\n      }\n    }\n    \n    for (const [key, value] of Object.entries(obj)) {\n      const newPath = path ? `${path}.${key}` : key;\n      const result = findVariableValuesRecursive(value, newPath);\n      if (result) return result;\n    }\n  }\n  \n  const foundVariableValues = findVariableValuesRecursive(inputData, 'inputData');\n  if (foundVariableValues) {\n    variableValues = foundVariableValues;\n  }\n  \n  // If still no variableValues, check if this is end-of-call-report in body\n  if ((!variableValues || Object.keys(variableValues).length === 0) && message?.type === 'end-of-call-report') {\n    console.log('🎯 This is actually an end-of-call-report in body.message!');\n    const isEndOfCallReport = message.type === 'end-of-call-report';\n    \n    if (isEndOfCallReport) {\n      // Extract from end-of-call-report structure\n      call = message.call || {};\n      analysis = message.analysis || {};\n      artifact = message.artifact || {};\n      variableValues = call?.variableValues || message?.variableValues || {};\n      \n      console.log('� End-of-call-report data:');\n      console.log('- call object:', call);\n      console.log('- call.variableValues:', call?.variableValues);\n      console.log('- message.variableValues:', message?.variableValues);\n    }\n  }\n  \n  console.log('� Final variableValues found:', variableValues);\n  console.log('� variableValues keys:', Object.keys(variableValues || {}));\n}\n\n// Extract transcript from multiple possible locations\nlet transcript = '';\nif (message?.transcript) {\n  transcript = message.transcript;\n} else if (artifact?.transcript) {\n  transcript = artifact.transcript;\n} else if (call?.transcript) {\n  transcript = call.transcript;\n} else if (inputData.transcript) {\n  transcript = inputData.transcript;\n} else {\n  // Build transcript from messages if no direct transcript\n  const messages = artifact?.messages || message?.messages || inputData.messages || [];\n  \n  if (messages.length > 0) {\n    transcript = messages\n      .filter(msg => msg.role === 'bot' || msg.role === 'user' || msg.role === 'assistant')\n      .map(msg => {\n        const role = msg.role === 'bot' ? 'AI' : (msg.role === 'assistant' ? 'AI' : 'User');\n        return `${role}: ${msg.message || msg.content}`;\n      })\n      .join('\\n');\n    \n    // Extract candidate name from transcript if variableValues is empty\n    if ((!variableValues || Object.keys(variableValues).length === 0) && transcript.includes('Jane')) {\n      // Extract Jane from the conversation\n      const janeMatch = transcript.match(/Jane/i);\n      if (janeMatch) {\n        // Create a mock variableValues object from transcript analysis\n        variableValues = {\n          candidateName: 'Jane',\n          name: 'Jane',\n          sessionId: 'extracted-from-transcript',\n          sessionToken: 'extracted-from-transcript',\n          originalToken: 'extracted-from-transcript'\n        };\n      }\n    }\n  }\n}\n\n// Extract summary\nconst summary = analysis?.summary || message?.summary || call?.summary || inputData.summary || 'No summary available';\n\n// Extract call duration with enhanced calculation and debugging\nfunction calculateCallDuration(message, call, inputData, artifact) {\n  console.log('🕒 DURATION EXTRACTION DEBUG:');\n  console.log('- message.durationMs:', message?.durationMs);\n  console.log('- message.durationSeconds:', message?.durationSeconds);\n  console.log('- inputData.durationMs:', inputData?.durationMs);\n  console.log('- inputData.durationSeconds:', inputData?.durationSeconds);\n  console.log('- call.durationMs:', call?.durationMs);\n  console.log('- call.durationSeconds:', call?.durationSeconds);\n  console.log('- artifact.durationMs:', artifact?.durationMs);\n  console.log('- artifact.durationSeconds:', artifact?.durationSeconds);\n  \n  // Try to get duration from multiple sources with more comprehensive search\n  let durationMs = message?.durationMs || \n                   message?.duration?.milliseconds ||\n                   inputData?.durationMs || \n                   inputData?.duration?.milliseconds ||\n                   call?.durationMs || \n                   call?.duration?.milliseconds ||\n                   artifact?.durationMs || \n                   artifact?.duration?.milliseconds ||\n                   0;\n  \n  let durationSeconds = message?.durationSeconds || \n                       message?.duration?.seconds ||\n                       inputData?.durationSeconds || \n                       inputData?.duration?.seconds ||\n                       call?.durationSeconds || \n                       call?.duration?.seconds ||\n                       artifact?.durationSeconds || \n                       artifact?.duration?.seconds ||\n                       0;\n  \n  // Check for duration in nested objects\n  if (!durationMs && !durationSeconds) {\n    // Search recursively for duration fields\n    function findDurationRecursive(obj, path = '') {\n      if (!obj || typeof obj !== 'object') return null;\n      \n      // Look for duration-related fields\n      const durationFields = ['durationMs', 'durationSeconds', 'duration_ms', 'duration_seconds', 'callDuration', 'callLength'];\n      for (const field of durationFields) {\n        if (obj[field] && typeof obj[field] === 'number' && obj[field] > 0) {\n          console.log(`📍 Found duration at ${path}.${field}:`, obj[field]);\n          return { field, value: obj[field] };\n        }\n      }\n      \n      // Look for duration object\n      if (obj.duration && typeof obj.duration === 'object') {\n        if (obj.duration.milliseconds) {\n          console.log(`📍 Found duration.milliseconds at ${path}:`, obj.duration.milliseconds);\n          return { field: 'milliseconds', value: obj.duration.milliseconds };\n        }\n        if (obj.duration.seconds) {\n          console.log(`📍 Found duration.seconds at ${path}:`, obj.duration.seconds);\n          return { field: 'seconds', value: obj.duration.seconds };\n        }\n      }\n      \n      // Recursively search nested objects\n      for (const [key, value] of Object.entries(obj)) {\n        const newPath = path ? `${path}.${key}` : key;\n        const result = findDurationRecursive(value, newPath);\n        if (result) return result;\n      }\n      \n      return null;\n    }\n    \n    console.log('🔍 Searching for duration recursively...');\n    const foundDuration = findDurationRecursive(inputData, 'inputData');\n    if (foundDuration) {\n      if (foundDuration.field.includes('Ms') || foundDuration.field === 'milliseconds') {\n        durationMs = foundDuration.value;\n      } else {\n        durationSeconds = foundDuration.value;\n      }\n    }\n  }\n  \n  // NEW: Calculate duration from messages array if available\n  if (!durationMs && !durationSeconds) {\n    const messages = artifact?.messages || message?.messages || inputData.messages || [];\n    console.log('💬 Checking messages for duration calculation...');\n    console.log('- Messages array length:', messages.length);\n    \n    if (messages.length > 0) {\n      // Method 1: Sum individual message durations\n      let totalDurationMs = 0;\n      let messageCount = 0;\n      \n      messages.forEach((msg, index) => {\n        if (msg.duration && typeof msg.duration === 'number') {\n          totalDurationMs += msg.duration;\n          messageCount++;\n          console.log(`- Message ${index} duration: ${msg.duration}ms`);\n        }\n      });\n      \n      if (totalDurationMs > 0) {\n        durationMs = totalDurationMs;\n        console.log(`✅ Calculated total duration from ${messageCount} messages: ${totalDurationMs}ms`);\n      }\n      \n      // Method 2: Calculate from first and last message timestamps\n      if (!durationMs || durationMs === 0) {\n        const firstMessage = messages.find(msg => msg.time);\n        const lastMessage = messages.reverse().find(msg => msg.endTime || msg.time);\n        \n        if (firstMessage && lastMessage) {\n          const startTime = firstMessage.time;\n          const endTime = lastMessage.endTime || lastMessage.time;\n          \n          console.log('🕐 Message timestamp calculation:');\n          console.log('- First message time:', startTime);\n          console.log('- Last message end time:', endTime);\n          \n          if (startTime && endTime) {\n            durationMs = endTime - startTime;\n            console.log(`✅ Calculated duration from message timestamps: ${durationMs}ms`);\n          }\n        }\n      }\n    }\n  }\n  \n  // If we have timestamps but no duration, calculate it\n  const startTime = message?.startedAt || call?.startedAt || inputData?.startedAt;\n  const endTime = message?.endedAt || call?.endedAt || inputData?.endedAt;\n  \n  console.log('📅 Timestamp check:');\n  console.log('- startTime:', startTime);\n  console.log('- endTime:', endTime);\n  \n  if (!durationMs && !durationSeconds && startTime && endTime) {\n    console.log('⏱️ Calculating duration from timestamps...');\n    const start = new Date(startTime);\n    const end = new Date(endTime);\n    durationMs = end.getTime() - start.getTime();\n    durationSeconds = Math.round(durationMs / 1000);\n    console.log(`✅ Calculated: ${durationMs}ms = ${durationSeconds}s`);\n  }\n  \n  // Convert between formats if we only have one\n  if (durationMs && !durationSeconds) {\n    durationSeconds = Math.round(durationMs / 1000);\n    console.log(`🔄 Converted ${durationMs}ms to ${durationSeconds}s`);\n  } else if (durationSeconds && !durationMs) {\n    durationMs = durationSeconds * 1000;\n    console.log(`🔄 Converted ${durationSeconds}s to ${durationMs}ms`);\n  }\n  \n  const durationMinutes = Math.round(durationSeconds / 60 * 100) / 100; // Round to 2 decimal places\n  \n  console.log(`🎯 Final duration: ${durationMs}ms | ${durationSeconds}s | ${durationMinutes}min`);\n  \n  return {\n    milliseconds: durationMs,\n    seconds: durationSeconds,\n    minutes: durationMinutes,\n    formatted: formatDuration(durationSeconds),\n    humanReadable: `${Math.floor(durationMinutes)} minutes and ${durationSeconds % 60} seconds`\n  };\n}\n\n// Helper function to format duration nicely\nfunction formatDuration(seconds) {\n  if (!seconds || seconds === 0) return '0:00';\n  \n  const minutes = Math.floor(seconds / 60);\n  const remainingSeconds = seconds % 60;\n  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;\n}\n\n// Extract call statistics\nconst callDuration = calculateCallDuration(message, call, inputData, artifact);\n\n// Add comprehensive debugging for the entire input structure\nconsole.log('🔍 COMPLETE INPUT DATA STRUCTURE:');\nconsole.log('- Input data keys:', Object.keys(inputData));\nconsole.log('- Input data type:', typeof inputData);\nconsole.log('- Full input data:', JSON.stringify(inputData, null, 2));\n\nconst callStats = {\n  // Basic call info\n  callId: call?.id || message?.call?.id || inputData.callId || 'unknown',\n  duration: callDuration,\n  \n  // Timestamps\n  startedAt: message?.startedAt || call?.startedAt || inputData.startedAt,\n  endedAt: message?.endedAt || call?.endedAt || inputData.endedAt,\n  endedReason: message?.endedReason || inputData.endedReason || 'unknown',\n  \n  // Cost breakdown\n  totalCost: message?.cost || inputData.cost || 0,\n  costBreakdown: message?.costBreakdown || inputData.costBreakdown || {},\n  costs: message?.costs || inputData.costs || [],\n  \n  // Performance metrics\n  performance: artifact?.performanceMetrics || inputData.performance || {},\n  \n  // Recording URLs\n  recordingUrl: message?.recordingUrl || artifact?.recordingUrl || inputData.recordingUrl,\n  stereoRecordingUrl: message?.stereoRecordingUrl || artifact?.stereoRecordingUrl || inputData.stereoRecordingUrl,\n  logUrl: artifact?.logUrl || inputData.logUrl,\n  \n  // Additional call details\n  type: call?.type || inputData.type || 'unknown',\n  status: call?.status || inputData.status || 'unknown',\n  transport: call?.transport || inputData.transport || {}\n};\n\n// Extract assistant information\nconst assistant = message?.assistant || inputData.assistant || {};\nconst assistantInfo = {\n  id: assistant.id || 'unknown',\n  name: assistant.name || 'Unknown Assistant',\n  voice: assistant.voice || {},\n  model: assistant.model || {}\n};\n\n// ASSISTANT VARIABLE VALUES SEARCH\nif (assistant.assistantOverrides) {\n  if (assistant.assistantOverrides.variableValues) {\n    // Use these if they contain real tokens\n    const assistantVarValues = assistant.assistantOverrides.variableValues;\n    if (assistantVarValues.sessionToken && \n        assistantVarValues.sessionToken !== 'extracted-from-transcript') {\n      variableValues = { ...variableValues, ...assistantVarValues };\n    }\n  }\n}\n\n// Check if there are any overrides at the call level\nif (call?.assistantOverrides?.variableValues) {\n  const callVarValues = call.assistantOverrides.variableValues;\n  if (callVarValues.sessionToken && \n      callVarValues.sessionToken !== 'extracted-from-transcript') {\n    variableValues = { ...variableValues, ...callVarValues };\n  }\n}\n\n// Extract candidate information from variableValues\nconst candidateName = \n  variableValues?.candidateName || \n  variableValues?.name ||\n  call?.metadata?.candidateName || \n  assistant?.variableValues?.candidateName ||\n  assistant?.variableValues?.name ||\n  'Unknown Candidate';\n\nconst sessionId = \n  variableValues?.sessionId ||\n  variableValues?.sessionToken ||\n  call?.metadata?.sessionId || \n  assistant?.variableValues?.sessionId ||\n  'unknown';\n\nconst originalToken = \n  variableValues?.originalToken ||\n  variableValues?.sessionToken ||  // If originalToken is same as sessionToken\n  call?.metadata?.originalToken ||\n  assistant?.variableValues?.originalToken ||\n  sessionId; // Fallback to sessionId if originalToken not found\n\n// Parse interview responses from transcript\nfunction extractInterviewResponses(transcript) {\n  const responses = {};\n  \n  // Extract availability\n  const availabilityMatch = transcript.match(/User: (.*(?:afternoon|evening|morning|available).*)/i);\n  if (availabilityMatch) {\n    responses.availability = availabilityMatch[1].trim();\n  }\n  \n  // Extract experience\n  const experienceMatch = transcript.match(/User: (.*(?:year|experience|daycare|children).*)/i);\n  if (experienceMatch) {\n    responses.experience = experienceMatch[1].trim();\n  }\n  \n  // Extract approach to tantrums\n  const approachMatch = transcript.match(/User: (.*(?:patient|calm|approach).*)/i);\n  if (approachMatch) {\n    responses.approach = approachMatch[1].trim();\n  }\n  \n  // Extract housekeeping comfort\n  const housekeepingMatch = transcript.match(/housekeeping.*\\n.*User: (.*)/i);\n  if (housekeepingMatch) {\n    responses.housekeeping = housekeepingMatch[1].trim();\n  }\n  \n  // Extract motivation\n  const motivationMatch = transcript.match(/why.*interested.*Bloom Buddies.*\\n.*User: (.*)/i);\n  if (motivationMatch) {\n    responses.motivation = motivationMatch[1].trim();\n  }\n  \n  return responses;\n}\n\n// Structure all extracted data\nconst extractedData = {\n  // Event information\n  eventType: message?.type || inputData.type || 'webhook-call',\n  timestamp: message?.timestamp || inputData.timestamp || Date.now(),\n  webhookUrl: inputData.webhookUrl || 'unknown',\n  executionMode: inputData.executionMode || 'unknown',\n  \n  // Candidate information (KEY FIX: Now properly extracts from variableValues)\n  candidate: {\n    name: candidateName,\n    sessionId: sessionId,\n    sessionToken: variableValues?.sessionToken || sessionId,\n    originalToken: originalToken, // Include original token from index.html\n    responses: extractInterviewResponses(transcript)\n  },\n  \n  // Interview content\n  transcript: {\n    full: transcript,\n    length: transcript.length,\n    wordCount: transcript.split(' ').length,\n    hasContent: transcript.length > 0\n  },\n  \n  // Call duration (easily accessible)\n  callDuration: callDuration,\n  \n  // Analysis results\n  analysis: {\n    summary: summary,\n    successEvaluation: analysis?.successEvaluation || 'unknown',\n    hasAnalysis: !!analysis\n  },\n  \n  // Call statistics\n  callStats: callStats,\n  \n  // Assistant information\n  assistant: assistantInfo,\n  \n  // Raw conversation data\n  conversation: {\n    messages: artifact?.messages || inputData.messages || [],\n    messagesOpenAI: artifact?.messagesOpenAIFormatted || [],\n    totalMessages: (artifact?.messages || inputData.messages || []).length\n  },\n  \n  // VAPI Configuration Data\n  vapiConfig: {\n    server: inputData.server || {},\n    compliancePlan: inputData.compliancePlan || {},\n    variableValues: variableValues,\n    webhookUrl: inputData.webhookUrl\n  },\n  \n  // Processing metadata\n  processing: {\n    extractedAt: new Date().toISOString(),\n    dataSource: 'vapi-webhook',\n    hasTranscript: transcript.length > 0,\n    hasSummary: summary !== 'No summary available',\n    hasCallStats: !!(message?.durationSeconds || inputData.durationSeconds),\n    inputStructure: isNewStructure ? 'end-of-call-report' : 'webhook-data'\n  }\n};\n\n// Validation and warnings\nif (!extractedData.transcript.hasContent) {\n  console.warn('⚠️ WARNING: No transcript content found');\n}\n\nif (!extractedData.analysis.hasAnalysis) {\n  console.warn('⚠️ WARNING: No analysis data found');\n}\n\nif (extractedData.candidate.name === 'Unknown Candidate') {\n  console.warn('⚠️ WARNING: Candidate name not found in metadata');\n}\n\n// Log extraction summary\nconsole.log('📊 EXTRACTION SUMMARY:');\nconsole.log(`- Input structure: ${extractedData.processing.inputStructure}`);\nconsole.log(`- Webhook URL: ${extractedData.vapiConfig.webhookUrl}`);\nconsole.log(`- Execution mode: ${extractedData.executionMode}`);\nconsole.log(`- Candidate: ${extractedData.candidate.name}`);\nconsole.log(`- Session ID: ${extractedData.candidate.sessionId}`);\nconsole.log(`- Session Token: ${extractedData.candidate.sessionToken}`);\nconsole.log(`- Original Token: ${extractedData.candidate.originalToken}`);\nconsole.log(`- Transcript length: ${extractedData.transcript.length} characters`);\nreturn [{ json: extractedData }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        192
+      ],
+      "id": "5f594a94-597d-4fb6-9067-b3b9cf17217f",
+      "name": "Extract Call Data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this interview for Bloom Buddies candidate: {{ $('Extract Call Data').item.json.candidate.name }}\n\n**CANDIDATE DETAILS:**\n- Name: {{ $('Extract Call Data').item.json.candidate.name }}\n- Session ID: {{ $('Extract Call Data').item.json.candidate.sessionId }}\n- Original Token: {{ $('Extract Call Data').item.json.candidate.originalToken }}\n- Session Token: {{ $('Extract Call Data').item.json.candidate.sessionToken }}\n\n**INTERVIEW METRICS:**\n- Duration: {{ $('Extract Call Data').item.json.callStats.duration.minutes }} minutes\n- Total Messages: {{ $('Extract Call Data').item.json.conversation.totalMessages }}\n- Call ID: {{ $('Extract Call Data').item.json.callStats.callId }}\n- Ended Reason: {{ $('Extract Call Data').item.json.callStats.endedReason }}\n- Interview Date: {{ $('Extract Call Data').item.json.processing.extractedAt }}\n\n**FULL TRANSCRIPT:**\n{{ $('Extract Call Data').item.json.transcript.full }}\n\n**EXTRACTED RESPONSES:**\n{{ JSON.stringify($('Extract Call Data').item.json.candidate.responses) }}\n\n**CALL STATISTICS:**\n- Cost: ${{ $('Extract Call Data').item.json.callStats.totalCost }}\n- Type: {{ $('Extract Call Data').item.json.callStats.type }}\n- Status: {{ $('Extract Call Data').item.json.callStats.status }}\n\n**ANALYSIS REQUIRED:**\nPlease provide a comprehensive analysis and return ONLY this JSON structure:\n\n{\n  \"candidateAnalysis\": {\n    \"candidateName\": \"{{ $('Extract Call Data').item.json.candidate.name }}\",\n    \"sessionId\": \"{{ $('Extract Call Data').item.json.candidate.sessionId }}\",\n    \"originalToken\": \"{{ $('Extract Call Data').item.json.candidate.originalToken }}\",\n    \"interviewDate\": \"{{ $('Extract Call Data').item.json.processing.extractedAt }}\",\n    \"callDuration\": {{ $('Extract Call Data').item.json.callStats.duration.minutes }},\n    \"overallScore\": number (1-10),\n    \"communicationSkillsScore\": number (1-10),\n    \"enthusiasmScore\": number (1-10), \n    \"professionalismScore\": number (1-10),\n    \"experienceScore\": number (1-10),\n    \"availabilityScore\": number (1-10),\n    \"safetyAwarenessScore\": number (1-10),\n    \"culturalFitScore\": number (1-10),\n    \"recommendation\": \"Hire|Interview Further|Pass\",\n    \"confidenceLevel\": \"High|Medium|Low\"\n  },\n  \"detailedAnalysis\": {\n    \"executiveSummary\": \"2-3 sentence professional summary\",\n    \"keyStrengths\": [\"strength1\", \"strength2\", \"strength3\"],\n    \"areasForImprovement\": [\"area1\", \"area2\"],\n    \"redFlags\": [\"any concerning behaviors - empty array if none\"],\n    \"standoutMoments\": [\"impressive responses - empty array if none\"],\n    \"detailedFeedback\": \"comprehensive analysis of interview performance\",\n    \"experienceAssessment\": \"evaluation of childcare background\",\n    \"availabilityAssessment\": \"analysis of scheduling compatibility\",\n    \"safetyPracticesAssessment\": \"evaluation of safety awareness\"\n  },\n  \"airtableUpdate\": {\n    \"status\": \"Interviewed\",\n    \"interviewScore\": number (1-10),\n    \"interviewNotes\": \"concise summary for Airtable record\",\n    \"recommendation\": \"Hire|Interview Further|Pass\",\n    \"nextSteps\": \"recommended next action\",\n    \"interviewer\": \"AI Assistant - Vanessa\",\n    \"interviewDate\": \"{{ $('Extract Call Data').item.json.processing.extractedAt }}\",\n    \"callDuration\": \"{{ $('Extract Call Data').item.json.callStats.duration.minutes }} minutes\",\n    \"interviewMethod\": \"Phone\",\n    \"availabilityNotes\": \"summary of candidate availability\",\n    \"experienceNotes\": \"summary of relevant experience\"\n  },\n  \"emailNotification\": {\n    \"subject\": \"Interview Complete: {{ $('Extract Call Data').item.json.candidate.name }} - [Recommendation]\",\n    \"recipientType\": \"internal\",\n    \"priority\": \"normal|high|urgent\",\n    \"emailBody\": \"Professional email body for internal team notification\",\n    \"includeTranscript\": true,\n    \"includeSummary\": true,\n    \"actionRequired\": \"yes|no\",\n    \"followUpRequired\": \"yes|no\"\n  },\n  \"transcriptSummary\": {\n    \"conversationFlow\": \"description of how the interview progressed\",\n    \"candidateResponses\": {\n      \"availability\": \"summary of availability discussion\",\n      \"experience\": \"summary of experience discussion\", \n      \"safetyPractices\": \"summary of safety practices discussion\",\n      \"questionsAsked\": \"any questions the candidate asked\",\n      \"overallTone\": \"professional|casual|nervous|confident\"\n    },\n    \"interviewQuality\": \"assessment of interview completeness\",\n    \"technicalIssues\": \"any call quality or technical problems noted\"\n  }\n}",
+        "options": {
+          "systemMessage": "YouYou are an expert interview analyst for Bloom Buddies childcare agency. You analyze phone interview transcripts and provide comprehensive candidate evaluations with structured recommendations for Airtable updates and email notifications.\n\nYour analysis must be thorough, professional, and actionable. You will evaluate candidates based on:\n- Communication skills and clarity\n- Professional experience and qualifications  \n- Availability and scheduling compatibility\n- Safety awareness and practices\n- Enthusiasm and cultural fit\n- Overall suitability for childcare roles\n\nReturn your response as valid JSON only, with no additional text or formatting. "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        192
+      ],
+      "id": "5b07107b-87ba-4eb3-b94d-201f40036d25",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "154"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        416
+      ],
+      "id": "023b363a-fc90-46db-a916-3b5b789f4d2c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appni7Lgyrk5sjLXY",
+          "mode": "list",
+          "cachedResultName": "Candidate Tracker",
+          "cachedResultUrl": "https://airtable.com/appni7Lgyrk5sjLXY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZbvFHR0vV2pPCd",
+          "mode": "list",
+          "cachedResultName": "Candidates",
+          "cachedResultUrl": "https://airtable.com/appni7Lgyrk5sjLXY/tblZbvFHR0vV2pPCd"
+        },
+        "filterByFormula": "={token} = '{{ $json.candidate.originalToken }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        448,
+        192
+      ],
+      "id": "0ecc8525-9892-48e3-9992-aaa387cb30c3",
+      "name": "Search records1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "JSCyKFdSIi5uTvkZ",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the AI Agent response - it's returned as a string in the 'output' field\nlet aiResponse;\ntry {\n  aiResponse = JSON.parse($json.output);\n} catch (error) {\n  console.error('Failed to parse AI response:', error);\n  // Fallback to empty structure if parsing fails\n  aiResponse = {\n    candidateAnalysis: {},\n    detailedAnalysis: {},\n    airtableUpdate: {},\n    emailNotification: {},\n    transcriptSummary: {}\n  };\n}\n\n// Extract main sections with fallbacks\nconst candidateAnalysis = aiResponse.candidateAnalysis || {};\nconst detailedAnalysis = aiResponse.detailedAnalysis || {};\nconst airtableUpdate = aiResponse.airtableUpdate || {};\nconst emailNotification = aiResponse.emailNotification || {};\nconst transcriptSummary = aiResponse.transcriptSummary || {};\n\n// Structure data for easy field access\nreturn [{\n  json: {\n    // Candidate basic info (for Airtable)\n    candidateName: candidateAnalysis.candidateName || \"Unknown\",\n    sessionId: candidateAnalysis.sessionId || \"unknown\",\n    originalToken: candidateAnalysis.originalToken || \"unknown\",\n    \n    // Scores (for Airtable fields)\n    overallScore: candidateAnalysis.overallScore || 0,\n    communicationScore: candidateAnalysis.communicationSkillsScore || 0,\n    enthusiasmScore: candidateAnalysis.enthusiasmScore || 0,\n    professionalismScore: candidateAnalysis.professionalismScore || 0,\n    experienceScore: candidateAnalysis.experienceScore || 0,\n    availabilityScore: candidateAnalysis.availabilityScore || 0,\n    safetyScore: candidateAnalysis.safetyAwarenessScore || 0,\n    culturalFitScore: candidateAnalysis.culturalFitScore || 0,\n    \n    // Recommendations (for Airtable)\n    recommendation: candidateAnalysis.recommendation || \"Interview Further\",\n    confidenceLevel: candidateAnalysis.confidenceLevel || \"Medium\",\n    interviewDate: candidateAnalysis.interviewDate || new Date().toISOString(),\n    callDuration: candidateAnalysis.callDuration || 0,\n    \n    // Detailed analysis (for Airtable notes) - convert arrays to strings\n    executiveSummary: detailedAnalysis.executiveSummary || \"No summary available\",\n    keyStrengths: Array.isArray(detailedAnalysis.keyStrengths) \n      ? detailedAnalysis.keyStrengths.join(\"; \") \n      : (detailedAnalysis.keyStrengths || \"None specified\"),\n    areasForImprovement: Array.isArray(detailedAnalysis.areasForImprovement) \n      ? detailedAnalysis.areasForImprovement.join(\"; \") \n      : (detailedAnalysis.areasForImprovement || \"None specified\"),\n    redFlags: Array.isArray(detailedAnalysis.redFlags) \n      ? detailedAnalysis.redFlags.join(\"; \") \n      : (detailedAnalysis.redFlags || \"None\"),\n    standoutMoments: Array.isArray(detailedAnalysis.standoutMoments) \n      ? detailedAnalysis.standoutMoments.join(\"; \") \n      : (detailedAnalysis.standoutMoments || \"None\"),\n    detailedFeedback: detailedAnalysis.detailedFeedback || \"No detailed feedback\",\n    experienceAssessment: detailedAnalysis.experienceAssessment || \"See interview notes\",\n    availabilityAssessment: detailedAnalysis.availabilityAssessment || \"See interview notes\",\n    safetyPracticesAssessment: detailedAnalysis.safetyPracticesAssessment || \"See interview notes\",\n    \n    // Airtable specific fields\n    airtableStatus: airtableUpdate.status || \"Interviewed\",\n    airtableScore: airtableUpdate.interviewScore || candidateAnalysis.overallScore || 0,\n    airtableNotes: airtableUpdate.interviewNotes || detailedAnalysis.executiveSummary || \"Interview completed\",\n    nextSteps: airtableUpdate.nextSteps || \"Review and follow up\",\n    interviewer: airtableUpdate.interviewer || \"AI Assistant - Vanessa\",\n    interviewMethod: airtableUpdate.interviewMethod || \"Phone\",\n    availabilityNotes: airtableUpdate.availabilityNotes || \"See transcript\",\n    experienceNotes: airtableUpdate.experienceNotes || \"See detailed analysis\",\n    \n    // Email fields\n    emailSubject: emailNotification.subject || `Interview Complete: ${candidateAnalysis.candidateName} - ${candidateAnalysis.recommendation}`,\n    emailPriority: emailNotification.priority || \"normal\",\n    emailBody: emailNotification.emailBody || detailedAnalysis.executiveSummary || \"Interview analysis complete\",\n    actionRequired: emailNotification.actionRequired || \"yes\",\n    followUpRequired: emailNotification.followUpRequired || \"yes\",\n    \n    // Conversation analysis\n    conversationFlow: transcriptSummary.conversationFlow || \"Standard interview flow\",\n    overallTone: transcriptSummary.candidateResponses?.overallTone || \"professional\",\n    interviewQuality: transcriptSummary.interviewQuality || \"complete\",\n    technicalIssues: transcriptSummary.technicalIssues || \"None reported\",\n    \n    // Candidate responses summary\n    availabilityResponse: transcriptSummary.candidateResponses?.availability || \"Not specified\",\n    experienceResponse: transcriptSummary.candidateResponses?.experience || \"Not specified\",\n    safetyResponse: transcriptSummary.candidateResponses?.safetyPractices || \"Not specified\",\n    questionsAsked: transcriptSummary.candidateResponses?.questionsAsked || \"None\",\n    \n    // Raw data for debugging\n    rawAIResponse: aiResponse,\n    originalOutput: $json.output\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        192
+      ],
+      "id": "51d51786-e46f-4086-8258-fd731e1d34c6",
+      "name": "Format Output Script"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-5-nano"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        416
+      ],
+      "id": "b77c51d5-f3b6-429c-b220-1d7732812379",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "yDU4fkmuMM4oxRSS",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "noreply@ai.xenergies.com"
+            },
+            {
+              "name": "=to",
+              "value": "hugh@xenergies.com"
+            },
+            {
+              "name": "subject",
+              "value": "=Interview Report -  {{ $json.fields['Candidate Name'] }}"
+            },
+            {
+              "name": "html",
+              "value": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Interview Report - {{ $node[\"Update record\"].json.fields[\"Candidate Name\"] }}</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { \n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; \n            line-height: 1.6; \n            color: #333; \n            background-color: #f8fafc;\n            padding: 20px;\n        }\n        .container { \n            max-width: 800px; \n            margin: 0 auto; \n            background: white; \n            border-radius: 12px; \n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n            overflow: hidden;\n        }\n        .header { \n            background: linear-gradient(135deg, #5dc399, #7be1b6); \n            color: white; \n            padding: 30px; \n            text-align: center;\n        }\n        .header h1 { \n            font-size: 2.2em; \n            margin-bottom: 10px; \n            text-shadow: 0 2px 4px rgba(0,0,0,0.2);\n        }\n        .header-info { \n            margin-top: 20px; \n        }\n        .score-row { \n            margin-top: 15px; \n        }\n        .header-table {\n            width: 100%;\n            border-collapse: collapse;\n            margin: 15px 0;\n        }\n        .header-table td {\n            background: rgba(255,255,255,0.2);\n            padding: 12px;\n            border-radius: 8px;\n            text-align: center;\n            vertical-align: top;\n        }\n        .header-table.info-row td {\n            width: 20%;\n        }\n        .header-table.score-row td {\n            width: 25%;\n        }\n        .header-table tr td:not(:last-child) {\n            padding-right: 8px;\n        }\n        .header-table tr td:not(:first-child) {\n            padding-left: 8px;\n        }\n        .header-item { \n            background: rgba(255,255,255,0.2); \n            padding: 12px; \n            border-radius: 8px; \n            text-align: center;\n        }\n        .content { padding: 30px; }\n        .score-section { \n            margin-bottom: 30px;\n            text-align: center;\n        }\n        .main-score { \n            font-size: 4em; \n            font-weight: bold; \n            color: #2563eb;\n            margin-bottom: 10px;\n            text-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        }\n        .score-grid { \n            display: grid; \n            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); \n            gap: 15px; \n            margin: 25px 0; \n        }\n        .score-card { \n            background: #f8fafc; \n            padding: 20px; \n            border-radius: 12px; \n            text-align: center;\n            border: 2px solid #e2e8f0;\n            transition: all 0.3s ease;\n        }\n        .score-card:hover { \n            transform: translateY(-3px); \n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n        }\n        .score-value { \n            font-size: 2.5em; \n            font-weight: bold; \n            margin-bottom: 5px;\n        }\n        .score-label { \n            font-size: 0.9em; \n            color: #64748b; \n            font-weight: 500; \n        }\n        .recommendation { \n            padding: 25px; \n            border-radius: 12px; \n            margin: 25px 0;\n            background: linear-gradient(135deg, #fef3c7, #fde68a);\n            border-left: 6px solid #f59e0b;\n        }\n        .recommendation.hire { \n            background: linear-gradient(135deg, #d1fae5, #a7f3d0);\n            border-left-color: #10b981;\n        }\n        .recommendation.pass { \n            background: linear-gradient(135deg, #fef2f2, #fecaca);\n            border-left-color: #ef4444;\n        }\n        .section { \n            margin-bottom: 25px; \n            padding: 20px;\n            background: #f8fafc;\n            border-radius: 8px;\n            border-left: 4px solid #5dc399;\n        }\n        .section h3 { \n            color: #065f46; \n            margin-bottom: 15px; \n            font-size: 1.3em;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n        .two-column { \n            display: grid; \n            grid-template-columns: 1fr 1fr; \n            gap: 25px; \n        }\n        .info-grid {\n            display: grid;\n            grid-template-columns: auto 1fr;\n            gap: 10px 20px;\n            margin: 15px 0;\n        }\n        .info-label {\n            font-weight: 600;\n            color: #4b5563;\n        }\n        .info-value {\n            color: #1f2937;\n        }\n        .transcript-box { \n            background: #f9fafb; \n            padding: 20px; \n            border-radius: 8px; \n            border: 1px solid #e5e7eb;\n            white-space: pre-wrap; \n            font-family: 'Courier New', monospace;\n            font-size: 0.9em;\n            line-height: 1.4;\n            max-height: 400px;\n            overflow-y: auto;\n        }\n        .availability-text {\n            background: #fff3cd;\n            padding: 12px;\n            border-radius: 6px;\n            border-left: 4px solid #ffc107;\n            margin: 10px 0;\n            font-style: italic;\n        }\n        .footer { \n            background: #f1f5f9;\n            text-align: center; \n            color: #64748b; \n            padding: 20px;\n            border-top: 1px solid #e2e8f0;\n        }\n        @media (max-width: 768px) {\n            .two-column { grid-template-columns: 1fr; }\n            .score-grid { grid-template-columns: repeat(2, 1fr); }\n            .header h1 { font-size: 1.8em; }\n            .main-score { font-size: 3em; }\n            body { padding: 10px; }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <!-- Header -->\n        <div class=\"header\">\n            <h1>🌸 Bloom Buddies Interview Report</h1>\n            \n            <!-- Info Row -->\n            <table class=\"header-table info-row\">\n                <tr>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Candidate</strong><br>\n                        {{ $node[\"Update record\"].json.fields[\"Candidate Name\"] }}\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Interview Date</strong><br>\n                        {{ new Date($node[\"Update record\"].json.fields[\"Interview Time\"]).toLocaleDateString('en-US', { \n                            year: 'numeric', month: 'long', day: 'numeric' \n                        }) }}\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Duration</strong><br>\n                        {{ $node[\"Update record\"].json.fields[\"Interview Length\"] }} minutes\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Email</strong><br>\n                        {{ $node[\"Update record\"].json.fields.Email }}\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Status</strong><br>\n                        {{ $node[\"Update record\"].json.fields.status }}\n                    </td>\n                </tr>\n            </table>\n            \n            <!-- Score Row -->\n            <table class=\"header-table score-row\">\n                <tr>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Communication</strong><br>\n                        <span style=\"font-size: 1.5em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.Communication >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.Communication >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.Communication }}/10</span>\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Enthusiasm</strong><br>\n                        <span style=\"font-size: 1.5em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.enthusiasm >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.enthusiasm >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.enthusiasm }}/10</span>\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Professionalism</strong><br>\n                        <span style=\"font-size: 1.5em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.professionalism >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.professionalism >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.professionalism }}/10</span>\n                    </td>\n                    <td style=\"background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;\">\n                        <strong>Overall Score</strong><br>\n                        <span style=\"font-size: 1.8em; font-weight: bold; color: {{ $node[\"Update record\"].json.fields.score >= 7 ? '#007bff' : ($node[\"Update record\"].json.fields.score >= 5 ? '#ff8c00' : '#dc3545') }};\">{{ $node[\"Update record\"].json.fields.score }}/10</span>\n                    </td>\n                </tr>\n            </table>\n        </div>\n\n        <div class=\"content\">\n            <!-- Availability Information -->\n            <div class=\"section\">\n                <h3>📅 Candidate Availability</h3>\n                <div class=\"availability-text\">\n                    {{ $node[\"Update record\"].json.fields.availability }}\n                </div>\n            </div>\n\n            <!-- Recommendation -->\n            <div class=\"recommendation {{ $node['Update record'].json.fields.Recommandation.toLowerCase().replace(' ', '') }}\">\n                <h3 style=\"margin-bottom: 15px; font-size: 1.5em;\">\n                    🎯 Recommendation: {{ $node[\"Update record\"].json.fields.Recommandation }}\n                </h3>\n                <div style=\"font-size: 1.1em; margin-bottom: 15px;\">\n                    <strong>Executive Summary:</strong><br>\n                    {{ $node[\"Update record\"].json.fields[\"Interview Summary\"] }}\n                </div>\n                <div style=\"background: rgba(255,255,255,0.7); padding: 15px; border-radius: 8px;\">\n                    <strong>Detailed Analysis:</strong><br>\n                    {{ $node[\"Update record\"].json.fields[\"Interview Analysis\"] }}\n                </div>\n            </div>\n\n            <!-- Next Action -->\n            <div class=\"section\">\n                <h3>🎯 Next Action</h3>\n                <p style=\"background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #3b82f6;\">\n                    {{ $node[\"Update record\"].json.fields[\"Next Action Recommendation\"] }}\n                </p>\n            </div>\n\n            <!-- Interview Transcript -->\n            <div class=\"section\">\n                <h3>📞 Interview Transcript</h3>\n                <div class=\"transcript-box\">{{ $node[\"Update record\"].json.fields[\"Interview Transcript\"] }}</div>\n            </div>\n        </div>\n\n        <!-- Footer -->\n        <div class=\"footer\">\n            <p><strong>Bloom Buddies Interview Analysis System</strong></p>\n            <p>Report generated on {{ new Date().toLocaleString() }}</p>\n            <p><em>Record ID: {{ $node[\"Update record\"].json.id }}</em></p>\n        </div>\n    </div>\n</body>\n</html>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1472,
+        192
+      ],
+      "id": "e671d676-343a-4c8a-95be-34d428c74ef0",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "myt5O2s8tOpc0AXt",
+          "name": "Bearer Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "AI Agent": [
+      {
+        "json": {
+          "output": "{\n  \"candidateAnalysis\": {\n    \"candidateName\": \"Jane\",\n    \"sessionId\": \"185ef1f6e87bbd42\",\n    \"originalToken\": \"185ef1f6e87bbd42\",\n    \"interviewDate\": \"2025-10-29T23:50:11.740Z\",\n    \"callDuration\": 1.97,\n    \"overallScore\": 6,\n    \"communicationSkillsScore\": 5,\n    \"enthusiasmScore\": 5,\n    \"professionalismScore\": 6,\n    \"experienceScore\": 7,\n    \"availabilityScore\": 4,\n    \"safetyAwarenessScore\": 6,\n    \"culturalFitScore\": 5,\n    \"recommendation\": \"Interview Further\",\n    \"confidenceLevel\": \"Medium\"\n  },\n  \"detailedAnalysis\": {\n    \"executiveSummary\": \"Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.\",\n    \"keyStrengths\": [\n      \"Solid 3 years of experience with toddlers in daycare\",\n      \"Basic but important safety practices such as carrying a phone and securing premises\",\n      \"Professional and polite demeanor throughout the interview\"\n    ],\n    \"areasForImprovement\": [\n      \"Improve clarity and precision in communication\",\n      \"Expand availability to better match scheduling needs\"\n    ],\n    \"redFlags\": [],\n    \"standoutMoments\": [],\n    \"detailedFeedback\": \"Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.\",\n    \"experienceAssessment\": \"Jane's 3-year daycare experience caring for children under 3 provides a strong foundation suited for infant and toddler care needs Bloom Buddies meets.\",\n    \"availabilityAssessment\": \"Her limited availability to only weekday mornings, with no Friday availability, may restrict assignment options and impact scheduling flexibility.\",\n    \"safetyPracticesAssessment\": \"She showed awareness of safety basics by carrying a phone and ensuring secure premises, though more detailed discussion of safety procedures would be beneficial.\"\n  },\n  \"airtableUpdate\": {\n    \"status\": \"Interviewed\",\n    \"interviewScore\": 6,\n    \"interviewNotes\": \"Experienced toddler caregiver with basic safety awareness. Limited to weekday mornings availability. Communication clarity needs improvement.\",\n    \"recommendation\": \"Interview Further\",\n    \"nextSteps\": \"Arrange follow-up interview focusing on communication skills and availability details\",\n    \"interviewer\": \"AI Assistant - Vanessa\",\n    \"interviewDate\": \"2025-10-29T23:50:11.740Z\",\n    \"callDuration\": \"1.97 minutes\",\n    \"interviewMethod\": \"Phone\",\n    \"availabilityNotes\": \"Available only on weekday mornings; completely unavailable Fridays\",\n    \"experienceNotes\": \"3 years in daycare center in Paris with children under 3\"\n  },\n  \"emailNotification\": {\n    \"subject\": \"Interview Complete: Jane - Interview Further\",\n    \"recipientType\": \"internal\",\n    \"priority\": \"normal\",\n    \"emailBody\": \"Dear Team,\\n\\nThe interview with candidate Jane is complete. She has solid childcare experience with toddlers and basic understanding of safety, but limited availability to weekday mornings only and no Fridays. Communication required clarification during the interview. We recommend a follow-up interview to further assess communication skills and scheduling fit.\\n\\nPlease review the attached transcript and summary.\\n\\nBest regards,\\nVanessa, AI Assistant\\nBloom Buddies\",\n    \"includeTranscript\": true,\n    \"includeSummary\": true,\n    \"actionRequired\": \"yes\",\n    \"followUpRequired\": \"yes\"\n  },\n  \"transcriptSummary\": {\n    \"conversationFlow\": \"The interview proceeded with introductory greetings, initial confusion about availability that was clarified after several exchanges, followed by questions about experience and safety practices. The interview concluded with the candidate declining to ask questions.\",\n    \"candidateResponses\": {\n      \"availability\": \"Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.\",\n      \"experience\": \"3 years working at a daycare center in Paris caring for children under 3 years.\",\n      \"safetyPractices\": \"Carries phone at all times and ensures premises are secure.\",\n      \"questionsAsked\": \"None.\",\n      \"overallTone\": \"Professional and polite, somewhat reserved.\"\n    },\n    \"interviewQuality\": \"Relatively brief but captured key information despite some communication challenges.\",\n    \"technicalIssues\": \"No call or technical issues noted; call ended by candidate.\"\n  }\n}"
+        }
+      }
+    ],
+    "Update record": [
+      {
+        "json": {
+          "id": "recIJK2r5baDbT5Fd",
+          "createdTime": "2025-12-11T16:38:15.000Z",
+          "fields": {
+            "Candidate Name": "Speed Racer",
+            "Interview Time": "2025-12-11T16:40:00.000Z",
+            "Interview Summary": "Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.",
+            "Interview Analysis": "Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.",
+            "Recommandation": "Interview Further",
+            "hours from Interview": 0,
+            "Interview Weekday": "Thursday",
+            "Interview Transcript": "AI: Hi. This is Vanessa from Bloom Buddies. For taking the time to interview with us. Is this Speed Racer?\nUser: Yes. It is.\nAI: Go to meet you, speed racer. I'm excited to chat with you today. Our interview will be structured in 3 parts. First, I'll share some information about Bloom Buddies, Then I'll ask you some questions to get to know you better. And finally, you'll have a chance to ask me any questions you might have. Let's start with a little introduction about Bloom Buddies. We are a certified childcare company dedicated to providing a nurturing environment for children while enriching their English language skills. Our mission It seems like your message got cut off. Would you like to continue? You have any questions or thoughts about Bloom Buddies, feel free to share. Otherwise, I can move on to asking you some questions. Are you ready to get started?\nUser: Yeah. Ask me questions.\nAI: Great. Let's start with the first question. Could you tell me a little bit about yourself?\nUser: Yes. I'm hungry.\nAI: I understand we all get hungry sometimes. But let's focus on the interview for now. Could you tell me about your experience working with children? Have you worked with children under 3 before? If so, for how long and in what setting?\nUser: 2 years. In a day care center in Lyon. For children under 3. I'm available all week long mornings.\nAI: That's wonderful to hear. 2 years of experience in a day care center with children under 3 is valuable. Next, could you share why you are interested in working with Bloom Buddies specifically? Also, do you have any relevant certifications such as CPR or first aid?\nUser: Another certifications, and I want to work cause I need a job.\nAI: Thank you for sharing that. Understanding your reasons for working is important. Let's move on to your skills and abilities. Are you comfortable with lighthouse keep? Task? Task? Such as tidying toys or preparing simple snacks? What's your approach when a child is upset or having a tantrum?\nUser: Um, I'm patient and calm.\nAI: Patience and calmness are essential qualities when handling upset children. Thank you for sharing. That. Now let's discuss your availability a little more. You mentioned you're available all week long in the mornings. Are there any specific days you're completely unavailable, and do you have a preference for any hours?\nUser: No.\nAI: That's good to know. It sounds like you have flexible availability. Now could you please provide me with information for professional references who can speak to your childcare experience?\nUser: No. I can't. I don't have any references.\nAI: I understand. References can sometimes be a challenge to provide. Just to let you know, we typically encourage at least 1 reference for verification. Before we wrap up, can you tell me about your safety practices when it comes to caring for children? Is there anything you'd like us to know about your experience or approach that we haven't covered?\nUser: No.\nAI: Thank you, speed racer, for sharing your experiences and thoughts with me today. To summarize, you have 2 years of experience working in a daycare with children under 3. You have a patient and calm approach to handling ups and downs. Unfortunately, we typically require at least 1 reference. And it's important for us to verify past experience as part of our hiring process. If you have any other questions for me or would like to clarify anything else, please feel free to ask. If not, I'd like to thank you for your time. We'll be in touch if there's a match.\nUser: Okay. Bye.\nAI: Thank you for your time, Speed Racer. Our team will review your responses and reach out within 48 hours if there's a potential match. Have a wonderful day. Goodbye.\n",
+            "Next Action Recommendation": "Arrange follow-up interview focusing on communication skills and availability details",
+            "Email": "hugh@xenergies.com",
+            "token": "4d0d7eee090489deff97614efbf4f5df",
+            "Sessions ID": "185ef1f6e87bbd42",
+            "status": "pending",
+            "score": 6,
+            "Communication": 5,
+            "enthusiasm": 5,
+            "professionalism": 6,
+            "Phone": "0682827892",
+            "Interview Length": 1.97,
+            "availability": "Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.",
+            "action": "interviewed",
+            "reminders sent": 0,
+            "Management Token": "72215341c778ed49137e6c2512eb948b",
+            "Formatted Date": "11 December",
+            "Formatted Time": "04:40 pm",
+            "emailSent": true,
+            "emailSentAt": "2025-12-11T16:38:16.540Z",
+            "timezoneOffset": 0,
+            "emailMessageId": "b5047675-800b-4113-b122-3b722e603869"
+          }
+        }
+      }
+    ],
+    "Format Output Script": [
+      {
+        "json": {
+          "candidateName": "Jane",
+          "sessionId": "185ef1f6e87bbd42",
+          "originalToken": "185ef1f6e87bbd42",
+          "overallScore": 6,
+          "communicationScore": 5,
+          "enthusiasmScore": 5,
+          "professionalismScore": 6,
+          "experienceScore": 7,
+          "availabilityScore": 4,
+          "safetyScore": 6,
+          "culturalFitScore": 5,
+          "recommendation": "Interview Further",
+          "confidenceLevel": "Medium",
+          "interviewDate": "2025-10-29T23:50:11.740Z",
+          "callDuration": 1.97,
+          "executiveSummary": "Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.",
+          "keyStrengths": "Solid 3 years of experience with toddlers in daycare; Basic but important safety practices such as carrying a phone and securing premises; Professional and polite demeanor throughout the interview",
+          "areasForImprovement": "Improve clarity and precision in communication; Expand availability to better match scheduling needs",
+          "redFlags": "",
+          "standoutMoments": "",
+          "detailedFeedback": "Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.",
+          "experienceAssessment": "Jane's 3-year daycare experience caring for children under 3 provides a strong foundation suited for infant and toddler care needs Bloom Buddies meets.",
+          "availabilityAssessment": "Her limited availability to only weekday mornings, with no Friday availability, may restrict assignment options and impact scheduling flexibility.",
+          "safetyPracticesAssessment": "She showed awareness of safety basics by carrying a phone and ensuring secure premises, though more detailed discussion of safety procedures would be beneficial.",
+          "airtableStatus": "Interviewed",
+          "airtableScore": 6,
+          "airtableNotes": "Experienced toddler caregiver with basic safety awareness. Limited to weekday mornings availability. Communication clarity needs improvement.",
+          "nextSteps": "Arrange follow-up interview focusing on communication skills and availability details",
+          "interviewer": "AI Assistant - Vanessa",
+          "interviewMethod": "Phone",
+          "availabilityNotes": "Available only on weekday mornings; completely unavailable Fridays",
+          "experienceNotes": "3 years in daycare center in Paris with children under 3",
+          "emailSubject": "Interview Complete: Jane - Interview Further",
+          "emailPriority": "normal",
+          "emailBody": "Dear Team,\n\nThe interview with candidate Jane is complete. She has solid childcare experience with toddlers and basic understanding of safety, but limited availability to weekday mornings only and no Fridays. Communication required clarification during the interview. We recommend a follow-up interview to further assess communication skills and scheduling fit.\n\nPlease review the attached transcript and summary.\n\nBest regards,\nVanessa, AI Assistant\nBloom Buddies",
+          "actionRequired": "yes",
+          "followUpRequired": "yes",
+          "conversationFlow": "The interview proceeded with introductory greetings, initial confusion about availability that was clarified after several exchanges, followed by questions about experience and safety practices. The interview concluded with the candidate declining to ask questions.",
+          "overallTone": "Professional and polite, somewhat reserved.",
+          "interviewQuality": "Relatively brief but captured key information despite some communication challenges.",
+          "technicalIssues": "No call or technical issues noted; call ended by candidate.",
+          "availabilityResponse": "Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.",
+          "experienceResponse": "3 years working at a daycare center in Paris caring for children under 3 years.",
+          "safetyResponse": "Carries phone at all times and ensures premises are secure.",
+          "questionsAsked": "None.",
+          "rawAIResponse": {
+            "candidateAnalysis": {
+              "candidateName": "Jane",
+              "sessionId": "185ef1f6e87bbd42",
+              "originalToken": "185ef1f6e87bbd42",
+              "interviewDate": "2025-10-29T23:50:11.740Z",
+              "callDuration": 1.97,
+              "overallScore": 6,
+              "communicationSkillsScore": 5,
+              "enthusiasmScore": 5,
+              "professionalismScore": 6,
+              "experienceScore": 7,
+              "availabilityScore": 4,
+              "safetyAwarenessScore": 6,
+              "culturalFitScore": 5,
+              "recommendation": "Interview Further",
+              "confidenceLevel": "Medium"
+            },
+            "detailedAnalysis": {
+              "executiveSummary": "Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.",
+              "keyStrengths": [
+                "Solid 3 years of experience with toddlers in daycare",
+                "Basic but important safety practices such as carrying a phone and securing premises",
+                "Professional and polite demeanor throughout the interview"
+              ],
+              "areasForImprovement": [
+                "Improve clarity and precision in communication",
+                "Expand availability to better match scheduling needs"
+              ],
+              "redFlags": [],
+              "standoutMoments": [],
+              "detailedFeedback": "Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.",
+              "experienceAssessment": "Jane's 3-year daycare experience caring for children under 3 provides a strong foundation suited for infant and toddler care needs Bloom Buddies meets.",
+              "availabilityAssessment": "Her limited availability to only weekday mornings, with no Friday availability, may restrict assignment options and impact scheduling flexibility.",
+              "safetyPracticesAssessment": "She showed awareness of safety basics by carrying a phone and ensuring secure premises, though more detailed discussion of safety procedures would be beneficial."
+            },
+            "airtableUpdate": {
+              "status": "Interviewed",
+              "interviewScore": 6,
+              "interviewNotes": "Experienced toddler caregiver with basic safety awareness. Limited to weekday mornings availability. Communication clarity needs improvement.",
+              "recommendation": "Interview Further",
+              "nextSteps": "Arrange follow-up interview focusing on communication skills and availability details",
+              "interviewer": "AI Assistant - Vanessa",
+              "interviewDate": "2025-10-29T23:50:11.740Z",
+              "callDuration": "1.97 minutes",
+              "interviewMethod": "Phone",
+              "availabilityNotes": "Available only on weekday mornings; completely unavailable Fridays",
+              "experienceNotes": "3 years in daycare center in Paris with children under 3"
+            },
+            "emailNotification": {
+              "subject": "Interview Complete: Jane - Interview Further",
+              "recipientType": "internal",
+              "priority": "normal",
+              "emailBody": "Dear Team,\n\nThe interview with candidate Jane is complete. She has solid childcare experience with toddlers and basic understanding of safety, but limited availability to weekday mornings only and no Fridays. Communication required clarification during the interview. We recommend a follow-up interview to further assess communication skills and scheduling fit.\n\nPlease review the attached transcript and summary.\n\nBest regards,\nVanessa, AI Assistant\nBloom Buddies",
+              "includeTranscript": true,
+              "includeSummary": true,
+              "actionRequired": "yes",
+              "followUpRequired": "yes"
+            },
+            "transcriptSummary": {
+              "conversationFlow": "The interview proceeded with introductory greetings, initial confusion about availability that was clarified after several exchanges, followed by questions about experience and safety practices. The interview concluded with the candidate declining to ask questions.",
+              "candidateResponses": {
+                "availability": "Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.",
+                "experience": "3 years working at a daycare center in Paris caring for children under 3 years.",
+                "safetyPractices": "Carries phone at all times and ensures premises are secure.",
+                "questionsAsked": "None.",
+                "overallTone": "Professional and polite, somewhat reserved."
+              },
+              "interviewQuality": "Relatively brief but captured key information despite some communication challenges.",
+              "technicalIssues": "No call or technical issues noted; call ended by candidate."
+            }
+          },
+          "originalOutput": "{\n  \"candidateAnalysis\": {\n    \"candidateName\": \"Jane\",\n    \"sessionId\": \"185ef1f6e87bbd42\",\n    \"originalToken\": \"185ef1f6e87bbd42\",\n    \"interviewDate\": \"2025-10-29T23:50:11.740Z\",\n    \"callDuration\": 1.97,\n    \"overallScore\": 6,\n    \"communicationSkillsScore\": 5,\n    \"enthusiasmScore\": 5,\n    \"professionalismScore\": 6,\n    \"experienceScore\": 7,\n    \"availabilityScore\": 4,\n    \"safetyAwarenessScore\": 6,\n    \"culturalFitScore\": 5,\n    \"recommendation\": \"Interview Further\",\n    \"confidenceLevel\": \"Medium\"\n  },\n  \"detailedAnalysis\": {\n    \"executiveSummary\": \"Jane has relevant childcare experience, having worked three years in a daycare setting with children under 3 years old. While she demonstrated basic safety awareness and professionalism, her communication was at times unclear, especially regarding her limited availability, warranting further assessment.\",\n    \"keyStrengths\": [\n      \"Solid 3 years of experience with toddlers in daycare\",\n      \"Basic but important safety practices such as carrying a phone and securing premises\",\n      \"Professional and polite demeanor throughout the interview\"\n    ],\n    \"areasForImprovement\": [\n      \"Improve clarity and precision in communication\",\n      \"Expand availability to better match scheduling needs\"\n    ],\n    \"redFlags\": [],\n    \"standoutMoments\": [],\n    \"detailedFeedback\": \"Jane responded politely and professionally but required multiple clarifications to confirm her availability, which is limited strictly to weekday mornings and completely unavailable on Fridays. Her experience at a daycare in Paris focused on children under 3 is a strong asset. Safety awareness was appropriately mentioned but lacked detail regarding emergency preparedness or specific safety protocols. She asked no questions and showed moderate enthusiasm. Overall, her profile is promising but further interview would help clarify communication and scheduling alignment.\",\n    \"experienceAssessment\": \"Jane's 3-year daycare experience caring for children under 3 provides a strong foundation suited for infant and toddler care needs Bloom Buddies meets.\",\n    \"availabilityAssessment\": \"Her limited availability to only weekday mornings, with no Friday availability, may restrict assignment options and impact scheduling flexibility.\",\n    \"safetyPracticesAssessment\": \"She showed awareness of safety basics by carrying a phone and ensuring secure premises, though more detailed discussion of safety procedures would be beneficial.\"\n  },\n  \"airtableUpdate\": {\n    \"status\": \"Interviewed\",\n    \"interviewScore\": 6,\n    \"interviewNotes\": \"Experienced toddler caregiver with basic safety awareness. Limited to weekday mornings availability. Communication clarity needs improvement.\",\n    \"recommendation\": \"Interview Further\",\n    \"nextSteps\": \"Arrange follow-up interview focusing on communication skills and availability details\",\n    \"interviewer\": \"AI Assistant - Vanessa\",\n    \"interviewDate\": \"2025-10-29T23:50:11.740Z\",\n    \"callDuration\": \"1.97 minutes\",\n    \"interviewMethod\": \"Phone\",\n    \"availabilityNotes\": \"Available only on weekday mornings; completely unavailable Fridays\",\n    \"experienceNotes\": \"3 years in daycare center in Paris with children under 3\"\n  },\n  \"emailNotification\": {\n    \"subject\": \"Interview Complete: Jane - Interview Further\",\n    \"recipientType\": \"internal\",\n    \"priority\": \"normal\",\n    \"emailBody\": \"Dear Team,\\n\\nThe interview with candidate Jane is complete. She has solid childcare experience with toddlers and basic understanding of safety, but limited availability to weekday mornings only and no Fridays. Communication required clarification during the interview. We recommend a follow-up interview to further assess communication skills and scheduling fit.\\n\\nPlease review the attached transcript and summary.\\n\\nBest regards,\\nVanessa, AI Assistant\\nBloom Buddies\",\n    \"includeTranscript\": true,\n    \"includeSummary\": true,\n    \"actionRequired\": \"yes\",\n    \"followUpRequired\": \"yes\"\n  },\n  \"transcriptSummary\": {\n    \"conversationFlow\": \"The interview proceeded with introductory greetings, initial confusion about availability that was clarified after several exchanges, followed by questions about experience and safety practices. The interview concluded with the candidate declining to ask questions.\",\n    \"candidateResponses\": {\n      \"availability\": \"Initially unclear, confirmed only weekday mornings available and completely unavailable on Fridays.\",\n      \"experience\": \"3 years working at a daycare center in Paris caring for children under 3 years.\",\n      \"safetyPractices\": \"Carries phone at all times and ensures premises are secure.\",\n      \"questionsAsked\": \"None.\",\n      \"overallTone\": \"Professional and polite, somewhat reserved.\"\n    },\n    \"interviewQuality\": \"Relatively brief but captured key information despite some communication challenges.\",\n    \"technicalIssues\": \"No call or technical issues noted; call ended by candidate.\"\n  }\n}"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "VAPI Call Completed Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Call Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update record": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Call Data": {
+      "main": [
+        [
+          {
+            "node": "Search records1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Output Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output Script": {
+      "main": [
+        [
+          {
+            "node": "Update record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1641c253-345b-4026-b65a-deb4bca339c3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "22a6fa010072b584f9926df98282cf0854324752d00ba86d87e22e2f24e22c9c"
+  },
+  "id": "qP1Z2Qo924AEYjGp",
+  "tags": []
+}

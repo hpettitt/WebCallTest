@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recruiting Portal - Bloom Buddies Interview System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #5dc399, #7be1b6);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .portal-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .portal-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .portal-header h1 {
+            color: #065f46;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .portal-header p {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .portal-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+        }
+
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #5dc399, #7be1b6);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+
+        .portal-card h2 {
+            color: #065f46;
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .portal-card p {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .card-features {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .card-features li {
+            color: #374151;
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-features li i {
+            color: #10b981;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .badge.new {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.demo {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        @media (max-width: 768px) {
+            .portal-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .portal-header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-container">
+        <!-- Header -->
+        <div class="portal-header">
+            <h1><i class="fas fa-rocket"></i> Recruiting Portal</h1>
+            <p>Bloom Buddies Interview Management System</p>
+        </div>
+
+        <!-- Main Cards -->
+        <div class="portal-grid">
+            <!-- Scheduling Page -->
+            <a href="/schedule-interview.html" class="portal-card" target="_blank">
+                <div class="card-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h2>Scheduling Page <span class="badge new">Public</span></h2>
+                <p>Candidate-facing scheduling interface where applicants can book their interview time.</p>
+                <ul class="card-features">
+                    <li><i class="fas fa-check-circle"></i> Monthly calendar view</li>
+                    <li><i class="fas fa-check-circle"></i> Time slot selection (7 AM - 7 PM)</li>
+                    <li><i class="fas fa-check-circle"></i> Email confirmation with interview link</li>
+                    <li><i class="fas fa-check-circle"></i> Timezone display (CET)</li>
+                </ul>
+            </a>
+
+            <!-- Interview Page -->
+            <div class="portal-card" onclick="openInterviewDemo()">
+                <div class="card-icon">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <h2>Interview Page <span class="badge demo">Demo</span></h2>
+                <p>VAPI-powered phone interview interface with call protection and network handling.</p>
+                <ul class="card-features">
+                    <li><i class="fas fa-check-circle"></i> Voice AI interview with VAPI</li>
+                    <li><i class="fas fa-check-circle"></i> 30-second minimum duration</li>
+                    <li><i class="fas fa-check-circle"></i> Network failure recovery</li>
+                    <li><i class="fas fa-check-circle"></i> Duplicate call prevention</li>
+                </ul>
+            </div>
+
+            <!-- Admin Dashboard -->
+            <a href="/dashboard/index.html" class="portal-card" target="_blank">
+                <div class="card-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h2>Admin Dashboard <span class="badge new">Secure</span></h2>
+                <p>Comprehensive dashboard to review candidates, manage interviews, and make hiring decisions.</p>
+                <ul class="card-features">
+                    <li><i class="fas fa-check-circle"></i> Clickable status filters</li>
+                    <li><i class="fas fa-check-circle"></i> Real-time candidate data</li>
+                    <li><i class="fas fa-check-circle"></i> Accept/reject workflow</li>
+                    <li><i class="fas fa-check-circle"></i> Interview transcripts & scores</li>
+                </ul>
+            </a>
+
+            <!-- Configuration Panel -->
+            <a href="/config-panel.html" class="portal-card">
+                <div class="card-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h2>Configuration Panel <span class="badge new">New</span></h2>
+                <p>Customize system settings, email templates, VAPI prompts, and branding.</p>
+                <ul class="card-features">
+                    <li><i class="fas fa-check-circle"></i> Edit email templates</li>
+                    <li><i class="fas fa-check-circle"></i> Configure VAPI questions</li>
+                    <li><i class="fas fa-check-circle"></i> Adjust time windows</li>
+                    <li><i class="fas fa-check-circle"></i> Update branding & URLs</li>
+                </ul>
+            </a>
+
+            <!-- Interview Management -->
+            <a href="/manage-interview-demo.html" class="portal-card" target="_blank">
+                <div class="card-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h2>Interview Management <span class="badge demo">Demo</span></h2>
+                <p>Self-service portal where candidates can reschedule or cancel their interviews.</p>
+                <ul class="card-features">
+                    <li><i class="fas fa-check-circle"></i> Secure token-based access</li>
+                    <li><i class="fas fa-check-circle"></i> Reschedule to new date/time</li>
+                    <li><i class="fas fa-check-circle"></i> Cancel interview option</li>
+                    <li><i class="fas fa-check-circle"></i> Zero admin intervention</li>
+                </ul>
+            </a>
+
+            <!-- Setup Guide -->
+            <a href="/SETUP_GUIDE.md" class="portal-card" target="_blank">
+                <div class="card-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h2>Setup Guide <span class="badge new">Docs</span></h2>
+                <p>Complete step-by-step guide to set up all system components and services.</p>
+                <ul class="card-features">
+                    <li><i class="fas fa-check-circle"></i> Airtable configuration</li>
+                    <li><i class="fas fa-check-circle"></i> VAPI and OpenAI setup</li>
+                    <li><i class="fas fa-check-circle"></i> Railway deployment</li>
+                    <li><i class="fas fa-check-circle"></i> n8n automation workflows</li>
+                </ul>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Load statistics
+        async function loadStats() {
+            try {
+                // This would fetch from your API
+                // For demo, showing placeholder
+                document.getElementById('totalCandidates').textContent = '...';
+                document.getElementById('scheduledCount').textContent = '...';
+                document.getElementById('pendingCount').textContent = '...';
+                document.getElementById('acceptedCount').textContent = '...';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function openInterviewDemo() {
+    </script>
+</body>
+</html>

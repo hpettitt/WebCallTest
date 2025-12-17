@@ -1,3 +1,28 @@
+# Dashboard Folder (Production)
+
+This folder contains the production-ready dashboard files served to users.
+
+- **All files here are live.**
+- Do not edit files here directly unless you intend to deploy to production.
+- Keep this folder in sync with your main development dashboard folder.
+- Remove any demo or obsolete files.
+
+## Key Files
+- `index.html` — Main dashboard UI
+- `dashboard.js` — Dashboard logic
+- `auth.js` — Authentication logic
+- `users.html` — User management (admin only)
+- `styles.css` — Dashboard styles
+
+## Best Practices
+- Test all changes locally before copying here
+- Use the checklist in `../../dev-checklists/dashboard-sync-checklist.md` before every deployment
+- Do not store sensitive data or tokens here
+
+---
+
+_This README is for developers. Users will not see this file._
+
 # Interview Dashboard Setup Guide
 
 ## 🌸 Bloom Buddies Interview Dashboard
