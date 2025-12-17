@@ -17,8 +17,13 @@
             <div class="nav-brand">
                 <i class="fas fa-flower"></i>
                 <span>Interviews Dashboard</span>
+                <span style="margin-left: 10px; font-size: 12px; background: #fbbf24; color: #78350f; padding: 2px 8px; border-radius: 4px; font-weight: bold;">test</span>
             </div>
             <div class="nav-actions">
+                <span id="dateTimeDisplay" style="margin-right: 20px; color: #9CA3AF; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-clock"></i>
+                    <span id="currentDateTime">--:--</span>
+                </span>
                 <span id="currentUserDisplay" style="margin-right: 15px; color: #667eea; font-weight: 500; display: none;">
                     <i class="fas fa-user-circle"></i> <span id="currentUserName"></span>
                 </span>
@@ -36,6 +41,7 @@
     </nav>
 
     <!-- Login Modal -->
+    <!-- Force deployment: 2025-12-17 00:35 -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <div class="login-form">
@@ -53,6 +59,10 @@
                                 <i class="fas fa-eye" id="passwordIcon"></i>
                             </button>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="authCode">Authentication Code:</label>
+                        <input type="text" id="authCode" autocomplete="one-time-code" placeholder="2FA code (if required)">
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-sign-in-alt"></i> Login
@@ -183,11 +193,9 @@
     </div>
 
     <script src="config.js?v=1130-1"></script>
-    <script src="config-local.js?v=1130-1"></script>
     <script src="config-demo.js?v=1130-1"></script>
     <script src="secure-config.js?v=1130-1"></script>
     <script src="security.js?v=1130-1"></script>
-    <script src="auth-local.js?v=1130-1"></script>
     <script src="auth.js?v=1130-1"></script>
     <script src="airtable.js?v=1130-2"></script>
     <script src="dashboard.js?v=1130-2"></script>
@@ -228,8 +236,29 @@
                 passwordIcon.classList.add('fa-eye');
             }
         }
+
+        // Update date/time display
+        function updateDateTime() {
+            const now = new Date();
+            const dateTimeDisplay = document.getElementById('currentDateTime');
+            if (dateTimeDisplay) {
+                const options = { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit',
+                    hour12: false 
+                };
+                dateTimeDisplay.textContent = now.toLocaleDateString('en-US', options);
+            }
+        }
         
         document.addEventListener('DOMContentLoaded', async function() {
+            // Start updating time display
+            setInterval(updateDateTime, 1000);
+            updateDateTime();
+
             console.log('🚀 DOM loaded, initializing secure app...');
             console.log('📍 Current URL:', window.location.href);
             console.log('🔐 SECURE_CONFIG available:', typeof SECURE_CONFIG !== 'undefined');
