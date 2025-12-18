@@ -8,7 +8,7 @@ Candidates can now reschedule or cancel their interviews without any admin inter
 ✅ **Self-Service Cancellation** - Candidates can cancel their interview
 ✅ **Secure Token-Based Access** - Each candidate gets a unique, secure management link
 ✅ **Automatic Notifications** - Confirmation emails sent for all changes
-✅ **Token Expiration** - Management links expire 24 hours after the interview
+✅ **Token Expiration** - Management links expire 72 hours after the interview
 ✅ **No Admin Work Required** - Everything is automated
 
 ## Setup Instructions
@@ -54,7 +54,7 @@ https://bloombuddies.up.railway.app/manage-interview.html?token=<secure-token>
 ### 4. Security Features
 
 - **Unique Tokens**: Each candidate gets a cryptographically secure unique token
-- **Token Expiration**: Links expire 24 hours after the scheduled interview
+- **Token Expiration**: Links expire 72 hours after the scheduled interview
 - **Single Use per Candidate**: Each token is tied to one specific candidate
 - **Status Validation**: Can't reschedule cancelled interviews
 
@@ -110,7 +110,7 @@ Body: { token }
 
 **Q: Candidate says the link doesn't work**
 - Check that the `Management Token` field exists in Airtable
-- Verify the token hasn't expired (24 hours after interview)
+- Verify the token hasn't expired (72 hours after interview)
 - Ensure the interview isn't already cancelled
 
 **Q: Changes aren't showing in the dashboard**

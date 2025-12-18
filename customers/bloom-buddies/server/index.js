@@ -1255,10 +1255,10 @@ app.get('/api/interview/verify-token', async (req, res) => {
       });
     }
 
-    // Check if token is expired (24 hours after interview)
+    // Check if token is expired (72 hours after interview)
     if (candidate.interviewDateTime) {
       const interviewDate = new Date(candidate.interviewDateTime);
-      const expiryDate = new Date(interviewDate.getTime() + 24 * 60 * 60 * 1000);
+      const expiryDate = new Date(interviewDate.getTime() + 72 * 60 * 60 * 1000);
       
       if (new Date() > expiryDate) {
         return res.status(410).json({

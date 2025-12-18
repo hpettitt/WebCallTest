@@ -1,0 +1,1321 @@
+{
+  "name": "Interview Reminders - Action Based",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Read inputs\nconst hoursFromInterview = Number($json['hours from Interview']);\nconst sentRemindersRaw = $json['sent reminders'] || '';\n\n// Convert sent reminders into a Set\nconst sentReminders = new Set(\n  sentRemindersRaw\n    .split(',')\n    .map(r => r.trim())\n    .filter(Boolean)\n);\n\n// Helper: safe hour window\nconst isWithin = (value, target, tolerance = 0.5) =>\n  value >= target - tolerance && value <= target + tolerance;\n\n// Decide reminder type\nlet messageType = null;\n\nif (isWithin(hoursFromInterview, -24) &&\n  !sentReminders.has('before_24h')\n) {\n  messageType = 'before_24h';\n}\n else if (isWithin(hoursFromInterview, -1) &&\n  !sentReminders.has('before_1h')) {\n  messageType = 'before_1h';\n\n} else if (isWithin(hoursFromInterview, 1) &&\n  !sentReminders.has('after_1h') ){\n  messageType = 'after_1h';\n\n} else if (isWithin(hoursFromInterview, 24) &&\n  !sentReminders.has('after_24h')) {\n  messageType = 'after_24h';\n\n} else if (isWithin(hoursFromInterview, 48) &&\n  !sentReminders.has('after_48h')) {\n  messageType = 'after_48h';\n\n} else if (isWithin(hoursFromInterview, 72) &&\n  !sentReminders.has('after_72h')) {\n  messageType = 'after_72h';\n}\n\n// Idempotency check\nconst shouldSend =\n  messageType !== null && !sentReminders.has(messageType);\n\n// Prepare updated sent reminders value\nlet updatedSentReminders = sentRemindersRaw;\n\nif (shouldSend) {\n  updatedSentReminders = [...sentReminders, messageType].join(',');\n}\n\n// Output\nreturn {\n  ...$json,\n  hoursFromInterview,\n  messageType,\n  shouldSend,\n  sentReminders: updatedSentReminders\n};\n"
+      },
+      "name": "Calculate Hours and Message Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        1064
+      ],
+      "id": "35fbb0c6-ec05-4401-8d55-4f4fed4cdad3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.shouldSend }}",
+              "value2": "={{ true }}"
+            }
+          ]
+        }
+      },
+      "name": "Should Send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        1064
+      ],
+      "id": "30904fdb-d772-4d5c-a55a-3763bb9feb04"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Read candidate info from $json\nconst candidateName = $json['Candidate Name'] || 'Candidate';\nconst interviewTime = new Date($json['Interview Time']);\nconst interviewMgmtURL = $json['InterviewMgmtURL'] || '#'; // Ensure this exists\n\n// Format date: day month, at HH:MM AM/PM CET (hours and minutes only)\nconst formattedTime = interviewTime.toLocaleString('en-GB', {\n  day: '2-digit',\n  month: 'long',\n  hour: 'numeric',\n  minute: '2-digit',\n  hour12: true,\n  timeZone: 'Europe/Paris' // CET/CEST\n});\n\n// Initialize email content\nlet subject = '';\nlet body = '';\n\n// Determine message content based on messageType\nswitch ($json.messageType) {\n  case 'after_72h':\n    subject = 'Your Interview Has Been Cancelled';\n    body = `Hi ${candidateName},<br><br>\nWe had not heard from you regarding your scheduled interview on ${formattedTime}.<br><br>\nUnfortunately, we have cancelled your interview slot.<br><br>\nBest regards,<br>\nBloom Buddies Team`;\n    break;\n\n  case 'before_24h':\n    subject = 'Your Interview is in 24 Hours!';\n    body = `Hi ${candidateName},<br><br>\nJust a quick reminder that your interview is scheduled on ${formattedTime}.<br><br>\nIf you need to reschedule, please click on the link below:<br>\n<a href=\"${interviewMgmtURL}\">${interviewMgmtURL}</a><br><br>\nBest regards,<br>\nBloom Buddies Team`;\n    break;\n\n  case 'before_1h':\n    subject = 'Your Interview is in 1 Hour!';\n    body = `Hi ${candidateName},<br><br>\nYour interview is scheduled on ${formattedTime}.<br><br>\nPlease make sure you are ready and have a stable internet connection.<br><br>\nIf you need to reschedule, please click on the link below:<br>\n<a href=\"${interviewMgmtURL}\">${interviewMgmtURL}</a><br><br>\nBest regards,<br>\nBloom Buddies Team`;\n    break;\n\n  case 'after_1h':\n    subject = 'Missed Interview';\n    body = `Hi ${candidateName},<br><br>\nWe see that you were not able to make it to your interview on ${formattedTime}.<br><br>\nIf you need to reschedule, please click on the link below:<br>\n<a href=\"${interviewMgmtURL}\">${interviewMgmtURL}</a><br><br>\nBest regards,<br>\nBloom Buddies Team`;\n    break;\n\n  case 'after_24h':\n    subject = 'Missed Interview Reminder 1';\n    body = `Hi ${candidateName},<br><br>\nIt has been 24 hours since you missed your interview on ${formattedTime}.<br><br>\nIf you need to reschedule, please click on the link below:<br>\n<a href=\"${interviewMgmtURL}\">${interviewMgmtURL}</a><br><br>\nBest regards,<br>\nBloom Buddies Team`;\n    break;\n\n  case 'after_48h':\n    subject = 'Missed Interview Reminder 2';\n    body = `Hi ${candidateName},<br><br>\nIt has been 48 hours since you missed your interview on ${formattedTime}.<br><br>\nWe would like to give you one more chance to reschedule your interview. Here is the link to manage your appointment:<br>\n<a href=\"${interviewMgmtURL}\">${interviewMgmtURL}</a><br><br>\nBest regards,<br>\nBloom Buddies Team`;\n    break;\n\n  default:\n    subject = '';\n    body = '';\n    break;\n}\n\n// Wrap plain text in HTML template\nconst htmlEmail = `\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>${subject}</title>\n    <style>\n        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8fafc; padding: 20px; }\n        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; }\n        .header { background: linear-gradient(135deg, #5dc399, #7be1b6); color: white; padding: 30px; text-align: center; }\n        .header h1 { font-size: 1.8em; margin-bottom: 10px; }\n        .content { padding: 30px; }\n        .footer { background: #f1f5f9; text-align: center; color: #64748b; padding: 20px; border-top: 1px solid #e2e8f0; font-size: 0.9em; }\n        a { color: #5dc399; text-decoration: none; font-weight: 600; }\n        a:hover { text-decoration: underline; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\"><h1>🌸 Bloom Buddies</h1></div>\n        <div class=\"content\">${body}</div>\n        <div class=\"footer\">\n            <p><strong>Bloom Buddies Interview Team</strong></p>\n            <p>© ${new Date().getFullYear()} Bloom Buddies. All rights reserved.</p>\n        </div>\n    </div>\n</body>\n</html>\n`.trim();\n\n// Return ready-to-use output for Email node\nreturn {\n  ...$json,\n  emailSubject: subject,\n  emailBody: htmlEmail\n};\n"
+      },
+      "name": "Generate Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        1064
+      ],
+      "id": "ec599886-b83c-463b-a050-f84b5168016c"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appODUV0mBmrmWeKX",
+          "mode": "list",
+          "cachedResultName": "BB-Candidate Tracker",
+          "cachedResultUrl": "https://airtable.com/appODUV0mBmrmWeKX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblLFl8HMHXPwlfpZ",
+          "mode": "list",
+          "cachedResultName": "Candidates",
+          "cachedResultUrl": "https://airtable.com/appODUV0mBmrmWeKX/tblLFl8HMHXPwlfpZ"
+        },
+        "filterByFormula": "{action}='waiting for interview'",
+        "options": {
+          "fields": [
+            "Candidate Name",
+            "Email",
+            "Interview Time",
+            "hours from Interview",
+            "Management Token",
+            "action",
+            "RemindersSent",
+            "ReminderSentDate",
+            "InterviewMgmtURL"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -1120,
+        1064
+      ],
+      "id": "fab570cc-3909-42c3-80ad-3e1723e829ec",
+      "name": "Pull Candidates waiting for interviews",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "M6WK6rr94MZJGRFG",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "noreply@ai.xenergies.com"
+            },
+            {
+              "name": "=to",
+              "value": "={{ $json.Email }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ $json.emailSubject }}"
+            },
+            {
+              "name": "html",
+              "value": "={{ $json.emailBody }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        224,
+        848
+      ],
+      "id": "41b87f31-6dc0-41c0-a024-9fcc73890f9d",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "WYMZwyh5BdR9qLHk",
+          "name": "Bearer Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        1064
+      ],
+      "id": "760d06ab-d022-40f5-97a0-9dd62ece06e9",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        848
+      ],
+      "id": "e17d4cfa-ae67-49c3-9c66-988da7fecbc7",
+      "name": "Wait1",
+      "webhookId": "e9176d0d-d7a8-45ea-96e8-a0a7284776f5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bd44a032-d493-4bd0-932b-4e96a3b17a8a",
+              "leftValue": "={{ $('Should Send?').item.json['hours from Interview'] }}",
+              "rightValue": 72,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        848
+      ],
+      "id": "98f32ccc-03d7-475c-b73f-052376967ea7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appODUV0mBmrmWeKX",
+          "mode": "list",
+          "cachedResultName": "BB-Candidate Tracker",
+          "cachedResultUrl": "https://airtable.com/appODUV0mBmrmWeKX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblLFl8HMHXPwlfpZ",
+          "mode": "list",
+          "cachedResultName": "Candidates",
+          "cachedResultUrl": "https://airtable.com/appODUV0mBmrmWeKX/tblLFl8HMHXPwlfpZ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "emailSent": true,
+            "status": "cancelled",
+            "emailSentAt": "={{ $now }}",
+            "id": "={{ $('Should Send?').item.json.id }}",
+            "emailMessageId": "={{ $json.id }}",
+            "Next Action Recommendation": "delete candidate",
+            "ReminderSentDate": "={{ $now }}",
+            "RemindersSent": "={{ $('Should Send?').item.json.sentReminders }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Time",
+              "displayName": "Interview Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "hours from Interview",
+              "displayName": "hours from Interview",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "token",
+              "displayName": "token",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Management Token",
+              "displayName": "Management Token",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "pending",
+                  "value": "pending"
+                },
+                {
+                  "name": "scheduled",
+                  "value": "scheduled"
+                },
+                {
+                  "name": "accept",
+                  "value": "accept"
+                },
+                {
+                  "name": "reject",
+                  "value": "reject"
+                },
+                {
+                  "name": "cancelled",
+                  "value": "cancelled"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "timezoneOffset",
+              "displayName": "timezoneOffset",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "CV Content",
+              "displayName": "CV Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "emailSent",
+              "displayName": "emailSent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "emailSentAt",
+              "displayName": "emailSentAt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "emailMessageId",
+              "displayName": "emailMessageId",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "pending",
+                  "value": "pending"
+                },
+                {
+                  "name": "interviewed",
+                  "value": "interviewed"
+                },
+                {
+                  "name": "reviewed",
+                  "value": "reviewed"
+                },
+                {
+                  "name": "waiting for interview",
+                  "value": "waiting for interview"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "interviewCompleted",
+              "displayName": "interviewCompleted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Photo",
+              "displayName": "Photo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Summary",
+              "displayName": "Interview Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Analysis",
+              "displayName": "Interview Analysis",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Recommandation",
+              "displayName": "Recommandation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Appointment time",
+              "displayName": "Appointment time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Interview Transcript",
+              "displayName": "Interview Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Next Action Recommendation",
+              "displayName": "Next Action Recommendation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Sessions ID",
+              "displayName": "Sessions ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "recording",
+              "displayName": "recording",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Communication",
+              "displayName": "Communication",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "enthusiasm",
+              "displayName": "enthusiasm",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "professionalism",
+              "displayName": "professionalism",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Length",
+              "displayName": "Interview Length",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "availability",
+              "displayName": "availability",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "RemindersSent",
+              "displayName": "RemindersSent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "InterviewMgmtURL",
+              "displayName": "InterviewMgmtURL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Modified",
+              "displayName": "Last Modified",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "ReminderSentDate",
+              "displayName": "ReminderSentDate",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Update Airtable Record to Cancelled",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        672,
+        920
+      ],
+      "id": "f07eba93-cbf9-4655-919a-af8051232fbd",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "M6WK6rr94MZJGRFG",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "interval": 30,
+        "unit": "minutes"
+      },
+      "name": "Trigger Every 30 Minutes",
+      "type": "n8n-nodes-base.interval",
+      "typeVersion": 1,
+      "position": [
+        -1344,
+        1064
+      ],
+      "id": "a75fa7de-d7b0-4190-8c47-45c9b51118b8"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appODUV0mBmrmWeKX",
+          "mode": "list",
+          "cachedResultName": "BB-Candidate Tracker",
+          "cachedResultUrl": "https://airtable.com/appODUV0mBmrmWeKX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblLFl8HMHXPwlfpZ",
+          "mode": "list",
+          "cachedResultName": "Candidates",
+          "cachedResultUrl": "https://airtable.com/appODUV0mBmrmWeKX/tblLFl8HMHXPwlfpZ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "emailSent": true,
+            "Last Modified": "={{ $now }}",
+            "emailSentAt": "={{ $now }}",
+            "id": "={{ $('Should Send?').item.json.id }}",
+            "emailMessageId": "={{ $('HTTP Request').item.json.id }}",
+            "RemindersSent": "={{ $('Calculate Hours and Message Type').item.json.sentReminders }}",
+            "ReminderSentDate": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Time",
+              "displayName": "Interview Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "hours from Interview",
+              "displayName": "hours from Interview",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "token",
+              "displayName": "token",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Management Token",
+              "displayName": "Management Token",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "pending",
+                  "value": "pending"
+                },
+                {
+                  "name": "scheduled",
+                  "value": "scheduled"
+                },
+                {
+                  "name": "accept",
+                  "value": "accept"
+                },
+                {
+                  "name": "reject",
+                  "value": "reject"
+                },
+                {
+                  "name": "cancelled",
+                  "value": "cancelled"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "timezoneOffset",
+              "displayName": "timezoneOffset",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "CV Content",
+              "displayName": "CV Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "emailSent",
+              "displayName": "emailSent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "emailSentAt",
+              "displayName": "emailSentAt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "emailMessageId",
+              "displayName": "emailMessageId",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "pending",
+                  "value": "pending"
+                },
+                {
+                  "name": "interviewed",
+                  "value": "interviewed"
+                },
+                {
+                  "name": "reviewed",
+                  "value": "reviewed"
+                },
+                {
+                  "name": "waiting for interview",
+                  "value": "waiting for interview"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "interviewCompleted",
+              "displayName": "interviewCompleted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Photo",
+              "displayName": "Photo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Summary",
+              "displayName": "Interview Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Analysis",
+              "displayName": "Interview Analysis",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Recommandation",
+              "displayName": "Recommandation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Appointment time",
+              "displayName": "Appointment time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Interview Transcript",
+              "displayName": "Interview Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Next Action Recommendation",
+              "displayName": "Next Action Recommendation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Sessions ID",
+              "displayName": "Sessions ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "recording",
+              "displayName": "recording",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Communication",
+              "displayName": "Communication",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "enthusiasm",
+              "displayName": "enthusiasm",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "professionalism",
+              "displayName": "professionalism",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Interview Length",
+              "displayName": "Interview Length",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "availability",
+              "displayName": "availability",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "RemindersSent",
+              "displayName": "RemindersSent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "InterviewMgmtURL",
+              "displayName": "InterviewMgmtURL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Modified",
+              "displayName": "Last Modified",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ReminderSentDate",
+              "displayName": "ReminderSentDate",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Update Airtable Record with reminder",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        672,
+        1112
+      ],
+      "id": "3dfb2d03-c065-4b35-955d-b3d5d223c878",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "M6WK6rr94MZJGRFG",
+          "name": "Airtable account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Calculate Hours and Message Type": {
+      "main": [
+        [
+          {
+            "node": "Should Send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send?": {
+      "main": [
+        [
+          {
+            "node": "Generate Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Pull Candidates waiting for interviews": {
+      "main": [
+        [
+          {
+            "node": "Calculate Hours and Message Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Email Content": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable Record to Cancelled",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Airtable Record with reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Airtable Record to Cancelled": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Every 30 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Pull Candidates waiting for interviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Airtable Record with reminder": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "042f5090-ce3e-4a34-8ab2-fc8fd1dac509",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "214ad909dc29c4ed91fae964e6b329af18577c197805d3364ed3a26076d1d92e"
+  },
+  "id": "bNmN9lu129pnDBYI",
+  "tags": []
+}

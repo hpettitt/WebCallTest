@@ -1,0 +1,238 @@
+{
+  "name": "Interview Reminders - Action Based",
+  "nodes": [
+    {
+      "parameters": {
+        "interval": [
+          5
+        ]
+      },
+      "name": "Trigger Every 5 Minutes",
+      "type": "n8n-nodes-base.interval",
+      "typeVersion": 1,
+      "position": [
+        50,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "executeQuery",
+        "base": "={{ $env.AIRTABLE_BASE_ID }}",
+        "table": "Candidates",
+        "filterByFormula": "{action} = \"waiting for interview\""
+      },
+      "name": "Get Waiting for Interview Candidates",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const now = new Date();\nconst interviewTime = new Date($json.fields['Interview Time']);\nconst hoursFromInterview = (interviewTime - now) / (1000 * 60 * 60);\nconst remindersSent = $json.fields['reminders sent'] || 0;\n\nlet messageType = null;\nlet shouldSend = false;\n\nif (hoursFromInterview < -72) {\n  messageType = 'cancelled';\n  shouldSend = true;\n} else if (hoursFromInterview >= -1.5 && hoursFromInterview <= -0.5) {\n  messageType = 'before';\n  shouldSend = true;\n} else if (hoursFromInterview >= 0.5 && hoursFromInterview <= 1.5) {\n  messageType = 'after';\n  shouldSend = true;\n} else if (hoursFromInterview >= 23.5 && hoursFromInterview <= 24.5) {\n  messageType = 'oneDay';\n  shouldSend = true;\n} else if (hoursFromInterview >= 71.5 && hoursFromInterview <= 72.5) {\n  messageType = 'threeDays';\n  shouldSend = true;\n}\n\nreturn {\n  ...this,\n  hoursFromInterview: parseFloat(hoursFromInterview.toFixed(2)),\n  messageType,\n  shouldSend,\n  remindersSent\n};"
+      },
+      "name": "Calculate Hours and Message Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.shouldSend }}",
+              "operation": "equals",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Should Send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Read candidate info from $json\nconst candidateName = $json.fields['Candidate Name'] || 'Candidate';\nconst interviewTime = new Date($json.fields['Interview Time']);\nconst interviewMgmtURL = $json.fields['InterviewMgmtURL'] || 'https://interviewer-voice-agent-production.up.railway.app/manage-interview.html';\n\n// Format date: day month, at HH:MM AM/PM CET (hours and minutes only)\nconst formattedTime = interviewTime.toLocaleString('en-GB', {\n  day: '2-digit',\n  month: 'long',\n  hour: 'numeric',\n  minute: '2-digit',\n  hour12: true,\n  timeZone: 'Europe/Paris' // CET/CEST\n});\n\n// Initialize email\nlet subject = '';\nlet plainBody = '';\n\n// Determine message content based on messageType\nswitch ($json.messageType) {\n  case 'cancelled':\n    subject = 'Your Interview Has Been Cancelled';\n    plainBody = `Hi ${candidateName},\\n\\nWe had not heard from you regarding your scheduled interview on ${formattedTime}.\\n\\nUnfortunately, we have cancelled your interview slot.\\n\\nBest regards,\\nBloom Buddies Team`;\n    break;\n\n  case 'before':\n    subject = 'Your Interview is in 24 Hours!';\n    plainBody = `Hi ${candidateName},\\n\\nJust a quick reminder that your interview is scheduled on ${formattedTime}.\\n\\nIf you need to reschedule, please click on the link below:\\n${interviewMgmtURL}\\n\\nBest regards,\\nBloom Buddies Team`;\n    break;\n\n  case 'before_1h':\n    subject = 'Your Interview is in 1 Hour!';\n    plainBody = `Hi ${candidateName},\\n\\nYour interview is scheduled on ${formattedTime}.\\n\\nPlease make sure you are ready and have a stable internet connection.\\n\\nIf you need to reschedule, please click on the link below:\\n${interviewMgmtURL}\\n\\nBest regards,\\nBloom Buddies Team`;\n    break;\n\n  case 'after':\n    subject = 'Missed Interview';\n    plainBody = `Hi ${candidateName},\\n\\nWe see that you were not able to make it to your interview on ${formattedTime}.\\n\\nIf you need to reschedule, please click on the link below:\\n${interviewMgmtURL}\\n\\nBest regards,\\nBloom Buddies Team`;\n    break;\n\n  case 'oneDay':\n    subject = 'Missed Interview Reminder 24 Hours';\n    plainBody = `Hi ${candidateName},\\n\\nIt has been 24 hours since you missed your interview on ${formattedTime}.\\n\\nIf you need to reschedule, please click on the link below:\\n${interviewMgmtURL}\\n\\nBest regards,\\nBloom Buddies Team`;\n    break;\n\n  case 'threeDays':\n    subject = 'Missed Interview Reminder 48 Hours';\n    plainBody = `Hi ${candidateName},\\n\\nIt has been 48 hours since you missed your interview on ${formattedTime}.\\n\\nWe would like to give you one more chance to reschedule your interview. Here is the link to manage your appointment:\\n${interviewMgmtURL}\\n\\nBest regards,\\nBloom Buddies Team`;\n    break;\n\n  default:\n    // No email if messageType is null or unknown\n    subject = '';\n    plainBody = '';\n    break;\n}\n\n// Format plainBody to HTML with proper line breaks and URL detection\nconst htmlBody = plainBody\n  .split('\\\\n\\\\n')\n  .map(para => {\n    // Replace URLs with clickable links\n    const withLinks = para.replace(\n      /(https?:\\/\\/[^\\s]+)/g,\n      '<a href=\"$1\" style=\"color: #5dc399; text-decoration: none; font-weight: 600;\">$1</a>'\n    );\n    return `<p style=\"margin: 15px 0; line-height: 1.6;\">${withLinks.replace(/\\\\n/g, '<br>')}</p>`;\n  })\n  .join('');\n\nconst htmlEmail = `\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>${subject}</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { \n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; \n            line-height: 1.6; \n            color: #333; \n            background-color: #f8fafc;\n            padding: 20px;\n        }\n        .container { \n            max-width: 600px; \n            margin: 0 auto; \n            background: white; \n            border-radius: 12px; \n            box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n            overflow: hidden;\n        }\n        .header { \n            background: linear-gradient(135deg, #5dc399, #7be1b6); \n            color: white; \n            padding: 30px; \n            text-align: center;\n        }\n        .header h1 { \n            font-size: 1.8em; \n            margin-bottom: 10px; \n        }\n        .content { \n            padding: 30px; \n        }\n        .content p { \n            margin: 15px 0; \n            line-height: 1.6;\n        }\n        .content a { \n            color: #5dc399; \n            text-decoration: none; \n            font-weight: 600;\n        }\n        .content a:hover { \n            text-decoration: underline; \n        }\n        .footer { \n            background: #f1f5f9;\n            text-align: center; \n            color: #64748b; \n            padding: 20px;\n            border-top: 1px solid #e2e8f0;\n            font-size: 0.9em;\n        }\n        @media (max-width: 600px) {\n            body { padding: 10px; }\n            .container { border-radius: 8px; }\n            .header { padding: 20px; }\n            .header h1 { font-size: 1.5em; }\n            .content { padding: 20px; }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>🌸 Bloom Buddies</h1>\n        </div>\n        <div class=\"content\">\n            ${htmlBody}\n        </div>\n        <div class=\"footer\">\n            <p><strong>Bloom Buddies Interview Team</strong></p>\n            <p>© ${new Date().getFullYear()} Bloom Buddies. All rights reserved.</p>\n        </div>\n    </div>\n</body>\n</html>\n`.trim();\n\nreturn {\n  ...this,\n  emailSubject: subject,\n  emailBody: htmlEmail,\n  plainBody: plainBody\n};"
+      },
+      "name": "Generate Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        850,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericCredentialType": "httpBasicAuth",
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "bodyParametersJson": "=json({\"from\": \"noreply@ai.xenergies.com\", \"to\": $json.fields.Email, \"subject\": $json.emailSubject, \"html\": $json.emailBody})",
+        "options": {}
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "resend_api_key",
+          "name": "Resend API Key"
+        }
+      },
+      "name": "Send Email via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1050,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let updates = {};\n\nif ($json.messageType === 'cancelled') {\n  updates = {\n    'status': 'cancelled',\n    'action': 'missed',\n    'reminders sent': ($json.remindersSent || 0) + 1\n  };\n} else {\n  updates = {\n    'reminders sent': ($json.remindersSent || 0) + 1\n  };\n}\n\nreturn {\n  ...this,\n  updates\n};"
+      },
+      "name": "Prepare Update Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "update",
+        "base": "={{ $env.AIRTABLE_BASE_ID }}",
+        "table": "Candidates",
+        "id": "={{ $json.id }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "reminders sent",
+              "fieldValue": "={{ $json.updates['reminders sent'] }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.updates.status || $json.fields.status }}"
+            },
+            {
+              "fieldId": "action",
+              "fieldValue": "={{ $json.updates.action || $json.fields.action }}"
+            }
+          ]
+        }
+      },
+      "name": "Update Airtable Record",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1450,
+        150
+      ]
+    }
+  ],
+  "connections": {
+    "Trigger Every 5 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Get Waiting for Interview Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Waiting for Interview Candidates": {
+      "main": [
+        [
+          {
+            "node": "Calculate Hours and Message Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Hours and Message Type": {
+      "main": [
+        [
+          {
+            "node": "Should Send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send?": {
+      "main": [
+        [
+          {
+            "node": "Generate Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Generate Email Content": {
+      "main": [
+        [
+          {
+            "node": "Send Email via Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email via Resend": {
+      "main": [
+        [
+          {
+            "node": "Prepare Update Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Update Fields": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
