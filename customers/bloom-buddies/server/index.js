@@ -1260,12 +1260,27 @@ app.get('/api/interview/verify-token', async (req, res) => {
       const interviewDate = new Date(candidate.interviewDateTime);
       const expiryDate = new Date(interviewDate.getTime() + 72 * 60 * 60 * 1000);
       
+      console.log('Token verification:', {
+        token: token,
+        interviewDateTime: candidate.interviewDateTime,
+        interviewDate: interviewDate,
+        expiryDate: expiryDate,
+        now: new Date(),
+        hoursElapsed: ((new Date() - interviewDate) / (1000 * 60 * 60)).toFixed(2),
+        isExpired: new Date() > expiryDate
+      });
+      
       if (new Date() > expiryDate) {
         return res.status(410).json({
           success: false,
           error: 'This management link has expired',
         });
       }
+    } else {
+      console.log('No interviewDateTime found for token:', {
+        token: token,
+        candidate: candidate
+      });
     }
 
     // Create interview link
