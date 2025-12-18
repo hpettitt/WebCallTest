@@ -407,13 +407,6 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Time Zone</label>
-                        <div style="padding: 0.75rem; background: #f8fafc; border: 2px solid #e5e7eb; border-radius: 8px; color: #4a5568;">
-                            Central European Time (CET)
-                        </div>
-                    </div>
-
-                    <div class="form-group">
                         <label for="cv">
                             <i class="fas fa-file-pdf" style="color: #667eea; margin-right: 8px;"></i>
                             Your Background or CV
@@ -462,7 +455,10 @@
 
                 <!-- Time Slots -->
                 <div class="time-slots-section">
-                    <div class="time-slots-title">Select Interview Time</div>
+                    <div class="time-slots-title">
+                        Select Interview Time
+                        <span style="font-size: 0.85rem; color: #6b7280; font-weight: 500; margin-left: 12px;">(Central European Time)</span>
+                    </div>
                     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                         <input type="time" id="timeInput" class="time-select" style="flex: 1;" placeholder="Select or enter time">
                         <button type="button" id="suggestTimeBtn" class="btn" style="flex: 0 0 150px; padding: 0.75rem 12px; background: #667eea; white-space: nowrap; height: 44px; display: flex; align-items: center; justify-content: center;">
