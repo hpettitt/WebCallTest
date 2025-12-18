@@ -1277,7 +1277,7 @@ app.get('/api/interview/verify-token', async (req, res) => {
         });
       }
     } else {
-      console.log('No interviewDateTime found for token:', {
+      console.log('No interviewDateTime found for token - allowing access (legacy token or missing data):', {
         token: token,
         candidate: candidate
       });
