@@ -29,7 +29,7 @@ Your "Candidates" table must have these fields:
 
 ### 2. Airtable API Connection
 - Ensure n8n has OAuth2 access to your Airtable base
-- Base ID: `appODUV0mBmrmWeKX`
+- Base ID: ` eKX`
 - Table: `Candidates`
 
 ### 3. Resend Email Configuration
